@@ -1,12 +1,4 @@
-"use client";
-
-// SEO Static Verification:
-// <title>CareerPilot AI - AI Career Studio Workspace</title>
-// <meta name="description" content="Không gian làm việc 3 cột theo chuẩn NotebookLM: Nguồn tài liệu CV & JD, Trung tâm đối thoại AI, và Studio quản lý các bản CV đã tối ưu." />
-// <meta property="og:title" content="CareerPilot AI - AI Career Studio Workspace" />
-// <meta property="og:description" content="Không gian làm việc 3 cột chuẩn NotebookLM phân tích CV và tối ưu ATS." />
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 
 interface Message {
   id: string;
@@ -25,13 +17,7 @@ interface Message {
 }
 
 export default function WorkspacePage() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Mobile Tab State (cho màn hình nhỏ): "sources" | "chat" | "studio"
+  // Mobile Tab State: "sources" | "chat" | "studio"
   const [activeMobileTab, setActiveMobileTab] = useState<"sources" | "chat" | "studio">("chat");
 
   // State Nguồn tài liệu (Cột 1)
@@ -500,7 +486,7 @@ export default function WorkspacePage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════
-            CỘT 3: STUDIO & BẢN CV ĐÃ SỬA (ARTIFACTS - 30% WIDTH)
+            CỘT 3: CV ĐÃ TỐI ƯU (ARTIFACTS - 30% WIDTH)
         ══════════════════════════════════════════════════════════ */}
         <aside
           className={`w-full lg:w-[30%] xl:w-[31%] border-l border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto slim-scrollbar ${

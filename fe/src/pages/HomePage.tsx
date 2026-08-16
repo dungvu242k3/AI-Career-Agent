@@ -1,104 +1,9 @@
-// SEO Static Verification:
-// <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
-// <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao." />
-// <meta property="og:title" content="CareerPilot AI" />
-// <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
+import React from "react";
+import { Link } from "react-router-dom";
 
-import Link from "next/link";
-
-export const metadata = {
-  title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
-  description:
-    "Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.",
-  openGraph: {
-    title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
-    description: "Tối ưu hóa ATS, phỏng vấn giả lập AI và lộ trình kỹ năng IT.",
-    url: "https://careerpilot.vn",
-    siteName: "CareerPilot AI",
-    locale: "vi_VN",
-    type: "website",
-  },
-};
-
-export default function LandingPage() {
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
-      {/* ────────────────────────────────────────────────────────
-          FIXED HEADER (1 HÀNG DUY NHẤT - 5 MỤC TÍNH NĂNG Ở GIỮA)
-      ──────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/80 backdrop-blur-md border-b border-[#3c4a42]/40">
-        {/* Logo trỏ về Trang chủ / */}
-        <div className="flex items-center shrink-0">
-          <Link
-            href="/"
-            aria-label="CareerPilot AI Trang chủ"
-            className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif]"
-          >
-            CareerPilot AI
-          </Link>
-        </div>
-
-        {/* Menu 5 tính năng cốt lõi trỏ thẳng vào 5 trang chuyên biệt */}
-        <nav
-          aria-label="Điều hướng chính"
-          className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
-        >
-          <Link
-            href="/workspace"
-            aria-label="Tính năng Phân tích CV"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
-          >
-            Phân tích CV
-          </Link>
-          <Link
-            href="/jobs"
-            aria-label="Tính năng Tìm việc và So khớp"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
-          >
-            Tìm việc &amp; So khớp
-          </Link>
-          <Link
-            href="/interview"
-            aria-label="Tính năng Phỏng vấn AI"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
-          >
-            Phỏng vấn AI
-          </Link>
-          <Link
-            href="/learning"
-            aria-label="Tính năng Lộ trình kỹ năng"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
-          >
-            Lộ trình kỹ năng
-          </Link>
-          <Link
-            href="/applications"
-            aria-label="Tính năng Quản lý ứng tuyển"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
-          >
-            Quản lý ứng tuyển
-          </Link>
-        </nav>
-
-        {/* CTA Actions */}
-        <div className="flex items-center gap-3 md:gap-4 shrink-0">
-          <Link
-            href="/login"
-            aria-label="Đăng nhập tài khoản"
-            className="text-[#bbcabf] hover:text-[#4edea3] font-medium text-sm transition-colors px-2 py-1.5"
-          >
-            Đăng nhập
-          </Link>
-          <button
-            type="button"
-            aria-label="Bắt đầu sử dụng miễn phí"
-            className="bg-[#10b981] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm hover:bg-[#4edea3] transition-colors shadow-sm"
-          >
-            Bắt đầu miễn phí
-          </button>
-        </div>
-      </header>
-
       {/* ────────────────────────────────────────────────────────
           MAIN CONTENT
       ──────────────────────────────────────────────────────── */}
@@ -121,12 +26,12 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
-              <button
-                type="button"
+              <Link
+                to="/workspace"
                 aria-label="Phân tích CV miễn phí ngay"
                 className="bg-[#10b981] text-[#090D16] font-semibold px-6 py-3 rounded-md border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base font-['Inter',sans-serif]"
               >
-                Phân tích CV miễn phí
+                <span>Phân tích CV miễn phí</span>
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -140,15 +45,15 @@ export default function LandingPage() {
                     d="M14 5l7 7m0 0l-7 7m7-7H3"
                   />
                 </svg>
-              </button>
+              </Link>
 
-              <button
-                type="button"
+              <Link
+                to="/workspace"
                 aria-label="Khám phá không gian làm việc Workspace"
                 className="bg-[#181b25] text-[#dfe2ef] font-medium px-6 py-3 rounded-md border border-[#1E293B] hover:bg-[#1f293d] hover:border-[#4edea3]/50 transition-colors flex items-center gap-2 text-sm sm:text-base font-['Inter',sans-serif]"
               >
                 Trải nghiệm Workspace
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -267,12 +172,12 @@ export default function LandingPage() {
               </div>
 
               {/* Action Button inside Card */}
-              <button
-                type="button"
+              <Link
+                to="/workspace"
                 aria-label="Tối ưu hóa nội dung CV ngay"
                 className="w-full bg-[#181b25] text-[#dfe2ef] border border-[#1E293B] hover:border-[#10b981] hover:text-[#4edea3] py-2.5 rounded-md text-sm transition-colors flex justify-center items-center gap-2 font-medium font-['Inter',sans-serif]"
               >
-                Tối ưu hóa nội dung CV ngay
+                <span>Tối ưu hóa nội dung CV ngay</span>
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -286,14 +191,14 @@ export default function LandingPage() {
                     d="M14 5l7 7m0 0l-7 7m7-7H3"
                   />
                 </svg>
-              </button>
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
       {/* ────────────────────────────────────────────────────────
-          FOOTER (BỐ CỤC ĐA CỘT & TYPOGRAPHY CHUẨN)
+          FOOTER
       ──────────────────────────────────────────────────────── */}
       <footer className="w-full pt-16 pb-12 px-6 md:px-12 border-t border-[#1E293B] bg-[#070A10]">
         <div className="max-w-[1200px] mx-auto">

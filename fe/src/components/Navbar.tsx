@@ -1,11 +1,9 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Navbar() {
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   const navItems = [
     { label: "Phân tích CV", href: "/workspace" },
@@ -20,7 +18,7 @@ export default function Navbar() {
       {/* ──────────────── Logo bên trái ──────────────── */}
       <div className="flex items-center shrink-0">
         <Link
-          href="/"
+          to="/"
           aria-label="CareerPilot AI Trang chủ"
           className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif]"
         >
@@ -38,7 +36,7 @@ export default function Navbar() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               aria-label={`Tính năng ${item.label}`}
               className={`px-3 py-1.5 text-sm shrink-0 transition-all duration-150 rounded ${
                 isActive
@@ -55,14 +53,14 @@ export default function Navbar() {
       {/* ──────────────── CTA Actions bên phải ──────────────── */}
       <div className="flex items-center gap-3 md:gap-4 shrink-0">
         <Link
-          href="/login"
+          to="/login"
           aria-label="Đăng nhập tài khoản"
           className="text-[#bbcabf] hover:text-[#4edea3] font-medium text-sm transition-colors px-2 py-1.5"
         >
           Đăng nhập
         </Link>
         <Link
-          href="/workspace"
+          to="/workspace"
           aria-label="Bắt đầu sử dụng miễn phí"
           className="bg-[#10b981] hover:bg-[#4edea3] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm transition-colors shadow-sm"
         >

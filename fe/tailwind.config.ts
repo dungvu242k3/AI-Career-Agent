@@ -3,10 +3,9 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   darkMode: "class",
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./features/**/*.{js,ts,jsx,tsx,mdx}",
-    "./entities/**/*.{js,ts,jsx,tsx,mdx}",
-    "./shared/**/*.{js,ts,jsx,tsx,mdx}",
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -35,9 +34,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        headline: ["var(--font-plus-jakarta)", "sans-serif"],
-        body: ["var(--font-inter)", "sans-serif"],
-        mono: ["var(--font-jetbrains-mono)", "monospace"],
+        headline: ["Plus Jakarta Sans", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
     },
   },
