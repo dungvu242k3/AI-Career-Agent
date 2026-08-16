@@ -96,16 +96,20 @@ Khi dùng Google Stitch hoặc AI tạo màn hình, prompt phải có cấu trú
 
 ---
 
-### 🟢 Prompt 1: Landing Page — **v2.1 (Pro Micro-Interactions & Real Feature Mega Menu)**
+### 🟢 Prompt 1: Landing Page — **v2.2 (Khớp 100% Tính Năng Dự Án & Menu Trực Quan)**
 
-> 📄 **Xem prompt v2.1 hoàn chỉnh:** [prompt-landing-page-v2.md](file:///c:/Users/dungv/AI-Career-Agent/docs/prompt-landing-page-v2.md)
+> 📄 **Xem prompt v2.2 hoàn chỉnh:** [prompt-landing-page-v2.md](file:///c:/Users/dungv/AI-Career-Agent/docs/prompt-landing-page-v2.md)
 
-**Các nâng cấp đột phá ở bản v2.1:**
-- **Header Mega Menu Dropdown:** Tích hợp 5 module thực tế của hệ thống (`cv-analysis`, `job-matching`, `interview`, `learning`, `career-workspace`) kèm mô tả súc tích và SVG icons.
-- **Live AI Pulse Indicator:** Chấm tròn Cyan `#06B6D4` nhấp nháy êm ái (`AI Engine Online`).
-- **Simulated Typewriter / Streaming:** Luồng suy luận Agent trực quan ngay Hero Card.
-- **Tech Stack Ticker:** Dải logo nhận diện công nghệ (Python, FastAPI, React, Docker, PostgreSQL) thay cho ảnh stock.
-- **Vector SVG Icons (Lucide):** Loại bỏ emoji ở UI controls để giữ tính chuyên nghiệp tối đa.
+**Các điểm chuẩn hóa ở bản v2.2:**
+- **Navbar Menu hiển thị trực tiếp 6 module thực tế của project:**
+  1. *Phân tích CV* (`cv-analysis` & `cv-optimization`)
+  2. *Tìm việc & So khớp* (`job-search` & `job-matching`)
+  3. *Phỏng vấn AI* (`interview`)
+  4. *Lộ trình kỹ năng* (`learning`)
+  5. *Quản lý ứng tuyển* (`applications`)
+  6. *Bảng giá* (`pricing`)
+- **Bỏ hoàn toàn nhãn `System Online` / `AI Engine Online`** để giao diện tối giản, thanh thoát và tự nhiên.
+- **Section 6 mở rộng thành 6 Feature Cards** bao hàm đầy đủ toàn bộ hệ sinh thái tính năng đã xây dựng trong `fe/features/`.
 
 ---
 
