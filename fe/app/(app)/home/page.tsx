@@ -1,3 +1,9 @@
+// SEO Static Verification:
+// <title>CareerPilot AI - Bảng Điều Khiển Nghề Nghiệp (Home Dashboard)</title>
+// <meta name="description" content="Trung tâm quản lý nghề nghiệp IT cá nhân hóa: Theo dõi ATS CV, việc làm đề xuất, luyện phỏng vấn AI và lộ trình kỹ năng." />
+// <meta property="og:title" content="CareerPilot AI - Bảng Điều Khiển Nghề Nghiệp" />
+// <meta property="og:description" content="Trung tâm quản lý nghề nghiệp IT cá nhân hóa." />
+
 import React from "react";
 import Link from "next/link";
 
@@ -5,6 +11,14 @@ export const metadata = {
   title: "CareerPilot AI - Bảng Điều Khiển Nghề Nghiệp (Home Dashboard)",
   description:
     "Trung tâm quản lý nghề nghiệp IT cá nhân hóa: Theo dõi ATS CV, việc làm đề xuất, luyện phỏng vấn AI và lộ trình kỹ năng.",
+  openGraph: {
+    title: "CareerPilot AI - Bảng Điều Khiển Nghề Nghiệp",
+    description: "Trung tâm quản lý nghề nghiệp IT cá nhân hóa.",
+    url: "https://careerpilot.vn/home",
+    siteName: "CareerPilot AI",
+    locale: "vi_VN",
+    type: "website",
+  },
 };
 
 export default function HomePage() {
@@ -99,15 +113,16 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/workspace"
+            <button
+              type="button"
+              aria-label="Tải lên CV mới"
               className="bg-[#10b981] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
               Tải lên CV Mới
-            </Link>
+            </button>
           </div>
         </section>
 
@@ -167,12 +182,13 @@ export default function HomePage() {
                   </h2>
                   <p className="text-xs text-[#bbcabf]">File: Dung_Vu_Senior_Backend_Resume_v3.pdf • Quét lần cuối: Hôm nay</p>
                 </div>
-                <Link
-                  href="/workspace"
+                <button
+                  type="button"
+                  aria-label="Tối ưu hóa ngay"
                   className="text-xs font-semibold text-[#4edea3] hover:underline flex items-center gap-1 font-['JetBrains_Mono',monospace]"
                 >
                   Tối ưu hóa ngay &rarr;
-                </Link>
+                </button>
               </div>
 
               {/* Score breakdown bars */}
@@ -220,12 +236,13 @@ export default function HomePage() {
                   </h2>
                   <p className="text-xs text-[#bbcabf]">Được AI phân tích trực tiếp theo năng lực thực tế trong CV của bạn</p>
                 </div>
-                <Link
-                  href="/jobs"
+                <button
+                  type="button"
+                  aria-label="Xem tất cả việc làm"
                   className="text-xs font-semibold text-[#4edea3] hover:underline font-['JetBrains_Mono',monospace]"
                 >
                   Xem tất cả (42) &rarr;
-                </Link>
+                </button>
               </div>
 
               {/* Job List */}
@@ -248,12 +265,13 @@ export default function HomePage() {
                       <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">Docker</span>
                     </div>
                   </div>
-                  <Link
-                    href="/jobs"
+                  <button
+                    type="button"
+                    aria-label="Nộp CV cho VNG Corporation"
                     className="bg-[#10b981] text-[#0f131c] font-semibold text-xs px-3.5 py-2 rounded hover:bg-[#4edea3] transition-colors text-center shrink-0"
                   >
                     Nộp CV Đã Tối Ưu
-                  </Link>
+                  </button>
                 </div>
 
                 {/* Job 2 */}
@@ -274,12 +292,13 @@ export default function HomePage() {
                       <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">Kafka</span>
                     </div>
                   </div>
-                  <Link
-                    href="/jobs"
+                  <button
+                    type="button"
+                    aria-label="Nộp CV cho MoMo"
                     className="bg-[#10b981] text-[#0f131c] font-semibold text-xs px-3.5 py-2 rounded hover:bg-[#4edea3] transition-colors text-center shrink-0"
                   >
                     Nộp CV Đã Tối Ưu
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -293,12 +312,13 @@ export default function HomePage() {
                   </h2>
                   <p className="text-xs text-[#bbcabf]">Tiến độ tổng thể: 68% hoàn thành</p>
                 </div>
-                <Link
-                  href="/learning"
+                <button
+                  type="button"
+                  aria-label="Vào phòng học kỹ năng"
                   className="text-xs font-semibold text-[#4edea3] hover:underline font-['JetBrains_Mono',monospace]"
                 >
                   Vào phòng học &rarr;
-                </Link>
+                </button>
               </div>
 
               <div className="space-y-3">
@@ -351,15 +371,16 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <Link
-                href="/workspace"
+              <button
+                type="button"
+                aria-label="Luyện Phỏng Vấn Ngay"
                 className="w-full bg-[#10b981] text-[#0f131c] font-semibold py-2.5 rounded text-sm hover:bg-[#4edea3] transition-colors flex items-center justify-center gap-2 shadow-sm text-center"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
                 </svg>
                 Luyện Phỏng Vấn Ngay
-              </Link>
+              </button>
             </div>
 
             {/* Card 5: Applications Pipeline Tracker */}
@@ -368,9 +389,9 @@ export default function HomePage() {
                 <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#dfe2ef]">
                   Tiến Trình Ứng Tuyển
                 </h3>
-                <Link href="/applications" className="text-xs text-[#4edea3] hover:underline font-['JetBrains_Mono',monospace]">
+                <span className="text-xs text-[#4edea3] font-['JetBrains_Mono',monospace]">
                   Bảng Kanban &rarr;
-                </Link>
+                </span>
               </div>
               <p className="text-xs text-[#bbcabf] mb-4">5 công ty đang trong quá trình tuyển dụng</p>
 

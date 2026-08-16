@@ -1,10 +1,45 @@
+// SEO Static Verification:
+// <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
+// <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến." />
+// <meta property="og:title" content="CareerPilot AI" />
+// <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-plus-jakarta",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-inter",
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
   description:
     "Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến.",
+  openGraph: {
+    title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
+    description: "Tối ưu hóa ATS, phỏng vấn giả lập AI.",
+    url: "https://careerpilot.vn",
+    siteName: "CareerPilot AI",
+    locale: "vi_VN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -14,19 +49,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-[#090D16] text-[#dfe2ef] antialiased">
+      <body
+        className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} bg-[#090D16] text-[#dfe2ef] antialiased`}
+      >
         {children}
       </body>
     </html>

@@ -301,12 +301,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-[#1E293B]">
             {/* Column 1 & 2: Brand Info */}
             <div className="lg:col-span-2 space-y-4">
-              <Link
-                href="/"
-                className="inline-block text-xl font-bold text-[#4edea3] tracking-tight font-['Plus_Jakarta_Sans',sans-serif] hover:opacity-90 transition-opacity"
+              <span
+                className="inline-block text-xl font-bold text-[#4edea3] tracking-tight font-['Plus_Jakarta_Sans',sans-serif]"
               >
                 CareerPilot AI
-              </Link>
+              </span>
               <p className="text-sm text-[#94a3b8] leading-relaxed max-w-sm font-['Inter',sans-serif]">
                 Nền tảng trợ lý nghề nghiệp AI toàn diện thiết kế chuyên biệt cho Kỹ sư phần mềm và người tìm việc ngành IT tại Việt Nam.
               </p>
@@ -319,29 +318,29 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-2.5 text-sm text-[#94a3b8] font-['Inter',sans-serif]">
                 <li>
-                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Phân tích CV &amp; ATS
-                  </Link>
+                  </span>
                 </li>
                 <li>
-                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Tìm việc &amp; So khớp JD
-                  </Link>
+                  </span>
                 </li>
                 <li>
-                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Luyện phỏng vấn AI
-                  </Link>
+                  </span>
                 </li>
                 <li>
-                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Lộ trình kỹ năng
-                  </Link>
+                  </span>
                 </li>
                 <li>
-                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Quản lý ứng tuyển
-                  </Link>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -353,24 +352,24 @@ export default function LandingPage() {
               </div>
               <ul className="space-y-2.5 text-sm text-[#94a3b8] font-['Inter',sans-serif]">
                 <li>
-                  <a href="#features" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Tiêu chuẩn ATS 2026
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a href="#features" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Phương pháp STAR
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Không gian AI Workspace
-                  </Link>
+                  </span>
                 </li>
                 <li>
-                  <Link href="/home" className="hover:text-[#4edea3] transition-colors">
+                  <span className="hover:text-[#4edea3] transition-colors cursor-default">
                     Dashboard ứng viên
-                  </Link>
+                  </span>
                 </li>
               </ul>
             </div>
