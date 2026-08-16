@@ -81,7 +81,7 @@ export default function WorkspacePage() {
           "Bổ sung từ khóa công nghệ chính xác (FastAPI, PostgreSQL, microservices) và đưa số liệu đo lường định lượng (giảm 35% latency, 10,000+ RPS) theo chuẩn ATS 2026.",
       },
       actionChips: [
-        "Áp dụng câu này vào Studio bên phải",
+        "Áp dụng câu này vào CV đã tối ưu",
         "Bổ sung kỹ năng Kubernetes còn thiếu",
         "Tạo 3 câu hỏi phỏng vấn cho dự án này",
         "Tải xuống bản PDF tối ưu",
@@ -108,8 +108,8 @@ export default function WorkspacePage() {
         agentName: "CareerPilot ATS Specialist",
         agentRole: "Chuyên gia Tối ưu Hồ sơ & ATS",
         timestamp: "Vừa xong",
-        content: `Tôi đã cập nhật phân tích theo yêu cầu: "${inputPrompt}". Phiên bản CV trong Studio bên phải đã được đồng bộ các từ khóa mới nhất.`,
-        actionChips: ["Xem bản CV mới trong Studio", "Tối ưu hóa tiếp"],
+        content: `Tôi đã cập nhật phân tích theo yêu cầu: "${inputPrompt}". Phiên bản CV đã tối ưu bên phải đã được đồng bộ các từ khóa mới nhất.`,
+        actionChips: ["Xem bản CV đã tối ưu", "Tối ưu hóa tiếp"],
       };
       setMessages((prev) => [...prev, aiReply]);
     }, 600);
@@ -165,7 +165,7 @@ export default function WorkspacePage() {
               : "border-transparent text-[#94a3b8]"
           }`}
         >
-          <span>📑 Studio (94%)</span>
+          <span>📑 CV đã tối ưu (94%)</span>
         </button>
       </div>
 
@@ -506,7 +506,7 @@ export default function WorkspacePage() {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
               <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-xs font-bold uppercase tracking-wider text-[#f8fafc]">
-                Studio &amp; Bản CV Đã Tối Ưu
+                CV Đã Tối Ưu
               </h2>
             </div>
 
