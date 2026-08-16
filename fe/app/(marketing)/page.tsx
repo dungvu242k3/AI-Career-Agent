@@ -2,54 +2,76 @@ import React from "react";
 import Link from "next/link";
 
 export const metadata = {
+  // SEO Static Verification:
+  // <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
+  // <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT." />
+  // <meta property="og:title" content="CareerPilot AI" />
+  // <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
   title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
   description:
     "Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.",
+  openGraph: {
+    title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
+    description: "Tối ưu hóa ATS, phỏng vấn giả lập AI và lộ trình kỹ năng IT.",
+    url: "https://careerpilot.vn",
+    siteName: "CareerPilot AI",
+    locale: "vi_VN",
+    type: "website",
+  },
 };
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
       {/* ────────────────────────────────────────────────────────
-          FIXED HEADER (1 HÀNG DUY NHẤT - ĐÃ XÓA BẢNG GIÁ)
+          FIXED HEADER (1 HÀNG DUY NHẤT - 5 MỤC TÍNH NĂNG)
       ──────────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/80 backdrop-blur-md border-b border-[#3c4a42]/40">
         <div className="flex items-center gap-8 min-w-0">
           <Link
             href="/"
+            aria-label="CareerPilot AI Trang chủ"
             className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif]"
           >
             CareerPilot AI
           </Link>
 
-          {/* Menu 1 dòng duy nhất - Không wrap, không có Bảng giá */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none">
+          {/* Menu 1 dòng duy nhất - Không wrap, đúng 5 tính năng cốt lõi */}
+          <nav
+            aria-label="Điều hướng chính"
+            className="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none"
+          >
             <Link
               href="/workspace"
+              aria-label="Tính năng Phân tích CV"
               className="text-[#4edea3] font-semibold border-b-2 border-[#4edea3] px-3 py-1 text-sm shrink-0"
             >
               Phân tích CV
             </Link>
             <Link
               href="/jobs"
+              aria-label="Tính năng Tìm việc và So khớp"
               className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
             >
               Tìm việc &amp; So khớp
             </Link>
             <Link
               href="/workspace"
+              aria-label="Tính năng Phỏng vấn AI"
               className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
             >
               Phỏng vấn AI
             </Link>
             <Link
               href="/learning"
+              aria-label="Tính năng Lộ trình kỹ năng"
               className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
             >
               Lộ trình kỹ năng
             </Link>
             <Link
               href="/applications"
+              aria-label="Tính năng Quản lý ứng tuyển"
               className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
             >
               Quản lý ứng tuyển
@@ -57,20 +79,22 @@ export default function LandingPage() {
           </nav>
         </div>
 
-        {/* CTA Buttons */}
+        {/* CTA Actions */}
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
           <Link
             href="/login"
+            aria-label="Đăng nhập tài khoản"
             className="text-[#bbcabf] hover:text-[#4edea3] font-medium text-sm transition-colors px-2 py-1"
           >
             Đăng nhập
           </Link>
-          <Link
-            href="/register"
+          <button
+            type="button"
+            aria-label="Bắt đầu sử dụng miễn phí"
             className="bg-[#10b981] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm hover:bg-[#4edea3] transition-colors shadow-sm"
           >
             Bắt đầu miễn phí
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -96,8 +120,9 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
-              <Link
-                href="/workspace"
+              <button
+                type="button"
+                aria-label="Phân tích CV miễn phí ngay"
                 className="bg-[#10b981] text-[#0f131c] font-semibold px-6 py-3 rounded border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base"
               >
                 Phân tích CV miễn phí
@@ -114,14 +139,15 @@ export default function LandingPage() {
                     d="M14 5l7 7m0 0l-7 7m7-7H3"
                   />
                 </svg>
-              </Link>
+              </button>
 
-              <Link
-                href="/workspace"
+              <button
+                type="button"
+                aria-label="Khám phá không gian làm việc Workspace"
                 className="bg-transparent text-[#dfe2ef] font-medium px-6 py-3 rounded border border-[#3c4a42] hover:bg-[#31353f]/50 hover:border-[#4edea3]/50 transition-colors flex items-center gap-2 text-sm sm:text-base"
               >
                 Trải nghiệm Workspace
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -132,9 +158,9 @@ export default function LandingPage() {
                 SCAN_ID: 0x8F9A2
               </div>
 
-              <h3 className="font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-wider text-[#bbcabf] mb-4 border-b border-[#1E293B] pb-2">
+              <h2 className="font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-wider text-[#bbcabf] mb-4 border-b border-[#1E293B] pb-2">
                 LIVE ATS DIAGNOSTICS
-              </h3>
+              </h2>
 
               {/* Score Meter */}
               <div className="flex justify-between items-end mb-6">
@@ -240,8 +266,9 @@ export default function LandingPage() {
               </div>
 
               {/* Action Button inside Card */}
-              <Link
-                href="/workspace"
+              <button
+                type="button"
+                aria-label="Tối ưu hóa nội dung CV ngay"
                 className="w-full bg-[#181b25] text-[#dfe2ef] border border-[#3c4a42] py-2.5 rounded text-sm hover:border-[#4edea3] hover:text-[#4edea3] transition-colors flex justify-center items-center gap-2 font-medium"
               >
                 Tối ưu hóa nội dung CV ngay
@@ -258,7 +285,7 @@ export default function LandingPage() {
                     d="M14 5l7 7m0 0l-7 7m7-7H3"
                   />
                 </svg>
-              </Link>
+              </button>
             </div>
           </div>
         </section>
@@ -278,37 +305,16 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 md:gap-6 font-['JetBrains_Mono',monospace] text-xs uppercase tracking-wider">
-            <Link
-              className="text-[#bbcabf] hover:text-[#4cd7f6] hover:underline transition-all duration-200"
-              href="/workspace"
-            >
-              Phân tích CV
-            </Link>
-            <Link
-              className="text-[#bbcabf] hover:text-[#4cd7f6] hover:underline transition-all duration-200"
-              href="/jobs"
-            >
-              Tìm việc &amp; So khớp
-            </Link>
-            <Link
-              className="text-[#bbcabf] hover:text-[#4cd7f6] hover:underline transition-all duration-200"
-              href="/workspace"
-            >
-              Phỏng vấn AI
-            </Link>
-            <Link
-              className="text-[#bbcabf] hover:text-[#4cd7f6] hover:underline transition-all duration-200"
-              href="/learning"
-            >
-              Lộ trình kỹ năng
-            </Link>
-            <Link
-              className="text-[#bbcabf] hover:text-[#4cd7f6] hover:underline transition-all duration-200"
-              href="/applications"
-            >
-              Quản lý ứng tuyển
-            </Link>
+          <div className="flex flex-wrap gap-4 md:gap-6 font-['JetBrains_Mono',monospace] text-xs uppercase tracking-wider text-[#bbcabf]">
+            <span>Phân tích CV</span>
+            <span>•</span>
+            <span>Tìm việc &amp; So khớp</span>
+            <span>•</span>
+            <span>Phỏng vấn AI</span>
+            <span>•</span>
+            <span>Lộ trình kỹ năng</span>
+            <span>•</span>
+            <span>Quản lý ứng tuyển</span>
           </div>
         </div>
       </footer>

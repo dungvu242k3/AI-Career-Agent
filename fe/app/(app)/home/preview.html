@@ -4,6 +4,15 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
+    <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao."/>
+    
+    <!-- Open Graph / SEO Meta Tags -->
+    <meta property="og:title" content="CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện"/>
+    <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI và lộ trình kỹ năng IT."/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:locale" content="vi_VN"/>
+    <meta property="og:url" content="https://careerpilot.vn"/>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -109,19 +118,19 @@
 <!-- Header (1 HÀNG DUY NHẤT - ĐÃ XÓA BẢNG GIÁ) -->
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 bg-background/80 backdrop-blur-md border-b border-outline-variant/40">
     <div class="flex items-center gap-8 min-w-0">
-        <div class="text-headline-md font-display-lg text-primary tracking-tighter shrink-0 cursor-pointer">CareerPilot AI</div>
+        <a href="/" aria-label="CareerPilot AI Trang chủ" class="text-headline-md font-display-lg text-primary tracking-tighter shrink-0 cursor-pointer">CareerPilot AI</a>
         <!-- Menu 1 dòng duy nhất - Không wrap, không có Bảng giá -->
-        <nav class="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none">
-            <a class="text-primary font-semibold border-b-2 border-primary px-3 py-1 text-sm shrink-0" href="#">Phân tích CV</a>
-            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Tìm việc &amp; So khớp</a>
-            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Phỏng vấn AI</a>
-            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Lộ trình kỹ năng</a>
-            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Quản lý ứng tuyển</a>
+        <nav aria-label="Điều hướng chính" class="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none">
+            <a aria-label="Phân tích CV" class="text-primary font-semibold border-b-2 border-primary px-3 py-1 text-sm shrink-0" href="/workspace">Phân tích CV</a>
+            <a aria-label="Tìm việc và So khớp" class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="/jobs">Tìm việc &amp; So khớp</a>
+            <a aria-label="Phỏng vấn AI" class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="/workspace">Phỏng vấn AI</a>
+            <a aria-label="Lộ trình kỹ năng" class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="/learning">Lộ trình kỹ năng</a>
+            <a aria-label="Quản lý ứng tuyển" class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="/applications">Quản lý ứng tuyển</a>
         </nav>
     </div>
     <div class="flex items-center gap-3 md:gap-4 shrink-0">
-        <button class="text-on-surface-variant hover:text-primary font-medium text-sm transition-colors px-2 py-1">Đăng nhập</button>
-        <button class="bg-primary-container text-background font-medium px-4 py-2 rounded text-sm hover:bg-primary transition-colors shadow-sm">Bắt đầu miễn phí</button>
+        <a href="/login" aria-label="Đăng nhập tài khoản" class="text-on-surface-variant hover:text-primary font-medium text-sm transition-colors px-2 py-1">Đăng nhập</a>
+        <button type="button" aria-label="Bắt đầu sử dụng miễn phí" class="bg-primary-container text-background font-medium px-4 py-2 rounded text-sm hover:bg-primary transition-colors shadow-sm">Bắt đầu miễn phí</button>
     </div>
 </header>
 
@@ -138,10 +147,10 @@
                 Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.
             </p>
             <div class="flex flex-wrap items-center gap-4 pt-4">
-                <button class="bg-primary-container text-background font-medium px-6 py-3 rounded border border-primary-container hover:bg-primary transition-colors flex items-center gap-2 shadow-sm">
+                <button type="button" aria-label="Phân tích CV miễn phí ngay" class="bg-primary-container text-background font-medium px-6 py-3 rounded border border-primary-container hover:bg-primary transition-colors flex items-center gap-2 shadow-sm">
                     Phân tích CV miễn phí <span class="material-symbols-outlined text-sm">arrow_forward</span>
                 </button>
-                <button class="bg-transparent text-on-surface font-medium px-6 py-3 rounded border border-outline-variant hover:bg-surface-variant/50 hover:border-primary/50 transition-colors flex items-center gap-2">
+                <button type="button" aria-label="Trải nghiệm Workspace" class="bg-transparent text-on-surface font-medium px-6 py-3 rounded border border-outline-variant hover:bg-surface-variant/50 hover:border-primary/50 transition-colors flex items-center gap-2">
                     Trải nghiệm Workspace
                 </button>
             </div>
@@ -151,7 +160,7 @@
         <div class="flex-1 w-full max-w-md">
             <div class="bg-[#111827] tech-border rounded-lg p-6 relative shadow-2xl">
                 <div class="absolute top-0 right-0 p-4 font-label-mono text-primary text-xs opacity-60">SCAN_ID: 0x8F9A2</div>
-                <h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 border-b border-outline-variant pb-2">LIVE ATS DIAGNOSTICS</h3>
+                <h2 class="font-label-caps text-label-caps text-on-surface-variant mb-4 border-b border-outline-variant pb-2">LIVE ATS DIAGNOSTICS</h2>
                 
                 <div class="flex justify-between items-end mb-6">
                     <div>
@@ -195,7 +204,7 @@
                     </div>
                 </div>
 
-                <button class="w-full bg-surface-container-low text-on-surface border border-outline-variant py-2.5 rounded text-sm hover:border-primary hover:text-primary transition-colors flex justify-center items-center gap-2 font-medium">
+                <button type="button" aria-label="Tối ưu hóa nội dung CV ngay" class="w-full bg-surface-container-low text-on-surface border border-outline-variant py-2.5 rounded text-sm hover:border-primary hover:text-primary transition-colors flex justify-center items-center gap-2 font-medium">
                     Tối ưu hóa nội dung CV ngay <span class="material-symbols-outlined text-sm">arrow_forward</span>
                 </button>
             </div>
@@ -210,12 +219,16 @@
             <div class="font-display-lg text-headline-md text-primary mb-2">CareerPilot AI</div>
             <div class="text-on-surface-variant text-body-sm font-body-sm">© 2026 CareerPilot AI. Kỹ thuật chính xác từ Việt Nam.</div>
         </div>
-        <div class="flex flex-wrap gap-4 md:gap-6 font-label-caps text-label-caps">
-            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Phân tích CV</a>
-            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Tìm việc &amp; So khớp</a>
-            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Phỏng vấn AI</a>
-            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Lộ trình kỹ năng</a>
-            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Quản lý ứng tuyển</a>
+        <div class="flex flex-wrap gap-4 md:gap-6 font-label-caps text-label-caps text-on-surface-variant">
+            <span>Phân tích CV</span>
+            <span>•</span>
+            <span>Tìm việc &amp; So khớp</span>
+            <span>•</span>
+            <span>Phỏng vấn AI</span>
+            <span>•</span>
+            <span>Lộ trình kỹ năng</span>
+            <span>•</span>
+            <span>Quản lý ứng tuyển</span>
         </div>
     </div>
 </footer>
