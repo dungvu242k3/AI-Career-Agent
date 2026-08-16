@@ -119,36 +119,19 @@ export default function WorkspacePage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif] flex flex-col relative overflow-x-hidden">
       {/* ────────────────────────────────────────────────────────────
-          1. TOP BAR ĐIỀU KHIỂN CHÍNH (Fixed Workspace Header)
+          1. WORKSPACE SUB-TOOLBAR (Nằm ngay dưới Navbar cố định)
       ──────────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 w-full z-40 flex items-center justify-between px-4 sm:px-6 h-14 bg-[#0f131c]/95 backdrop-blur-md border-b border-[#1E293B]">
-        {/* Left Side: Logo & Back */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href="/"
-            aria-label="Quay lại Trang chủ"
-            className="flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-[#4edea3] transition-colors font-medium px-2 py-1.5 rounded bg-[#181b25] border border-[#1E293B]"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="hidden sm:inline">Trang chủ</span>
-          </Link>
-
-          <div className="h-4 w-px bg-[#1E293B] hidden sm:block"></div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[#4edea3] tracking-tight font-['Plus_Jakarta_Sans',sans-serif]">
-              CareerPilot
-            </span>
-            <span className="text-xs bg-[#181b25] text-[#94a3b8] border border-[#1E293B] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">
-              Workspace v2.2
-            </span>
-          </div>
+      <div className="sticky top-16 z-30 flex items-center justify-between px-4 sm:px-6 h-12 bg-[#090D16]/95 backdrop-blur-md border-b border-[#1E293B]">
+        {/* Left Side: Session Title */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#94a3b8] hidden sm:inline">Hồ sơ:</span>
+          <span className="text-xs font-semibold text-[#dfe2ef] font-['JetBrains_Mono',monospace] bg-[#181b25] px-2 py-0.5 rounded border border-[#1E293B]">
+            Dung_Vu_Senior_Backend_Resume_v3.pdf
+          </span>
         </div>
 
-        {/* Center: Mode Switcher (Phân tích CV | Phỏng vấn | Lộ trình) */}
-        <div className="hidden md:flex items-center bg-[#181b25] p-1 rounded-lg border border-[#1E293B]">
+        {/* Center: Mode Switcher */}
+        <div className="hidden md:flex items-center bg-[#181b25] p-0.5 rounded-lg border border-[#1E293B]">
           <button
             type="button"
             onClick={() => setActiveMode("cv-optimize")}
@@ -220,7 +203,7 @@ export default function WorkspacePage() {
             </kbd>
           </button>
         </div>
-      </header>
+      </div>
 
       {/* ────────────────────────────────────────────────────────────
           2. KHUNG TRUNG TÂM (Zen Focus Multi-Agent Chat)
