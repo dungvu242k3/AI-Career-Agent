@@ -116,39 +116,9 @@ export default function WorkspacePage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif] flex flex-col pt-16">
       {/* ────────────────────────────────────────────────────────────
-          TOP STATUS BAR (WORKSPACE HEADER)
-      ──────────────────────────────────────────────────────────── */}
-      <div className="h-12 border-b border-[#1E293B] bg-[#0c101b] px-4 sm:px-8 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs text-[#94a3b8]">
-            <span className="font-medium text-[#f8fafc]">Nguyễn Văn A</span>
-            <span>/</span>
-            <span className="text-[#4edea3] font-semibold">Senior AI &amp; Backend Systems</span>
-          </div>
-          <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#10b981]/10 border border-[#10b981]/30 text-[#4edea3] text-[11px] font-['JetBrains_Mono',monospace]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
-            ATS MATCH: 96%
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveRightTab("studio");
-              setActiveVersion("v2");
-            }}
-            className="inline-flex items-center gap-1.5 bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm font-['Plus_Jakarta_Sans',sans-serif]"
-          >
-            Tải PDF Đã Tối Ưu (95%)
-          </button>
-        </div>
-      </div>
-
-      {/* ────────────────────────────────────────────────────────────
           UNIFIED 3-COLUMN STUDIO LAYOUT
       ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-7rem)] overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-4rem)] overflow-hidden">
         
         {/* ════════════════════════════════════════════════════════════
             CỘT 1 (3/12 Col ~ 25%): MY CV & PROFILE
