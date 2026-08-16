@@ -27,7 +27,8 @@ export default function LandingPage() {
           FIXED HEADER (1 HÀNG DUY NHẤT - 5 MỤC TÍNH NĂNG)
       ──────────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/80 backdrop-blur-md border-b border-[#3c4a42]/40">
-        <div className="flex items-center gap-8 min-w-0">
+        {/* Logo */}
+        <div className="flex items-center shrink-0">
           <Link
             href="/"
             aria-label="CareerPilot AI Trang chủ"
@@ -35,49 +36,49 @@ export default function LandingPage() {
           >
             CareerPilot AI
           </Link>
-
-          {/* Menu 1 dòng duy nhất - Không wrap, đúng 5 tính năng cốt lõi */}
-          <nav
-            aria-label="Điều hướng chính"
-            className="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none"
-          >
-            <Link
-              href="/workspace"
-              aria-label="Tính năng Phân tích CV"
-              className="text-[#4edea3] font-semibold border-b-2 border-[#4edea3] px-3 py-1 text-sm shrink-0"
-            >
-              Phân tích CV
-            </Link>
-            <Link
-              href="/jobs"
-              aria-label="Tính năng Tìm việc và So khớp"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Tìm việc &amp; So khớp
-            </Link>
-            <Link
-              href="/workspace"
-              aria-label="Tính năng Phỏng vấn AI"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Phỏng vấn AI
-            </Link>
-            <Link
-              href="/learning"
-              aria-label="Tính năng Lộ trình kỹ năng"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Lộ trình kỹ năng
-            </Link>
-            <Link
-              href="/applications"
-              aria-label="Tính năng Quản lý ứng tuyển"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Quản lý ứng tuyển
-            </Link>
-          </nav>
         </div>
+
+        {/* Menu 1 dòng ở chính giữa header */}
+        <nav
+          aria-label="Điều hướng chính"
+          className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
+        >
+          <Link
+            href="/workspace"
+            aria-label="Tính năng Phân tích CV"
+            className="text-[#4edea3] font-semibold border-b-2 border-[#4edea3] px-3 py-1 text-sm shrink-0"
+          >
+            Phân tích CV
+          </Link>
+          <Link
+            href="/jobs"
+            aria-label="Tính năng Tìm việc và So khớp"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Tìm việc &amp; So khớp
+          </Link>
+          <Link
+            href="/workspace"
+            aria-label="Tính năng Phỏng vấn AI"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Phỏng vấn AI
+          </Link>
+          <Link
+            href="/learning"
+            aria-label="Tính năng Lộ trình kỹ năng"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Lộ trình kỹ năng
+          </Link>
+          <Link
+            href="/applications"
+            aria-label="Tính năng Quản lý ứng tuyển"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Quản lý ứng tuyển
+          </Link>
+        </nav>
 
         {/* CTA Actions */}
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
@@ -106,16 +107,16 @@ export default function LandingPage() {
         <section className="max-w-[1200px] mx-auto px-6 md:px-12 flex flex-col lg:flex-row items-center gap-12 py-12 md:py-20">
           {/* Left Column: Value Proposition */}
           <div className="flex-1 space-y-6">
-            <div className="inline-flex items-center gap-2 border border-[#3c4a42] rounded-full px-3 py-1 bg-[#181b25] text-xs font-['JetBrains_Mono',monospace] text-[#4edea3] uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 border border-[#10b981]/30 rounded-full px-3.5 py-1.5 bg-[#181b25] text-xs font-semibold font-['Plus_Jakarta_Sans',sans-serif] text-[#4edea3] tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
               TRỢ LÝ NGHỀ NGHIỆP AI TOÀN DIỆN
             </div>
 
-            <h1 className="font-['Plus_Jakarta_Sans',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold text-[#dfe2ef] leading-[1.15] tracking-tight">
+            <h1 className="font-['Plus_Jakarta_Sans',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#f8fafc] leading-[1.18] tracking-tight">
               Từ CV chưa tối ưu đến Offer Letter — AI đồng hành cùng bạn.
             </h1>
 
-            <p className="text-[#bbcabf] text-base sm:text-lg leading-relaxed max-w-xl">
+            <p className="text-[#94a3b8] text-base sm:text-lg leading-relaxed max-w-xl font-['Inter',sans-serif]">
               Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.
             </p>
 
@@ -123,7 +124,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 aria-label="Phân tích CV miễn phí ngay"
-                className="bg-[#10b981] text-[#0f131c] font-semibold px-6 py-3 rounded border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base"
+                className="bg-[#10b981] text-[#090D16] font-semibold px-6 py-3 rounded-md border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base font-['Inter',sans-serif]"
               >
                 Phân tích CV miễn phí
                 <svg
@@ -144,7 +145,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 aria-label="Khám phá không gian làm việc Workspace"
-                className="bg-transparent text-[#dfe2ef] font-medium px-6 py-3 rounded border border-[#3c4a42] hover:bg-[#31353f]/50 hover:border-[#4edea3]/50 transition-colors flex items-center gap-2 text-sm sm:text-base"
+                className="bg-[#181b25] text-[#dfe2ef] font-medium px-6 py-3 rounded-md border border-[#1E293B] hover:bg-[#1f293d] hover:border-[#4edea3]/50 transition-colors flex items-center gap-2 text-sm sm:text-base font-['Inter',sans-serif]"
               >
                 Trải nghiệm Workspace
               </button>
@@ -154,21 +155,21 @@ export default function LandingPage() {
           {/* Right Column: Live ATS Diagnostics Instrument Card */}
           <div className="flex-1 w-full max-w-md">
             <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6 relative shadow-2xl">
-              <div className="absolute top-0 right-0 p-4 font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs opacity-60">
+              <div className="absolute top-0 right-0 p-4 font-['JetBrains_Mono',monospace] text-[#4edea3]/80 text-xs font-medium">
                 SCAN_ID: 0x8F9A2
               </div>
 
-              <h2 className="font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-wider text-[#bbcabf] mb-4 border-b border-[#1E293B] pb-2">
-                LIVE ATS DIAGNOSTICS
+              <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-xs font-bold uppercase tracking-wider text-[#94a3b8] mb-4 border-b border-[#1E293B] pb-2">
+                Live ATS Diagnostics
               </h2>
 
               {/* Score Meter */}
               <div className="flex justify-between items-end mb-6">
                 <div>
-                  <div className="text-sm text-[#bbcabf] mb-1">
+                  <div className="text-xs font-medium text-[#94a3b8] mb-1 font-['Inter',sans-serif]">
                     ATS Match Score
                   </div>
-                  <div className="font-['JetBrains_Mono',monospace] text-4xl text-[#4edea3] font-bold">
+                  <div className="font-['JetBrains_Mono',monospace] text-4xl text-[#4edea3] font-extrabold tracking-tight">
                     94%
                   </div>
                 </div>
@@ -214,52 +215,52 @@ export default function LandingPage() {
               {/* Skills Breakdown Bars */}
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-medium text-[#f8fafc]">
                     FastAPI
                   </span>
                   <div className="flex items-center gap-2">
                     <div className="w-24 h-1.5 bg-[#31353f] rounded-full overflow-hidden">
                       <div className="w-[95%] h-full bg-[#4edea3]"></div>
                     </div>
-                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs">
+                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs font-semibold">
                       95%
                     </span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center text-sm">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-medium text-[#f8fafc]">
                     PostgreSQL
                   </span>
                   <div className="flex items-center gap-2">
                     <div className="w-24 h-1.5 bg-[#31353f] rounded-full overflow-hidden">
                       <div className="w-[90%] h-full bg-[#4edea3]"></div>
                     </div>
-                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs">
+                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs font-semibold">
                       90%
                     </span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center text-sm">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-medium text-[#f8fafc]">
                     Docker
                   </span>
                   <div className="flex items-center gap-2">
                     <div className="w-24 h-1.5 bg-[#31353f] rounded-full overflow-hidden">
                       <div className="w-[88%] h-full bg-[#4edea3]"></div>
                     </div>
-                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs">
+                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs font-semibold">
                       88%
                     </span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-sm opacity-75">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-['Plus_Jakarta_Sans',sans-serif] font-medium text-[#94a3b8]">
                     Kubernetes
                   </span>
-                  <span className="text-[#ffb95f] text-xs border border-[#ffb95f]/30 px-1.5 py-0.5 rounded bg-[#ffb95f]/10 font-['JetBrains_Mono',monospace]">
+                  <span className="text-[#f59e0b] text-xs border border-[#f59e0b]/30 px-2 py-0.5 rounded bg-[#f59e0b]/10 font-medium font-['Inter',sans-serif]">
                     Thiếu kinh nghiệm
                   </span>
                 </div>
@@ -269,7 +270,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 aria-label="Tối ưu hóa nội dung CV ngay"
-                className="w-full bg-[#181b25] text-[#dfe2ef] border border-[#3c4a42] py-2.5 rounded text-sm hover:border-[#4edea3] hover:text-[#4edea3] transition-colors flex justify-center items-center gap-2 font-medium"
+                className="w-full bg-[#181b25] text-[#dfe2ef] border border-[#1E293B] hover:border-[#10b981] hover:text-[#4edea3] py-2.5 rounded-md text-sm transition-colors flex justify-center items-center gap-2 font-medium font-['Inter',sans-serif]"
               >
                 Tối ưu hóa nội dung CV ngay
                 <svg
@@ -292,29 +293,128 @@ export default function LandingPage() {
       </main>
 
       {/* ────────────────────────────────────────────────────────
-          FOOTER
+          FOOTER (BỐ CỤC ĐA CỘT & TYPOGRAPHY CHUẨN)
       ──────────────────────────────────────────────────────── */}
-      <footer className="w-full py-12 px-6 md:px-12 border-t border-[#3c4a42]/40 bg-[#0a0e17]">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-          <div>
-            <div className="font-['Plus_Jakarta_Sans',sans-serif] text-xl font-bold text-[#4edea3] mb-2">
-              CareerPilot AI
+      <footer className="w-full pt-16 pb-12 px-6 md:px-12 border-t border-[#1E293B] bg-[#070A10]">
+        <div className="max-w-[1200px] mx-auto">
+          {/* Main Footer Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-[#1E293B]">
+            {/* Column 1 & 2: Brand Info */}
+            <div className="lg:col-span-2 space-y-4">
+              <Link
+                href="/"
+                className="inline-block text-xl font-bold text-[#4edea3] tracking-tight font-['Plus_Jakarta_Sans',sans-serif] hover:opacity-90 transition-opacity"
+              >
+                CareerPilot AI
+              </Link>
+              <p className="text-sm text-[#94a3b8] leading-relaxed max-w-sm font-['Inter',sans-serif]">
+                Nền tảng trợ lý nghề nghiệp AI toàn diện thiết kế chuyên biệt cho Kỹ sư phần mềm và người tìm việc ngành IT tại Việt Nam.
+              </p>
             </div>
-            <div className="text-[#bbcabf] text-sm">
-              © 2026 CareerPilot AI. Kỹ thuật chính xác từ Việt Nam.
+
+            {/* Column 3: Tính năng cốt lõi */}
+            <div className="space-y-3">
+              <div className="text-xs font-semibold text-[#f8fafc] uppercase tracking-wider font-['JetBrains_Mono',monospace]">
+                Tính Năng
+              </div>
+              <ul className="space-y-2.5 text-sm text-[#94a3b8] font-['Inter',sans-serif]">
+                <li>
+                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                    Phân tích CV &amp; ATS
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                    Tìm việc &amp; So khớp JD
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                    Luyện phỏng vấn AI
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                    Lộ trình kỹ năng
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                    Quản lý ứng tuyển
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Tài nguyên */}
+            <div className="space-y-3">
+              <div className="text-xs font-semibold text-[#f8fafc] uppercase tracking-wider font-['JetBrains_Mono',monospace]">
+                Tài Nguyên
+              </div>
+              <ul className="space-y-2.5 text-sm text-[#94a3b8] font-['Inter',sans-serif]">
+                <li>
+                  <a href="#features" className="hover:text-[#4edea3] transition-colors">
+                    Tiêu chuẩn ATS 2026
+                  </a>
+                </li>
+                <li>
+                  <a href="#features" className="hover:text-[#4edea3] transition-colors">
+                    Phương pháp STAR
+                  </a>
+                </li>
+                <li>
+                  <Link href="/workspace" className="hover:text-[#4edea3] transition-colors">
+                    Không gian AI Workspace
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/home" className="hover:text-[#4edea3] transition-colors">
+                    Dashboard ứng viên
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 5: Thông tin */}
+            <div className="space-y-3">
+              <div className="text-xs font-semibold text-[#f8fafc] uppercase tracking-wider font-['JetBrains_Mono',monospace]">
+                Thông Tin
+              </div>
+              <ul className="space-y-2.5 text-sm text-[#94a3b8] font-['Inter',sans-serif]">
+                <li>
+                  <span className="text-[#94a3b8] hover:text-[#dfe2ef] transition-colors cursor-default">
+                    Bảo mật dữ liệu hồ sơ
+                  </span>
+                </li>
+                <li>
+                  <span className="text-[#94a3b8] hover:text-[#dfe2ef] transition-colors cursor-default">
+                    Điều khoản sử dụng
+                  </span>
+                </li>
+                <li>
+                  <span className="text-[#94a3b8] hover:text-[#dfe2ef] transition-colors cursor-default">
+                    Chính sách quyền riêng tư
+                  </span>
+                </li>
+                <li>
+                  <span className="text-[#64748b]">
+                    Đồ án Tốt nghiệp CNTT
+                  </span>
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 md:gap-6 font-['JetBrains_Mono',monospace] text-xs uppercase tracking-wider text-[#bbcabf]">
-            <span>Phân tích CV</span>
-            <span>•</span>
-            <span>Tìm việc &amp; So khớp</span>
-            <span>•</span>
-            <span>Phỏng vấn AI</span>
-            <span>•</span>
-            <span>Lộ trình kỹ năng</span>
-            <span>•</span>
-            <span>Quản lý ứng tuyển</span>
+          {/* Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-[#94a3b8] font-['Inter',sans-serif]">
+            <div>
+              © 2026 CareerPilot AI. Kỹ thuật chính xác từ Việt Nam.
+            </div>
+            <div className="flex items-center gap-4 font-['JetBrains_Mono',monospace] text-[#64748b]">
+              <span>Bảo mật TLS 1.3</span>
+              <span>•</span>
+              <span className="text-[#4edea3]">careerpilot.vn</span>
+            </div>
           </div>
         </div>
       </footer>

@@ -2,32 +2,20 @@ import React from "react";
 import Link from "next/link";
 
 export const metadata = {
-  // SEO Static Verification:
-  // <title>CareerPilot AI - Trang Chủ & Trợ lý Nghề nghiệp AI Toàn diện</title>
-  // <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT." />
-  // <meta property="og:title" content="CareerPilot AI" />
-  // <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
-  title: "CareerPilot AI - Trang Chủ & Trợ lý Nghề nghiệp AI Toàn diện",
+  title: "CareerPilot AI - Bảng Điều Khiển Nghề Nghiệp (Home Dashboard)",
   description:
-    "Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.",
-  openGraph: {
-    title: "CareerPilot AI - Trang Chủ & Trợ lý Nghề nghiệp AI Toàn diện",
-    description: "Tối ưu hóa ATS, phỏng vấn giả lập AI và lộ trình kỹ năng IT.",
-    url: "https://careerpilot.vn/home",
-    siteName: "CareerPilot AI",
-    locale: "vi_VN",
-    type: "website",
-  },
+    "Trung tâm quản lý nghề nghiệp IT cá nhân hóa: Theo dõi ATS CV, việc làm đề xuất, luyện phỏng vấn AI và lộ trình kỹ năng.",
 };
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
       {/* ────────────────────────────────────────────────────────
-          FIXED HEADER (1 HÀNG DUY NHẤT - 5 MỤC TÍNH NĂNG)
+          FIXED HEADER (DASHBOARD HEADER - 5 MỤC TÍNH NĂNG Ở GIỮA)
       ──────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/80 backdrop-blur-md border-b border-[#3c4a42]/40">
-        <div className="flex items-center gap-8 min-w-0">
+      <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/90 backdrop-blur-md border-b border-[#3c4a42]/40">
+        {/* Logo */}
+        <div className="flex items-center shrink-0">
           <Link
             href="/home"
             aria-label="CareerPilot AI Trang chủ"
@@ -35,286 +23,399 @@ export default function HomePage() {
           >
             CareerPilot AI
           </Link>
-
-          {/* Menu 1 dòng duy nhất - Không wrap, đúng 5 tính năng cốt lõi */}
-          <nav
-            aria-label="Điều hướng chính"
-            className="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none"
-          >
-            <Link
-              href="/workspace"
-              aria-label="Tính năng Phân tích CV"
-              className="text-[#4edea3] font-semibold border-b-2 border-[#4edea3] px-3 py-1 text-sm shrink-0"
-            >
-              Phân tích CV
-            </Link>
-            <Link
-              href="/jobs"
-              aria-label="Tính năng Tìm việc và So khớp"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Tìm việc &amp; So khớp
-            </Link>
-            <Link
-              href="/workspace"
-              aria-label="Tính năng Phỏng vấn AI"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Phỏng vấn AI
-            </Link>
-            <Link
-              href="/learning"
-              aria-label="Tính năng Lộ trình kỹ năng"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Lộ trình kỹ năng
-            </Link>
-            <Link
-              href="/applications"
-              aria-label="Tính năng Quản lý ứng tuyển"
-              className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
-            >
-              Quản lý ứng tuyển
-            </Link>
-          </nav>
         </div>
 
-        {/* CTA Actions */}
-        <div className="flex items-center gap-3 md:gap-4 shrink-0">
+        {/* Menu 5 tính năng cốt lõi ở chính giữa */}
+        <nav
+          aria-label="Điều hướng chính"
+          className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
+        >
           <Link
-            href="/login"
-            aria-label="Đăng nhập tài khoản"
-            className="text-[#bbcabf] hover:text-[#4edea3] font-medium text-sm transition-colors px-2 py-1"
+            href="/workspace"
+            aria-label="Tính năng Phân tích CV"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
           >
-            Đăng nhập
+            Phân tích CV
           </Link>
-          <button
-            type="button"
-            aria-label="Bắt đầu sử dụng miễn phí"
-            className="bg-[#10b981] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm hover:bg-[#4edea3] transition-colors shadow-sm"
+          <Link
+            href="/jobs"
+            aria-label="Tính năng Tìm việc và So khớp"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
           >
-            Bắt đầu miễn phí
-          </button>
+            Tìm việc &amp; So khớp
+          </Link>
+          <Link
+            href="/workspace"
+            aria-label="Tính năng Phỏng vấn AI"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Phỏng vấn AI
+          </Link>
+          <Link
+            href="/learning"
+            aria-label="Tính năng Lộ trình kỹ năng"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Lộ trình kỹ năng
+          </Link>
+          <Link
+            href="/applications"
+            aria-label="Tính năng Quản lý ứng tuyển"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+          >
+            Quản lý ứng tuyển
+          </Link>
+        </nav>
+
+        {/* User Profile Info */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden sm:flex flex-col text-right">
+            <span className="text-sm font-semibold text-[#dfe2ef]">Dũng Vũ</span>
+            <span className="text-xs text-[#4edea3] font-['JetBrains_Mono',monospace]">Senior Backend</span>
+          </div>
+          <div className="w-9 h-9 rounded-full bg-[#1e293b] border border-[#3c4a42] flex items-center justify-center text-[#4edea3] font-bold text-sm">
+            DV
+          </div>
         </div>
       </header>
 
       {/* ────────────────────────────────────────────────────────
-          MAIN CONTENT
+          MAIN DASHBOARD CONTENT
       ──────────────────────────────────────────────────────── */}
-      <main className="pt-24 pb-16">
-        {/* HERO SECTION */}
-        <section className="max-w-[1200px] mx-auto px-6 md:px-12 flex flex-col lg:flex-row items-center gap-12 py-12 md:py-20">
-          {/* Left Column: Value Proposition */}
-          <div className="flex-1 space-y-6">
-            <div className="inline-flex items-center gap-2 border border-[#3c4a42] rounded-full px-3 py-1 bg-[#181b25] text-xs font-['JetBrains_Mono',monospace] text-[#4edea3] uppercase tracking-wider">
+      <main className="pt-24 pb-16 max-w-[1280px] mx-auto px-6 md:px-12">
+        {/* Top Greeting & Status Banner */}
+        <section className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#3c4a42]/40 pb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 border border-[#3c4a42] rounded-full px-3 py-0.5 bg-[#181b25] text-xs font-['JetBrains_Mono',monospace] text-[#4edea3] mb-3">
               <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse"></span>
-              TRỢ LÝ NGHỀ NGHIỆP AI TOÀN DIỆN
+              TRẠNG THÁI: TÌM VIỆC TÍCH CỰC
             </div>
-
-            <h1 className="font-['Plus_Jakarta_Sans',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold text-[#dfe2ef] leading-[1.15] tracking-tight">
-              Từ CV chưa tối ưu đến Offer Letter — AI đồng hành cùng bạn.
+            <h1 className="font-['Plus_Jakarta_Sans',sans-serif] text-2xl sm:text-3xl font-bold text-[#dfe2ef] tracking-tight">
+              Trung tâm Điều khiển Nghề nghiệp
             </h1>
-
-            <p className="text-[#bbcabf] text-base sm:text-lg leading-relaxed max-w-xl">
-              Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.
+            <p className="text-sm text-[#bbcabf] mt-1">
+              Mục tiêu hiện tại: <span className="text-[#dfe2ef] font-medium">Senior Backend Engineer / Tech Lead</span> • TP. Hồ Chí Minh &amp; Remote
             </p>
-
-            <div className="flex flex-wrap items-center gap-4 pt-4">
-              <button
-                type="button"
-                aria-label="Phân tích CV miễn phí ngay"
-                className="bg-[#10b981] text-[#0f131c] font-semibold px-6 py-3 rounded border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base"
-              >
-                Phân tích CV miễn phí
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </button>
-
-              <button
-                type="button"
-                aria-label="Khám phá không gian làm việc Workspace"
-                className="bg-transparent text-[#dfe2ef] font-medium px-6 py-3 rounded border border-[#3c4a42] hover:bg-[#31353f]/50 hover:border-[#4edea3]/50 transition-colors flex items-center gap-2 text-sm sm:text-base"
-              >
-                Trải nghiệm Workspace
-              </button>
-            </div>
           </div>
 
-          {/* Right Column: Live ATS Diagnostics Instrument Card */}
-          <div className="flex-1 w-full max-w-md">
-            <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6 relative shadow-2xl">
-              <div className="absolute top-0 right-0 p-4 font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs opacity-60">
-                SCAN_ID: 0x8F9A2
-              </div>
-
-              <h2 className="font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-wider text-[#bbcabf] mb-4 border-b border-[#1E293B] pb-2">
-                LIVE ATS DIAGNOSTICS
-              </h2>
-
-              {/* Score Meter */}
-              <div className="flex justify-between items-end mb-6">
-                <div>
-                  <div className="text-sm text-[#bbcabf] mb-1">
-                    ATS Match Score
-                  </div>
-                  <div className="font-['JetBrains_Mono',monospace] text-4xl text-[#4edea3] font-bold">
-                    94%
-                  </div>
-                </div>
-
-                <div className="w-16 h-16 rounded-full border-4 border-[#31353f] flex items-center justify-center relative">
-                  <svg
-                    className="absolute inset-0 w-full h-full -rotate-90"
-                    viewBox="0 0 36 36"
-                  >
-                    <path
-                      className="text-[#31353f]"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeDasharray="100, 100"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="text-[#4edea3]"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeDasharray="94, 100"
-                      strokeWidth="4"
-                    />
-                  </svg>
-                  <svg
-                    className="w-6 h-6 text-[#4edea3]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Skills Breakdown Bars */}
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
-                    FastAPI
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-[#31353f] rounded-full overflow-hidden">
-                      <div className="w-[95%] h-full bg-[#4edea3]"></div>
-                    </div>
-                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs">
-                      95%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
-                    PostgreSQL
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-[#31353f] rounded-full overflow-hidden">
-                      <div className="w-[90%] h-full bg-[#4edea3]"></div>
-                    </div>
-                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs">
-                      90%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
-                    Docker
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-[#31353f] rounded-full overflow-hidden">
-                      <div className="w-[88%] h-full bg-[#4edea3]"></div>
-                    </div>
-                    <span className="font-['JetBrains_Mono',monospace] text-[#4edea3] text-xs">
-                      88%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center text-sm opacity-75">
-                  <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef]">
-                    Kubernetes
-                  </span>
-                  <span className="text-[#ffb95f] text-xs border border-[#ffb95f]/30 px-1.5 py-0.5 rounded bg-[#ffb95f]/10 font-['JetBrains_Mono',monospace]">
-                    Thiếu kinh nghiệm
-                  </span>
-                </div>
-              </div>
-
-              {/* Action Button inside Card */}
-              <button
-                type="button"
-                aria-label="Tối ưu hóa nội dung CV ngay"
-                className="w-full bg-[#181b25] text-[#dfe2ef] border border-[#3c4a42] py-2.5 rounded text-sm hover:border-[#4edea3] hover:text-[#4edea3] transition-colors flex justify-center items-center gap-2 font-medium"
-              >
-                Tối ưu hóa nội dung CV ngay
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </button>
-            </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/workspace"
+              className="bg-[#10b981] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Tải lên CV Mới
+            </Link>
           </div>
         </section>
+
+        {/* 4 Summary Stat Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Stat 1: ATS Score */}
+          <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-5">
+            <div className="flex justify-between items-center text-xs text-[#bbcabf] font-['JetBrains_Mono',monospace] uppercase mb-2">
+              <span>ATS Score Tổng Thể</span>
+              <span className="text-[#4edea3] font-bold">+6% tuần này</span>
+            </div>
+            <div className="text-3xl font-bold font-['JetBrains_Mono',monospace] text-[#4edea3]">94%</div>
+            <div className="text-xs text-[#bbcabf] mt-2">Dựa trên CV: <span className="text-[#dfe2ef]">Backend_Resume_v3.pdf</span></div>
+          </div>
+
+          {/* Stat 2: Matched Jobs */}
+          <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-5">
+            <div className="flex justify-between items-center text-xs text-[#bbcabf] font-['JetBrains_Mono',monospace] uppercase mb-2">
+              <span>Việc Làm So Khớp</span>
+              <span className="text-[#06b6d4] font-bold">18 việc mới</span>
+            </div>
+            <div className="text-3xl font-bold font-['JetBrains_Mono',monospace] text-[#06b6d4]">42</div>
+            <div className="text-xs text-[#bbcabf] mt-2">Độ tương thích kỹ thuật &gt; 85%</div>
+          </div>
+
+          {/* Stat 3: Mock Interview */}
+          <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-5">
+            <div className="flex justify-between items-center text-xs text-[#bbcabf] font-['JetBrains_Mono',monospace] uppercase mb-2">
+              <span>Luyện Phỏng Vấn AI</span>
+              <span className="text-[#4edea3] font-bold">Vừa hoàn thành</span>
+            </div>
+            <div className="text-3xl font-bold font-['JetBrains_Mono',monospace] text-[#dfe2ef]">8.8<span className="text-sm text-[#bbcabf]">/10</span></div>
+            <div className="text-xs text-[#bbcabf] mt-2">Chủ đề: System Design &amp; Concurrency</div>
+          </div>
+
+          {/* Stat 4: Active Applications */}
+          <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-5">
+            <div className="flex justify-between items-center text-xs text-[#bbcabf] font-['JetBrains_Mono',monospace] uppercase mb-2">
+              <span>Hồ Sơ Đang Ứng Tuyển</span>
+              <span className="text-[#f59e0b] font-bold">1 lịch pv ngày mai</span>
+            </div>
+            <div className="text-3xl font-bold font-['JetBrains_Mono',monospace] text-[#f59e0b]">5</div>
+            <div className="text-xs text-[#bbcabf] mt-2">2 vòng Technical • 1 Offer pending</div>
+          </div>
+        </section>
+
+        {/* 2-Column Responsive Dashboard Body */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* ──────────────── Left Column (2/3 width) ──────────────── */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Card 1: Live ATS Diagnostics & Optimization */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6 relative">
+              <div className="flex justify-between items-center mb-4 border-b border-[#1E293B] pb-3">
+                <div>
+                  <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#dfe2ef]">
+                    Phân tích CV &amp; Khả năng Vượt ATS
+                  </h2>
+                  <p className="text-xs text-[#bbcabf]">File: Dung_Vu_Senior_Backend_Resume_v3.pdf • Quét lần cuối: Hôm nay</p>
+                </div>
+                <Link
+                  href="/workspace"
+                  className="text-xs font-semibold text-[#4edea3] hover:underline flex items-center gap-1 font-['JetBrains_Mono',monospace]"
+                >
+                  Tối ưu hóa ngay &rarr;
+                </Link>
+              </div>
+
+              {/* Score breakdown bars */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="bg-[#181b25] p-3 rounded border border-[#1E293B]">
+                  <div className="text-xs text-[#bbcabf] mb-1">Kỹ năng chuyên môn</div>
+                  <div className="text-lg font-bold font-['JetBrains_Mono',monospace] text-[#4edea3]">95%</div>
+                  <div className="w-full h-1 bg-[#31353f] rounded-full mt-2 overflow-hidden">
+                    <div className="w-[95%] h-full bg-[#4edea3]"></div>
+                  </div>
+                </div>
+
+                <div className="bg-[#181b25] p-3 rounded border border-[#1E293B]">
+                  <div className="text-xs text-[#bbcabf] mb-1">Đo lường tác động (Impact)</div>
+                  <div className="text-lg font-bold font-['JetBrains_Mono',monospace] text-[#4edea3]">90%</div>
+                  <div className="w-full h-1 bg-[#31353f] rounded-full mt-2 overflow-hidden">
+                    <div className="w-[90%] h-full bg-[#4edea3]"></div>
+                  </div>
+                </div>
+
+                <div className="bg-[#181b25] p-3 rounded border border-[#1E293B]">
+                  <div className="text-xs text-[#bbcabf] mb-1">Định dạng &amp; Từ khóa ATS</div>
+                  <div className="text-lg font-bold font-['JetBrains_Mono',monospace] text-[#4edea3]">98%</div>
+                  <div className="w-full h-1 bg-[#31353f] rounded-full mt-2 overflow-hidden">
+                    <div className="w-[98%] h-full bg-[#4edea3]"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Insight Box */}
+              <div className="bg-[#181b25] border-l-2 border-[#4edea3] p-3.5 rounded-r text-xs text-[#bbcabf] flex items-start gap-2.5">
+                <span className="text-[#4edea3] text-sm">💡</span>
+                <div>
+                  <strong className="text-[#dfe2ef]">Gợi ý từ AI:</strong> Bổ sung thêm từ khóa <span className="text-[#4edea3] font-['JetBrains_Mono',monospace]">gRPC Streaming</span> và <span className="text-[#4edea3] font-['JetBrains_Mono',monospace]">Distributed Tracing</span> để tăng thêm 4% độ phù hợp cho các vị trí Lead Backend.
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Top AI Matched Jobs */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4 border-b border-[#1E293B] pb-3">
+                <div>
+                  <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#dfe2ef]">
+                    Việc Làm So Khớp Tốt Nhất Hôm Nay
+                  </h2>
+                  <p className="text-xs text-[#bbcabf]">Được AI phân tích trực tiếp theo năng lực thực tế trong CV của bạn</p>
+                </div>
+                <Link
+                  href="/jobs"
+                  className="text-xs font-semibold text-[#4edea3] hover:underline font-['JetBrains_Mono',monospace]"
+                >
+                  Xem tất cả (42) &rarr;
+                </Link>
+              </div>
+
+              {/* Job List */}
+              <div className="space-y-3">
+                {/* Job 1 */}
+                <div className="bg-[#181b25] border border-[#1E293B] hover:border-[#4edea3]/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition-colors">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-[#dfe2ef]">Senior Python / FastAPI Engineer</span>
+                      <span className="bg-[#10b981]/10 text-[#4edea3] border border-[#10b981]/30 text-xs px-2 py-0.5 rounded font-['JetBrains_Mono',monospace] font-bold">
+                        96% Match
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#bbcabf] mt-1">
+                      VNG Corporation • TP. Hồ Chí Minh (Hybrid) • $2,500 - $3,500
+                    </div>
+                    <div className="flex gap-1.5 mt-2">
+                      <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">FastAPI</span>
+                      <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">PostgreSQL</span>
+                      <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">Docker</span>
+                    </div>
+                  </div>
+                  <Link
+                    href="/jobs"
+                    className="bg-[#10b981] text-[#0f131c] font-semibold text-xs px-3.5 py-2 rounded hover:bg-[#4edea3] transition-colors text-center shrink-0"
+                  >
+                    Nộp CV Đã Tối Ưu
+                  </Link>
+                </div>
+
+                {/* Job 2 */}
+                <div className="bg-[#181b25] border border-[#1E293B] hover:border-[#4edea3]/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition-colors">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-[#dfe2ef]">Lead Backend Architect</span>
+                      <span className="bg-[#10b981]/10 text-[#4edea3] border border-[#10b981]/30 text-xs px-2 py-0.5 rounded font-['JetBrains_Mono',monospace] font-bold">
+                        94% Match
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#bbcabf] mt-1">
+                      MoMo • TP. Hồ Chí Minh • $3,000 - $4,200
+                    </div>
+                    <div className="flex gap-1.5 mt-2">
+                      <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">Microservices</span>
+                      <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">System Design</span>
+                      <span className="text-[11px] bg-[#31353f]/60 text-[#bbcabf] px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">Kafka</span>
+                    </div>
+                  </div>
+                  <Link
+                    href="/jobs"
+                    className="bg-[#10b981] text-[#0f131c] font-semibold text-xs px-3.5 py-2 rounded hover:bg-[#4edea3] transition-colors text-center shrink-0"
+                  >
+                    Nộp CV Đã Tối Ưu
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Skill Roadmap & Learning Progress */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4 border-b border-[#1E293B] pb-3">
+                <div>
+                  <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#dfe2ef]">
+                    Lộ Trình Kỹ Năng: Tech Lead / Principal Engineer
+                  </h2>
+                  <p className="text-xs text-[#bbcabf]">Tiến độ tổng thể: 68% hoàn thành</p>
+                </div>
+                <Link
+                  href="/learning"
+                  className="text-xs font-semibold text-[#4edea3] hover:underline font-['JetBrains_Mono',monospace]"
+                >
+                  Vào phòng học &rarr;
+                </Link>
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-[#181b25] p-3.5 rounded border border-[#1E293B] flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-[#dfe2ef]">Kubernetes Cluster Architecture &amp; Helm</div>
+                    <div className="text-xs text-[#bbcabf] mt-0.5">Mục tiêu: Quản trị cụm phân tán và CI/CD GitOps</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-[#4edea3] font-['JetBrains_Mono',monospace]">65%</span>
+                    <div className="w-20 h-1.5 bg-[#31353f] rounded-full mt-1 overflow-hidden">
+                      <div className="w-[65%] h-full bg-[#4edea3]"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#181b25] p-3.5 rounded border border-[#1E293B] flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-[#dfe2ef]">High-Throughput Distributed Messaging (Kafka/RabbitMQ)</div>
+                    <div className="text-xs text-[#bbcabf] mt-0.5">Hoàn thành bài test kiến trúc hệ thống</div>
+                  </div>
+                  <span className="text-xs font-bold text-[#4edea3] bg-[#10b981]/10 border border-[#10b981]/30 px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">
+                    100% Hoàn thành
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ──────────────── Right Column (1/3 width) ──────────────── */}
+          <div className="space-y-8">
+            {/* Card 4: AI Mock Interview Coach */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#dfe2ef]">
+                  Phỏng Vấn AI Giả Lập
+                </h3>
+                <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse"></span>
+              </div>
+              <p className="text-xs text-[#bbcabf] mb-4">Luyện tập câu hỏi tình huống thực tế với AI Voice Coach</p>
+
+              <div className="bg-[#181b25] p-4 rounded border border-[#1E293B] mb-4">
+                <div className="flex justify-between items-center text-xs text-[#bbcabf] mb-1">
+                  <span>Phiên gần nhất</span>
+                  <span className="text-[#4edea3] font-bold font-['JetBrains_Mono',monospace]">8.8 / 10</span>
+                </div>
+                <div className="text-sm font-semibold text-[#dfe2ef] mb-2">System Design &amp; Concurrency</div>
+                <p className="text-xs text-[#bbcabf] italic">
+                  &ldquo;Giải thích Database Sharding xuất sắc. Cần làm rõ thêm cơ chế bù trừ khi xảy ra Distributed Transaction.&rdquo;
+                </p>
+              </div>
+
+              <Link
+                href="/workspace"
+                className="w-full bg-[#10b981] text-[#0f131c] font-semibold py-2.5 rounded text-sm hover:bg-[#4edea3] transition-colors flex items-center justify-center gap-2 shadow-sm text-center"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+                </svg>
+                Luyện Phỏng Vấn Ngay
+              </Link>
+            </div>
+
+            {/* Card 5: Applications Pipeline Tracker */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-lg p-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-['Plus_Jakarta_Sans',sans-serif] text-base font-bold text-[#dfe2ef]">
+                  Tiến Trình Ứng Tuyển
+                </h3>
+                <Link href="/applications" className="text-xs text-[#4edea3] hover:underline font-['JetBrains_Mono',monospace]">
+                  Bảng Kanban &rarr;
+                </Link>
+              </div>
+              <p className="text-xs text-[#bbcabf] mb-4">5 công ty đang trong quá trình tuyển dụng</p>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-[#181b25] rounded border border-l-2 border-[#1E293B] border-l-[#f59e0b]">
+                  <div className="flex justify-between items-center text-xs font-bold text-[#dfe2ef]">
+                    <span>VNG Corporation</span>
+                    <span className="text-[#f59e0b] font-['JetBrains_Mono',monospace]">Vòng 3 (Tech)</span>
+                  </div>
+                  <div className="text-xs text-[#bbcabf] mt-1">14:00 Ngày mai • Google Meet</div>
+                </div>
+
+                <div className="p-3 bg-[#181b25] rounded border border-l-2 border-[#1E293B] border-l-[#4edea3]">
+                  <div className="flex justify-between items-center text-xs font-bold text-[#dfe2ef]">
+                    <span>Grab</span>
+                    <span className="text-[#4edea3] font-['JetBrains_Mono',monospace]">Đã qua HR Screening</span>
+                  </div>
+                  <div className="text-xs text-[#bbcabf] mt-1">Đang chờ xếp lịch Technical Assessment</div>
+                </div>
+
+                <div className="p-3 bg-[#181b25] rounded border border-l-2 border-[#1E293B] border-l-[#06b6d4]">
+                  <div className="flex justify-between items-center text-xs font-bold text-[#dfe2ef]">
+                    <span>MoMo</span>
+                    <span className="text-[#06b6d4] font-['JetBrains_Mono',monospace]">Đang duyệt CV</span>
+                  </div>
+                  <div className="text-xs text-[#bbcabf] mt-1">Đạt 94% ATS Match Score</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* ────────────────────────────────────────────────────────
-          FOOTER
+          DASHBOARD FOOTER
       ──────────────────────────────────────────────────────── */}
-      <footer className="w-full py-12 px-6 md:px-12 border-t border-[#3c4a42]/40 bg-[#0a0e17]">
-        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+      <footer className="w-full py-8 px-6 md:px-12 border-t border-[#3c4a42]/40 bg-[#0a0e17] mt-12">
+        <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[#bbcabf]">
           <div>
-            <div className="font-['Plus_Jakarta_Sans',sans-serif] text-xl font-bold text-[#4edea3] mb-2">
-              CareerPilot AI
-            </div>
-            <div className="text-[#bbcabf] text-sm">
-              © 2026 CareerPilot AI. Kỹ thuật chính xác từ Việt Nam.
-            </div>
+            © 2026 CareerPilot AI. Nền tảng hỗ trợ thăng tiến nghề nghiệp kỹ thuật số.
           </div>
-
-          <div className="flex flex-wrap gap-4 md:gap-6 font-['JetBrains_Mono',monospace] text-xs uppercase tracking-wider text-[#bbcabf]">
-            <span>Phân tích CV</span>
+          <div className="flex items-center gap-4 font-['JetBrains_Mono',monospace]">
+            <span>Phiên bản v2.2</span>
             <span>•</span>
-            <span>Tìm việc &amp; So khớp</span>
-            <span>•</span>
-            <span>Phỏng vấn AI</span>
-            <span>•</span>
-            <span>Lộ trình kỹ năng</span>
-            <span>•</span>
-            <span>Quản lý ứng tuyển</span>
+            <span className="text-[#4edea3]">Hệ thống bảo mật TLS 1.3</span>
           </div>
         </div>
       </footer>

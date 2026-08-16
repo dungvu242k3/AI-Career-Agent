@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 :root {
+  --font-plus-jakarta: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", monospace;
   --background: #090D16;
   --foreground: #dfe2ef;
 }
