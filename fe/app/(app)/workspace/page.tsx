@@ -7,7 +7,6 @@
 // <meta property="og:description" content="Phân tích CV trực quan và tối ưu hóa ATS với AI Multi-Agent." />
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 
 interface Message {
   id: string;
@@ -29,9 +28,6 @@ export default function WorkspacePage() {
   // State quản lý Drawer
   const [isSourceDrawerOpen, setIsSourceDrawerOpen] = useState(false);
   const [isInsightsDrawerOpen, setIsInsightsDrawerOpen] = useState(false);
-
-  // State chế độ hoạt động
-  const [activeMode, setActiveMode] = useState<"cv-optimize" | "interview-prep" | "skill-roadmap">("cv-optimize");
 
   // State nhập liệu & danh sách hội thoại
   const [inputPrompt, setInputPrompt] = useState("");
@@ -119,107 +115,54 @@ export default function WorkspacePage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif] flex flex-col relative overflow-x-hidden">
       {/* ────────────────────────────────────────────────────────────
-          1. WORKSPACE SUB-TOOLBAR (Nằm ngay dưới Navbar cố định)
+          KHUNG TRUNG TÂM (Nằm ngay dưới Menu cố định)
       ──────────────────────────────────────────────────────────── */}
-      <div className="sticky top-16 z-30 flex items-center justify-between px-4 sm:px-6 h-12 bg-[#090D16]/95 backdrop-blur-md border-b border-[#1E293B]">
-        {/* Left Side: Session Title */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[#94a3b8] hidden sm:inline">Hồ sơ:</span>
-          <span className="text-xs font-semibold text-[#dfe2ef] font-['JetBrains_Mono',monospace] bg-[#181b25] px-2 py-0.5 rounded border border-[#1E293B]">
-            Dung_Vu_Senior_Backend_Resume_v3.pdf
-          </span>
-        </div>
-
-        {/* Center: Mode Switcher */}
-        <div className="hidden md:flex items-center bg-[#181b25] p-0.5 rounded-lg border border-[#1E293B]">
-          <button
-            type="button"
-            onClick={() => setActiveMode("cv-optimize")}
-            aria-label="Chế độ Tối ưu hóa CV và ATS"
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-              activeMode === "cv-optimize"
-                ? "bg-[#10b981] text-[#090D16] shadow-sm"
-                : "text-[#94a3b8] hover:text-[#dfe2ef]"
-            }`}
-          >
-            Phân tích CV &amp; ATS
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMode("interview-prep")}
-            aria-label="Chế độ Luyện phỏng vấn AI"
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-              activeMode === "interview-prep"
-                ? "bg-[#10b981] text-[#090D16] shadow-sm"
-                : "text-[#94a3b8] hover:text-[#dfe2ef]"
-            }`}
-          >
-            Luyện phỏng vấn AI
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMode("skill-roadmap")}
-            aria-label="Chế độ Lộ trình kỹ năng"
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-              activeMode === "skill-roadmap"
-                ? "bg-[#10b981] text-[#090D16] shadow-sm"
-                : "text-[#94a3b8] hover:text-[#dfe2ef]"
-            }`}
-          >
-            Lộ trình kỹ năng
-          </button>
-        </div>
-
-        {/* Right Side: Drawer Trigger Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Nút Mở Left Drawer: Source Panel */}
-          <button
-            type="button"
-            onClick={() => setIsSourceDrawerOpen(true)}
-            aria-label="Mở ngăn kéo Nguồn Hồ Sơ và JD"
-            className="flex items-center gap-1.5 text-xs font-medium bg-[#181b25] hover:bg-[#1f293d] text-[#dfe2ef] border border-[#1E293B] hover:border-[#10b981]/50 px-3 py-1.5 rounded transition-all shadow-sm"
-          >
-            <svg className="w-4 h-4 text-[#4edea3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="hidden lg:inline">Nguồn Hồ Sơ &amp; JD</span>
-            <kbd className="hidden xl:inline-block text-[10px] bg-[#090D16] text-[#94a3b8] px-1.5 py-0.5 rounded border border-[#1E293B] font-['JetBrains_Mono',monospace]">
-              Ctrl+[
-            </kbd>
-          </button>
-
-          {/* Nút Mở Right Drawer: Insights & ATS Score */}
-          <button
-            type="button"
-            onClick={() => setIsInsightsDrawerOpen(true)}
-            aria-label="Mở ngăn kéo Báo cáo Điểm ATS và Phân tích"
-            className="flex items-center gap-1.5 text-xs font-medium bg-[#10b981]/10 hover:bg-[#10b981]/20 text-[#4edea3] border border-[#10b981]/30 px-3 py-1.5 rounded transition-all shadow-sm"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
-            <span className="font-['JetBrains_Mono',monospace] font-bold">94% ATS</span>
-            <span className="hidden lg:inline font-sans">Báo cáo</span>
-            <kbd className="hidden xl:inline-block text-[10px] bg-[#090D16] text-[#4edea3] px-1.5 py-0.5 rounded border border-[#10b981]/30 font-['JetBrains_Mono',monospace]">
-              Ctrl+]
-            </kbd>
-          </button>
-        </div>
-      </div>
-
-      {/* ────────────────────────────────────────────────────────────
-          2. KHUNG TRUNG TÂM (Zen Focus Multi-Agent Chat)
-      ──────────────────────────────────────────────────────────── */}
-      <main className="flex-1 pt-16 pb-28 px-4 sm:px-6 max-w-[880px] w-full mx-auto flex flex-col justify-between">
-        {/* Session Sub-Header Info */}
-        <div className="py-4 border-b border-[#1E293B]/60 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#94a3b8]">
-          <div className="flex items-center gap-2">
-            <span className="text-[#4edea3] font-semibold">Tập tin đang xử lý:</span>
-            <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef] bg-[#181b25] px-2 py-0.5 rounded border border-[#1E293B]">
-              Dung_Vu_Senior_Backend_Resume_v3.pdf
-            </span>
+      <main className="flex-1 pt-24 pb-28 px-4 sm:px-6 max-w-[880px] w-full mx-auto flex flex-col justify-between">
+        {/* Session Sub-Header Bar with Drawer Triggers */}
+        <div className="py-3 px-4 rounded-xl bg-[#111827] border border-[#1E293B] mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[#4edea3] font-semibold">Tập tin:</span>
+              <span className="font-['JetBrains_Mono',monospace] text-[#dfe2ef] bg-[#181b25] px-2 py-0.5 rounded border border-[#1E293B]">
+                Dung_Vu_Senior_Backend_Resume_v3.pdf
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#94a3b8]">Đối chiếu:</span>
+              <span className="text-[#06b6d4] font-medium font-['JetBrains_Mono',monospace]">VNG Corp • Senior Python</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span>JD đối chiếu:</span>
-            <span className="text-[#06b6d4] font-medium font-['JetBrains_Mono',monospace]">VNG Corp • Senior Python</span>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Nút Mở Left Drawer: Source Panel */}
+            <button
+              type="button"
+              onClick={() => setIsSourceDrawerOpen(true)}
+              aria-label="Mở ngăn kéo Nguồn Hồ Sơ và JD"
+              className="flex items-center gap-1.5 text-xs font-medium bg-[#181b25] hover:bg-[#1f293d] text-[#dfe2ef] border border-[#1E293B] hover:border-[#10b981]/50 px-2.5 py-1.5 rounded transition-all shadow-sm"
+            >
+              <svg className="w-3.5 h-3.5 text-[#4edea3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Nguồn CV &amp; JD</span>
+              <kbd className="text-[10px] bg-[#090D16] text-[#94a3b8] px-1 py-0.2 rounded border border-[#1E293B] font-['JetBrains_Mono',monospace]">
+                Ctrl+[
+              </kbd>
+            </button>
+
+            {/* Nút Mở Right Drawer: Insights & ATS Score */}
+            <button
+              type="button"
+              onClick={() => setIsInsightsDrawerOpen(true)}
+              aria-label="Mở ngăn kéo Báo cáo Điểm ATS và Phân tích"
+              className="flex items-center gap-1.5 text-xs font-medium bg-[#10b981]/10 hover:bg-[#10b981]/20 text-[#4edea3] border border-[#10b981]/30 px-2.5 py-1.5 rounded transition-all shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
+              <span className="font-['JetBrains_Mono',monospace] font-bold">94% ATS</span>
+              <kbd className="text-[10px] bg-[#090D16] text-[#4edea3] px-1 py-0.2 rounded border border-[#10b981]/30 font-['JetBrains_Mono',monospace]">
+                Ctrl+]
+              </kbd>
+            </button>
           </div>
         </div>
 
@@ -350,7 +293,7 @@ export default function WorkspacePage() {
       </main>
 
       {/* ────────────────────────────────────────────────────────────
-          3. KHUNG NHẬP LIỆU PROMPT CỐ ĐỊNH Ở ĐÁY (Floating Input Bar)
+          KHUNG NHẬP LIỆU PROMPT CỐ ĐỊNH Ở ĐÁY (Floating Input Bar)
       ──────────────────────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 w-full z-30 bg-[#090D16]/90 backdrop-blur-md border-t border-[#1E293B] py-3.5 px-4 sm:px-6">
         <div className="max-w-[880px] mx-auto">
@@ -408,7 +351,7 @@ export default function WorkspacePage() {
       </div>
 
       {/* ────────────────────────────────────────────────────────────
-          4. LEFT SLIDE-OVER DRAWER (Source Panel: Quản lý CV & JD)
+          LEFT SLIDE-OVER DRAWER (Source Panel: Quản lý CV & JD)
       ──────────────────────────────────────────────────────────── */}
       {isSourceDrawerOpen && (
         <div className="fixed inset-0 z-50 flex">
@@ -516,7 +459,7 @@ export default function WorkspacePage() {
       )}
 
       {/* ────────────────────────────────────────────────────────────
-          5. RIGHT SLIDE-OVER DRAWER (Insights Panel: ATS & Analytics)
+          RIGHT SLIDE-OVER DRAWER (Insights Panel: ATS & Analytics)
       ──────────────────────────────────────────────────────────── */}
       {isInsightsDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">

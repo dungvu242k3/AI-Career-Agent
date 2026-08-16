@@ -4,7 +4,6 @@
 // <meta property="og:title" content="CareerPilot AI - Tìm Việc & So Khớp Năng Lực IT" />
 // <meta property="og:description" content="Tìm việc làm IT và so khớp ATS chính xác với AI." />
 
-import React from "react";
 import Link from "next/link";
 
 export const metadata = {
@@ -70,6 +69,75 @@ export default function JobsPage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
       {/* ────────────────────────────────────────────────────────────
+          HEADER CHUẨN 5 TÍNH NĂNG (Active: Tìm việc & So khớp)
+      ──────────────────────────────────────────────────────────── */}
+      <header className="fixed top-0 left-0 w-full z-40 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/90 backdrop-blur-md border-b border-[#1E293B]">
+        {/* Logo dẫn về Trang chủ / */}
+        <div className="flex items-center shrink-0">
+          <Link
+            href="/"
+            aria-label="CareerPilot AI Trang chủ"
+            className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif]"
+          >
+            CareerPilot AI
+          </Link>
+        </div>
+
+        {/* Menu 5 tính năng */}
+        <nav
+          aria-label="Điều hướng chính"
+          className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
+        >
+          <Link
+            href="/workspace"
+            aria-label="Tính năng Phân tích CV"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
+          >
+            Phân tích CV
+          </Link>
+          <Link
+            href="/jobs"
+            aria-label="Tính năng Tìm việc và So khớp"
+            className="text-[#4edea3] font-semibold border-b-2 border-[#4edea3] px-3 py-1.5 text-sm shrink-0"
+          >
+            Tìm việc &amp; So khớp
+          </Link>
+          <Link
+            href="/interview"
+            aria-label="Tính năng Phỏng vấn AI"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
+          >
+            Phỏng vấn AI
+          </Link>
+          <Link
+            href="/learning"
+            aria-label="Tính năng Lộ trình kỹ năng"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
+          >
+            Lộ trình kỹ năng
+          </Link>
+          <Link
+            href="/applications"
+            aria-label="Tính năng Quản lý ứng tuyển"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
+          >
+            Quản lý ứng tuyển
+          </Link>
+        </nav>
+
+        {/* CTA Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href="/workspace"
+            aria-label="Tối ưu CV trong Workspace"
+            className="bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-semibold px-4 py-2 rounded text-xs transition-colors shadow-sm"
+          >
+            Tối ưu CV với AI
+          </Link>
+        </div>
+      </header>
+
+      {/* ────────────────────────────────────────────────────────────
           MAIN CONTENT (JOBS MATCHING ARENA)
       ──────────────────────────────────────────────────────────── */}
       <main className="pt-24 pb-16 max-w-[1200px] mx-auto px-6 md:px-12">
@@ -115,13 +183,13 @@ export default function JobsPage() {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <Link
-                    href="/workspace"
+                  <button
+                    type="button"
                     aria-label={`Tối ưu CV cho ${job.company}`}
                     className="bg-[#181b25] hover:bg-[#1f293d] text-[#dfe2ef] border border-[#1E293B] hover:border-[#10b981]/50 text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors"
                   >
                     Tối ưu CV cho JD này
-                  </Link>
+                  </button>
                   <button
                     type="button"
                     aria-label={`Ứng tuyển vào ${job.company}`}

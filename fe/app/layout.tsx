@@ -3,10 +3,8 @@
 // <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến." />
 // <meta property="og:title" content="CareerPilot AI" />
 // <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
-
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
-import Navbar from "@/components/Navbar";
+import { Inter, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -54,7 +52,6 @@ export default function RootLayout({
       <body
         className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} bg-[#090D16] text-[#dfe2ef] antialiased`}
       >
-        <Navbar />
         {children}
       </body>
     </html>
