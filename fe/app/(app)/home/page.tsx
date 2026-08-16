@@ -2,12 +2,12 @@ import React from "react";
 import Link from "next/link";
 
 export const metadata = {
-  title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
+  title: "CareerPilot AI - Trang Chủ & Trợ lý Nghề nghiệp AI Toàn diện",
   description:
     "Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.",
 };
 
-export default function LandingPage() {
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
       {/* ────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ export default function LandingPage() {
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/80 backdrop-blur-md border-b border-[#3c4a42]/40">
         <div className="flex items-center gap-8 min-w-0">
           <Link
-            href="/"
+            href="/home"
             className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif]"
           >
             CareerPilot AI
