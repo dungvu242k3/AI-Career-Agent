@@ -6,7 +6,7 @@
 // <meta property="og:title" content="CareerPilot AI - AI Career Studio Workspace" />
 // <meta property="og:description" content="Không gian làm việc 3 cột chuẩn NotebookLM phân tích CV và tối ưu ATS." />
 
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface Message {
   id: string;
@@ -25,6 +25,12 @@ interface Message {
 }
 
 export default function WorkspacePage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Mobile Tab State (cho màn hình nhỏ): "sources" | "chat" | "studio"
   const [activeMobileTab, setActiveMobileTab] = useState<"sources" | "chat" | "studio">("chat");
 

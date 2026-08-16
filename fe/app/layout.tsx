@@ -50,9 +50,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className="dark">
+    <html lang="vi" className="dark" suppressHydrationWarning>
       <body
         className={`${plusJakarta.variable} ${inter.variable} ${jetbrainsMono.variable} bg-[#090D16] text-[#dfe2ef] antialiased`}
+        suppressHydrationWarning
       >
         <Navbar />
         {children}
