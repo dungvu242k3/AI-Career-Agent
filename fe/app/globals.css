@@ -25,6 +25,37 @@ code, kbd, samp, pre {
   font-family: var(--font-jetbrains-mono), monospace;
 }
 
+/* ────────────────────────────────────────────────────────────
+   GLOBAL MODERN SLIM SCROLLBARS (Thanh cuộn tối giản chuẩn Dark Mode)
+──────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1E293B transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Custom Utilities */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
@@ -32,4 +63,19 @@ code, kbd, samp, pre {
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.slim-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #1E293B transparent;
+}
+.slim-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.slim-scrollbar::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 9999px;
+}
+.slim-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
 }

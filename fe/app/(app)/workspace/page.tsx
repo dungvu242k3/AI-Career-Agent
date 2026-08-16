@@ -177,7 +177,7 @@ export default function WorkspacePage() {
             CỘT 1: NGUỒN TÀI LIỆU (SOURCES PANEL - 26% WIDTH)
         ══════════════════════════════════════════════════════════ */}
         <aside
-          className={`w-full lg:w-[26%] xl:w-[25%] border-r border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto ${
+          className={`w-full lg:w-[26%] xl:w-[25%] border-r border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto slim-scrollbar ${
             activeMobileTab === "sources" ? "flex" : "hidden lg:flex"
           }`}
         >
@@ -330,7 +330,7 @@ export default function WorkspacePage() {
           </div>
 
           {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 slim-scrollbar">
             {messages.map((msg) => (
               <div
                 key={msg.id}
@@ -497,7 +497,7 @@ export default function WorkspacePage() {
             CỘT 3: STUDIO & BẢN CV ĐÃ SỬA (ARTIFACTS - 30% WIDTH)
         ══════════════════════════════════════════════════════════ */}
         <aside
-          className={`w-full lg:w-[30%] xl:w-[31%] border-l border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto ${
+          className={`w-full lg:w-[30%] xl:w-[31%] border-l border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto slim-scrollbar ${
             activeMobileTab === "studio" ? "flex" : "hidden lg:flex"
           }`}
         >
