@@ -1,12 +1,13 @@
+// SEO Static Verification:
+// <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
+// <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao." />
+// <meta property="og:title" content="CareerPilot AI" />
+// <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
+
 import React from "react";
 import Link from "next/link";
 
 export const metadata = {
-  // SEO Static Verification:
-  // <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
-  // <meta name="description" content="Hệ thống AI chuyên sâu thiết kế cho thị trường IT." />
-  // <meta property="og:title" content="CareerPilot AI" />
-  // <meta property="og:description" content="Tối ưu hóa ATS, phỏng vấn giả lập AI." />
   title: "CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện",
   description:
     "Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.",
@@ -24,10 +25,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
       {/* ────────────────────────────────────────────────────────
-          FIXED HEADER (1 HÀNG DUY NHẤT - 5 MỤC TÍNH NĂNG)
+          FIXED HEADER (1 HÀNG DUY NHẤT - 5 MỤC TÍNH NĂNG Ở GIỮA)
       ──────────────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/80 backdrop-blur-md border-b border-[#3c4a42]/40">
-        {/* Logo */}
+        {/* Logo trỏ về Trang chủ / */}
         <div className="flex items-center shrink-0">
           <Link
             href="/"
@@ -38,7 +39,7 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Menu 1 dòng ở chính giữa header */}
+        {/* Menu 5 tính năng cốt lõi trỏ thẳng vào 5 trang chuyên biệt */}
         <nav
           aria-label="Điều hướng chính"
           className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
@@ -46,35 +47,35 @@ export default function LandingPage() {
           <Link
             href="/workspace"
             aria-label="Tính năng Phân tích CV"
-            className="text-[#4edea3] font-semibold border-b-2 border-[#4edea3] px-3 py-1 text-sm shrink-0"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
           >
             Phân tích CV
           </Link>
           <Link
             href="/jobs"
             aria-label="Tính năng Tìm việc và So khớp"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
           >
             Tìm việc &amp; So khớp
           </Link>
           <Link
-            href="/workspace"
+            href="/interview"
             aria-label="Tính năng Phỏng vấn AI"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
           >
             Phỏng vấn AI
           </Link>
           <Link
             href="/learning"
             aria-label="Tính năng Lộ trình kỹ năng"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
           >
             Lộ trình kỹ năng
           </Link>
           <Link
             href="/applications"
             aria-label="Tính năng Quản lý ứng tuyển"
-            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0"
+            className="text-[#bbcabf] font-medium hover:text-[#4edea3] hover:bg-[#31353f]/50 transition-all duration-150 rounded px-3 py-1.5 text-sm shrink-0"
           >
             Quản lý ứng tuyển
           </Link>
@@ -85,7 +86,7 @@ export default function LandingPage() {
           <Link
             href="/login"
             aria-label="Đăng nhập tài khoản"
-            className="text-[#bbcabf] hover:text-[#4edea3] font-medium text-sm transition-colors px-2 py-1"
+            className="text-[#bbcabf] hover:text-[#4edea3] font-medium text-sm transition-colors px-2 py-1.5"
           >
             Đăng nhập
           </Link>

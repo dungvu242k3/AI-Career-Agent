@@ -125,14 +125,14 @@ export default function WorkspacePage() {
         {/* Left Side: Logo & Back */}
         <div className="flex items-center gap-3 shrink-0">
           <Link
-            href="/home"
-            aria-label="Quay lại Bảng điều khiển"
+            href="/"
+            aria-label="Quay lại Trang chủ"
             className="flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-[#4edea3] transition-colors font-medium px-2 py-1.5 rounded bg-[#181b25] border border-[#1E293B]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="hidden sm:inline">Dashboard</span>
+            <span className="hidden sm:inline">Trang chủ</span>
           </Link>
 
           <div className="h-4 w-px bg-[#1E293B] hidden sm:block"></div>
