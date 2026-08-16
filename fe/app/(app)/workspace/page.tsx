@@ -77,8 +77,6 @@ export default function WorkspacePage() {
   ]);
 
   const [selectedJdKey, setSelectedJdKey] = useState<"vng" | "momo">("vng");
-  const [isAddSourceModalOpen, setIsAddSourceModalOpen] = useState(false);
-  const [newJdText, setNewJdText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State Phiên bản CV trong Studio (Cột 3)
@@ -218,14 +216,6 @@ export default function WorkspacePage() {
                 Nguồn Tài Liệu (2)
               </h2>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsAddSourceModalOpen(true)}
-              aria-label="Thêm nguồn tài liệu mới"
-              className="bg-[#181b25] hover:bg-[#1f293d] text-[#4edea3] hover:text-[#f8fafc] border border-[#1E293B] hover:border-[#10b981]/50 text-xs font-semibold px-2.5 py-1 rounded transition-all flex items-center gap-1"
-            >
-              <span>+ Thêm nguồn</span>
-            </button>
           </div>
 
           {/* Danh sách Nguồn đã nạp */}
@@ -710,80 +700,6 @@ export default function WorkspacePage() {
           </div>
         </aside>
       </div>
-
-      {/* ────────────────────────────────────────────────────────────
-          MODAL: THÊM NGUỒN TÀI LIỆU MỚI (ADD SOURCE MODAL)
-      ──────────────────────────────────────────────────────────── */}
-      {isAddSourceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setIsAddSourceModalOpen(false)}
-          ></div>
-
-          <div className="relative bg-[#111827] border border-[#1E293B] rounded-2xl max-w-lg w-full p-6 z-10 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
-              <h3 className="text-base font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
-                Thêm Nguồn Tài Liệu Mới
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddSourceModalOpen(false)}
-                className="text-[#94a3b8] hover:text-[#dfe2ef] p-1"
-                aria-label="Đóng modal"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#94a3b8] uppercase tracking-wider mb-2">
-                Dán nội dung JD hoặc tài liệu mô tả
-              </label>
-              <textarea
-                rows={5}
-                value={newJdText}
-                onChange={(e) => setNewJdText(e.target.value)}
-                placeholder="Dán toàn bộ nội dung yêu cầu tuyển dụng hoặc dự án mới..."
-                className="w-full bg-[#181b25] text-xs text-[#dfe2ef] placeholder-[#64748b] p-3 rounded-lg border border-[#1E293B] focus:border-[#10b981] outline-none resize-none"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsAddSourceModalOpen(false)}
-                className="text-xs text-[#94a3b8] hover:text-[#dfe2ef] px-3 py-2"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (newJdText.trim()) {
-                    setSources((prev) => [
-                      ...prev,
-                      {
-                        id: `src-${Date.now()}`,
-                        name: "JD_Moi_Bo_Sung.txt",
-                        type: "jd",
-                        size: "0.8 KB",
-                        active: true,
-                        company: "Công ty mục tiêu",
-                      },
-                    ]);
-                    setNewJdText("");
-                    setIsAddSourceModalOpen(false);
-                  }
-                }}
-                className="bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] text-xs font-bold px-4 py-2 rounded-lg"
-              >
-                Nạp Nguồn Vào AI
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
