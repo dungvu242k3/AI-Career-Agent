@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CareerPilot AI - Trợ lý Nghề nghiệp AI Toàn diện</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#005236",
+                        "secondary-fixed-dim": "#4cd7f6",
+                        "secondary": "#4cd7f6",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-primary-container": "#00422b",
+                        "error-container": "#93000a",
+                        "tertiary-fixed": "#ffddb8",
+                        "background": "#0f131c",
+                        "on-tertiary-container": "#523200",
+                        "surface-variant": "#31353f",
+                        "tertiary": "#ffb95f",
+                        "surface-tint": "#4edea3",
+                        "surface-container": "#1c1f29",
+                        "on-primary": "#003824",
+                        "surface-container-low": "#181b25",
+                        "outline": "#86948a",
+                        "on-secondary-container": "#00424e",
+                        "secondary-fixed": "#acedff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "primary-container": "#10b981",
+                        "surface-container-highest": "#31353f",
+                        "primary-fixed": "#6ffbbe",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#4edea3",
+                        "surface-dim": "#0f131c",
+                        "inverse-primary": "#006c49",
+                        "error": "#ffb4ab",
+                        "surface": "#0f131c",
+                        "surface-bright": "#353943",
+                        "outline-variant": "#3c4a42",
+                        "on-tertiary": "#472a00",
+                        "on-secondary": "#003640",
+                        "primary": "#4edea3",
+                        "on-surface-variant": "#bbcabf",
+                        "on-primary-fixed": "#002113",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-high": "#262a34",
+                        "on-secondary-fixed-variant": "#004e5c",
+                        "on-background": "#dfe2ef",
+                        "inverse-surface": "#dfe2ef",
+                        "secondary-container": "#03b5d3",
+                        "tertiary-container": "#e29100",
+                        "on-surface": "#dfe2ef",
+                        "inverse-on-surface": "#2c303a",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-secondary-fixed": "#001f26",
+                        "surface-container-lowest": "#0a0e17"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "container-max": "1200px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-caps": ["JetBrains Mono"],
+                        "label-mono": ["JetBrains Mono"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #090D16; color: #dfe2ef; -webkit-font-smoothing: antialiased; }
+        .tech-border { border: 1px solid #1E293B; }
+        .glass-panel { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid #1E293B; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-body-lg text-body-lg selection:bg-primary-container selection:text-background">
+
+<!-- Header (1 HÀNG DUY NHẤT - ĐÃ XÓA BẢNG GIÁ) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 bg-background/80 backdrop-blur-md border-b border-outline-variant/40">
+    <div class="flex items-center gap-8 min-w-0">
+        <div class="text-headline-md font-display-lg text-primary tracking-tighter shrink-0 cursor-pointer">CareerPilot AI</div>
+        <!-- Menu 1 dòng duy nhất - Không wrap, không có Bảng giá -->
+        <nav class="hidden lg:flex items-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none">
+            <a class="text-primary font-semibold border-b-2 border-primary px-3 py-1 text-sm shrink-0" href="#">Phân tích CV</a>
+            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Tìm việc &amp; So khớp</a>
+            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Phỏng vấn AI</a>
+            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Lộ trình kỹ năng</a>
+            <a class="text-on-surface-variant font-medium hover:text-primary transition-colors hover:bg-surface-variant/50 transition-all duration-150 rounded px-3 py-1 text-sm shrink-0" href="#">Quản lý ứng tuyển</a>
+        </nav>
+    </div>
+    <div class="flex items-center gap-3 md:gap-4 shrink-0">
+        <button class="text-on-surface-variant hover:text-primary font-medium text-sm transition-colors px-2 py-1">Đăng nhập</button>
+        <button class="bg-primary-container text-background font-medium px-4 py-2 rounded text-sm hover:bg-primary transition-colors shadow-sm">Bắt đầu miễn phí</button>
+    </div>
+</header>
+
+<main class="pt-24 pb-16">
+    <!-- Hero Section -->
+    <section class="max-w-container-max mx-auto px-margin-desktop flex flex-col lg:flex-row items-center gap-12 py-12 md:py-20">
+        <!-- Left: Value Proposition -->
+        <div class="flex-1 space-y-6">
+            <div class="inline-flex items-center gap-2 border border-outline-variant rounded-full px-3 py-1 bg-surface-container-low text-xs font-label-mono text-primary uppercase tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span> TRỢ LÝ NGHỀ NGHIỆP AI TOÀN DIỆN
+            </div>
+            <h1 class="font-display-lg text-display-lg text-on-surface leading-[1.15]">Từ CV chưa tối ưu đến Offer Letter — AI đồng hành cùng bạn.</h1>
+            <p class="text-on-surface-variant font-body-lg text-body-lg max-w-xl">
+                Hệ thống AI chuyên sâu thiết kế cho thị trường IT. Tối ưu hóa ATS, phỏng vấn giả lập, và hoạch định lộ trình thăng tiến với độ chính xác kỹ thuật cao.
+            </p>
+            <div class="flex flex-wrap items-center gap-4 pt-4">
+                <button class="bg-primary-container text-background font-medium px-6 py-3 rounded border border-primary-container hover:bg-primary transition-colors flex items-center gap-2 shadow-sm">
+                    Phân tích CV miễn phí <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+                <button class="bg-transparent text-on-surface font-medium px-6 py-3 rounded border border-outline-variant hover:bg-surface-variant/50 hover:border-primary/50 transition-colors flex items-center gap-2">
+                    Trải nghiệm Workspace
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Live ATS Diagnostics Instrument Card -->
+        <div class="flex-1 w-full max-w-md">
+            <div class="bg-[#111827] tech-border rounded-lg p-6 relative shadow-2xl">
+                <div class="absolute top-0 right-0 p-4 font-label-mono text-primary text-xs opacity-60">SCAN_ID: 0x8F9A2</div>
+                <h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 border-b border-outline-variant pb-2">LIVE ATS DIAGNOSTICS</h3>
+                
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <div class="text-sm text-on-surface-variant mb-1 font-body-sm">ATS Match Score</div>
+                        <div class="font-label-mono text-4xl text-primary font-bold">94%</div>
+                    </div>
+                    <div class="w-16 h-16 rounded-full border-4 border-surface-variant flex items-center justify-center relative">
+                        <svg class="absolute inset-0 w-full h-full -rotate-90" viewbox="0 0 36 36">
+                            <path class="text-surface-variant" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="4"></path>
+                            <path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="94, 100" stroke-width="4"></path>
+                        </svg>
+                        <span class="material-symbols-outlined text-primary">check</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-label-mono text-on-surface">FastAPI</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-24 h-1.5 bg-surface-variant rounded-full overflow-hidden"><div class="w-[95%] h-full bg-primary"></div></div>
+                            <span class="font-label-mono text-primary text-xs">95%</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-label-mono text-on-surface">PostgreSQL</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-24 h-1.5 bg-surface-variant rounded-full overflow-hidden"><div class="w-[90%] h-full bg-primary"></div></div>
+                            <span class="font-label-mono text-primary text-xs">90%</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-label-mono text-on-surface">Docker</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-24 h-1.5 bg-surface-variant rounded-full overflow-hidden"><div class="w-[88%] h-full bg-primary"></div></div>
+                            <span class="font-label-mono text-primary text-xs">88%</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-sm opacity-75">
+                        <span class="font-label-mono text-on-surface">Kubernetes</span>
+                        <span class="text-tertiary text-xs border border-tertiary/30 px-1.5 py-0.5 rounded bg-tertiary/10 font-label-mono">Thiếu kinh nghiệm</span>
+                    </div>
+                </div>
+
+                <button class="w-full bg-surface-container-low text-on-surface border border-outline-variant py-2.5 rounded text-sm hover:border-primary hover:text-primary transition-colors flex justify-center items-center gap-2 font-medium">
+                    Tối ưu hóa nội dung CV ngay <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer class="w-full py-12 px-margin-desktop border-t border-outline-variant/40 bg-surface-container-lowest">
+    <div class="max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        <div>
+            <div class="font-display-lg text-headline-md text-primary mb-2">CareerPilot AI</div>
+            <div class="text-on-surface-variant text-body-sm font-body-sm">© 2026 CareerPilot AI. Kỹ thuật chính xác từ Việt Nam.</div>
+        </div>
+        <div class="flex flex-wrap gap-4 md:gap-6 font-label-caps text-label-caps">
+            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Phân tích CV</a>
+            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Tìm việc &amp; So khớp</a>
+            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Phỏng vấn AI</a>
+            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Lộ trình kỹ năng</a>
+            <a class="text-on-surface-variant hover:text-secondary hover:underline transition-all duration-200" href="#">Quản lý ứng tuyển</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
