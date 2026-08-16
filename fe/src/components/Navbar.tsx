@@ -6,30 +6,33 @@ export default function Navbar() {
   const pathname = location.pathname;
 
   const navItems = [
-    { label: "Phân tích CV", href: "/workspace" },
-    { label: "Tìm việc", href: "/jobs" },
+    { label: "Phân tích & Tìm việc", href: "/workspace" },
     { label: "Phỏng vấn AI", href: "/interview" },
     { label: "Lộ trình kỹ năng", href: "/learning" },
     { label: "Quản lý ứng tuyển", href: "/applications" },
   ];
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-12 h-16 bg-[#0f131c]/90 backdrop-blur-md border-b border-[#3c4a42]/40 font-['Inter',sans-serif]">
+    <header className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 sm:px-8 md:px-12 h-16 bg-[#0f131c]/90 backdrop-blur-md border-b border-[#3c4a42]/40 font-['Inter',sans-serif]">
       {/* ──────────────── Logo bên trái ──────────────── */}
-      <div className="flex items-center shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         <Link
           to="/"
           aria-label="CareerPilot AI Trang chủ"
-          className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif]"
+          className="text-xl font-bold text-[#4edea3] tracking-tighter shrink-0 hover:opacity-90 transition-opacity font-['Plus_Jakarta_Sans',sans-serif] flex items-center gap-2"
         >
-          CareerPilot AI
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
+          <span>CareerPilot AI</span>
         </Link>
+        <span className="hidden sm:inline text-[11px] bg-[#181b25] text-[#94a3b8] px-2 py-0.5 rounded border border-[#1E293B] font-['JetBrains_Mono',monospace]">
+          Studio v2.4
+        </span>
       </div>
 
-      {/* ──────────────── 5 Tính năng ở chính giữa (Cố định 1 hàng) ──────────────── */}
+      {/* ──────────────── 4 Tính năng ở chính giữa ──────────────── */}
       <nav
         aria-label="Điều hướng chính"
-        className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
+        className="hidden md:flex items-center justify-center gap-1 xl:gap-2 whitespace-nowrap overflow-x-auto scrollbar-none absolute left-1/2 -translate-x-1/2"
       >
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -61,10 +64,10 @@ export default function Navbar() {
         </Link>
         <Link
           to="/workspace"
-          aria-label="Bắt đầu sử dụng miễn phí"
-          className="bg-[#10b981] hover:bg-[#4edea3] text-[#0f131c] font-semibold px-4 py-2 rounded text-sm transition-colors shadow-sm"
+          aria-label="Mở Không Gian Làm Việc AI Studio"
+          className="bg-[#10b981] hover:bg-[#4edea3] text-[#0f131c] font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition-colors shadow-sm font-['Plus_Jakarta_Sans',sans-serif]"
         >
-          Bắt đầu miễn phí
+          AI Studio
         </Link>
       </div>
     </header>

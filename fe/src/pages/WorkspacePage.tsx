@@ -1,689 +1,792 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
-interface Message {
+// Types
+interface JobItem {
   id: string;
-  sender: "ai" | "user";
-  agentName?: string;
-  agentRole?: string;
-  timestamp: string;
-  content: string;
-  reasoning?: string[];
-  starDiff?: {
-    original: string;
-    improved: string;
-    explanation: string;
-  };
-  actionChips?: string[];
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  matchScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  description: string;
+  requirements: string[];
+  benefits: string[];
 }
 
 export default function WorkspacePage() {
-  // Mobile Tab State: "sources" | "chat" | "studio"
-  const [activeMobileTab, setActiveMobileTab] = useState<"sources" | "chat" | "studio">("chat");
-
-  // State Nguồn tài liệu (Cột 1)
-  const [sources, setSources] = useState([
-    {
-      id: "src-1",
-      name: "Dung_Vu_Senior_Backend_Resume_v3.pdf",
-      type: "resume",
-      size: "245 KB",
-      active: true,
-      sections: ["Tóm tắt chuyên môn", "Kinh nghiệm (3)", "Kỹ năng (18)", "Học vấn & Bằng cấp"],
-    },
-    {
-      id: "src-2",
-      name: "JD_VNG_Senior_Python_FastAPI.txt",
-      type: "jd",
-      size: "1.2 KB",
-      active: true,
-      company: "VNG Corporation",
-    },
-  ]);
-
-  const [selectedJdKey, setSelectedJdKey] = useState<"vng" | "momo">("vng");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // State Phiên bản CV trong Studio (Cột 3)
-  const [selectedVersion, setSelectedVersion] = useState<"v2" | "v1">("v2");
-  const [isCopied, setIsCopied] = useState(false);
-
-  // State Hội thoại AI (Cột 2)
-  const [inputPrompt, setInputPrompt] = useState("");
+  // State variables
+  const [activeRightTab, setActiveRightTab] = useState<"jobs" | "studio">("jobs");
+  const [activeVersion, setActiveVersion] = useState<"v2" | "v1">("v2");
+  const [selectedJob, setSelectedJob] = useState<JobItem | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
   const [isReasoningOpen, setIsReasoningOpen] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([
+
+  // Sample matched jobs data
+  const jobsList: JobItem[] = [
     {
-      id: "msg-1",
-      sender: "ai",
-      agentName: "CareerPilot ATS Specialist",
-      agentRole: "Chuyên gia Tối ưu Hồ sơ & ATS",
-      timestamp: "10:24 AM",
-      content:
-        "Xin chào Dũng! Tôi đã đối chiếu hồ sơ **Senior Backend Engineer** của bạn với tiêu chuẩn tuyển dụng và JD mục tiêu tại **VNG Corporation**. Điểm ATS hiện tại của bạn đạt **94/100**.\n\nDưới đây là phân tích chi tiết và đề xuất viết lại câu mô tả kinh nghiệm dự án Cổng thanh toán theo mô hình **STAR (Situation - Task - Action - Result)** để vượt qua bộ lọc ATS với điểm số vượt trội:",
-      reasoning: [
-        "Đã quét 18/20 từ khóa kỹ thuật cốt lõi khớp với JD (FastAPI, PostgreSQL, Docker, Redis, Microservices).",
-        "Phát hiện câu mô tả dự án Payment Gateway còn chung chung, thiếu số liệu định lượng (Metrics & Impact).",
-        "Khuyến nghị chuyển đổi câu văn sang phương pháp STAR và bổ sung từ khóa Distributed Tracing (Jaeger).",
+      id: "vng-01",
+      title: "Senior AI & Backend Systems Engineer",
+      company: "VNG Corporation",
+      location: "TP. Hồ Chí Minh (Hybrid)",
+      salary: "50.000.000đ - 75.000.000đ",
+      matchScore: 96,
+      matchedSkills: ["Python", "FastAPI", "RAG Pipelines", "PostgreSQL", "Docker"],
+      missingSkills: ["Kafka Cluster"],
+      description:
+        "Chịu trách nhiệm kiến trúc và phát triển nền tảng AI Core phục vụ hàng triệu người dùng. Tối ưu hóa độ trễ truy vấn RAG và xây dựng backend microservices hiệu năng cao.",
+      requirements: [
+        "Từ 3+ năm kinh nghiệm phát triển hệ thống Backend với Python (FastAPI/AsyncIO) hoặc Go.",
+        "Kinh nghiệm thực chiến với Vector Database (Qdrant, Milvus, Pinecone) và RAG Frameworks.",
+        "Thành thạo tối ưu hóa câu lệnh PostgreSQL, Caching Redis và kiến trúc Microservices.",
+        "Có tư duy làm việc độc lập và kỹ năng giải quyết vấn đề hệ thống quy mô lớn.",
       ],
-      starDiff: {
-        original:
-          "Phát triển và bảo trì các API backend cho hệ thống thanh toán điện tử, xử lý dữ liệu giao dịch hàng ngày.",
-        improved:
-          "Thiết kế & tối ưu hóa 12 microservices backend bằng **FastAPI** và **PostgreSQL**, giảm 35% độ trễ API P99 và chịu tải ổn định 10,000+ RPS cho cổng thanh toán điện tử.",
-        explanation:
-          "Bổ sung từ khóa công nghệ chính xác (FastAPI, PostgreSQL, microservices) và đưa số liệu đo lường định lượng (giảm 35% latency, 10,000+ RPS) theo chuẩn ATS 2026.",
-      },
-      actionChips: [
-        "Áp dụng câu này vào CV đã tối ưu",
-        "Bổ sung kỹ năng Kubernetes còn thiếu",
-        "Tạo 3 câu hỏi phỏng vấn cho dự án này",
-        "Tải xuống bản PDF tối ưu",
+      benefits: [
+        "Mức lương cạnh tranh bậc nhất thị trường + Thưởng hiệu suất hàng năm (14-16 tháng lương).",
+        "Bảo hiểm sức khỏe cao cấp VNG Care cho nhân viên và người thân.",
+        "Môi trường làm việc Hybrid linh hoạt, cung cấp Macbook Pro M3 Max.",
       ],
     },
-  ]);
+    {
+      id: "momo-02",
+      title: "Lead Backend Architect",
+      company: "MoMo (M_Service)",
+      location: "Hà Nội / TP. HCM",
+      salary: "60.000.000đ - 85.000.000đ",
+      matchScore: 92,
+      matchedSkills: ["Python", "Go", "PostgreSQL", "Redis", "Microservices"],
+      missingSkills: ["Kubernetes Operator"],
+      description:
+        "Thiết kế kiến trúc hệ thống thanh toán và dịch vụ tài chính chịu tải 30,000+ RPS. Đảm bảo tính khả dụng 99.99% và an toàn bảo mật dữ liệu giao dịch.",
+      requirements: [
+        "4+ năm kinh nghiệm Backend quy mô lớn, thành thạo Go/Python.",
+        "Hiểu sâu về Sharding DB, Distributed Transaction và Idempotency.",
+        "Kinh nghiệm làm việc với Redis Cluster, Kafka Event Streaming.",
+      ],
+      benefits: [
+        "Gói ESOP dành cho nhân sự nòng cốt.",
+        "Thưởng hiệu suất 3-5 tháng lương mỗi năm.",
+        "Lộ trình thăng tiến rõ ràng lên Principal Architect.",
+      ],
+    },
+    {
+      id: "techfin-03",
+      title: "Machine Learning Systems Lead",
+      company: "TechFin Global",
+      location: "Remote (Toàn thời gian)",
+      salary: "$3,000 - $4,500 / tháng",
+      matchScore: 88,
+      matchedSkills: ["PyTorch", "Python", "RAG", "Docker", "Qdrant"],
+      missingSkills: ["Triton Inference Server"],
+      description:
+        "Xây dựng hạ tầng triển khai mô hình LLM và RAG quy mô doanh nghiệp cho các tổ chức tài chính tại Singapore và Đông Nam Á.",
+      requirements: [
+        "Kinh nghiệm tối ưu hóa mô hình LLM, Fine-tuning và Quantization.",
+        "Xây dựng API serving với độ trễ thấp (< 200ms).",
+      ],
+      benefits: [
+        "Làm việc 100% Remote, thanh toán theo USD.",
+        "Ngân sách $2,000/năm cho học tập và thiết bị.",
+      ],
+    },
+  ];
 
-  // Xử lý gửi prompt
-  const handleSendMessage = () => {
-    if (!inputPrompt.trim()) return;
-    const userMsg: Message = {
-      id: `user-${Date.now()}`,
-      sender: "user",
-      timestamp: "Bây giờ",
-      content: inputPrompt,
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setInputPrompt("");
-
-    setTimeout(() => {
-      const aiReply: Message = {
-        id: `ai-${Date.now()}`,
-        sender: "ai",
-        agentName: "CareerPilot ATS Specialist",
-        agentRole: "Chuyên gia Tối ưu Hồ sơ & ATS",
-        timestamp: "Vừa xong",
-        content: `Tôi đã cập nhật phân tích theo yêu cầu: "${inputPrompt}". Phiên bản CV đã tối ưu bên phải đã được đồng bộ các từ khóa mới nhất.`,
-        actionChips: ["Xem bản CV đã tối ưu", "Tối ưu hóa tiếp"],
-      };
-      setMessages((prev) => [...prev, aiReply]);
-    }, 600);
+  // Handler for selecting job to view in drawer
+  const handleOpenJobDetail = (job: JobItem) => {
+    setSelectedJob(job);
+    setIsDrawerOpen(true);
   };
 
-  // Toggle checkbox nguồn
-  const toggleSource = (id: string) => {
-    setSources((prev) =>
-      prev.map((src) => (src.id === id ? { ...src, active: !src.active } : src))
-    );
+  // Handler for tailoring CV for a specific job
+  const handleTailorForJob = (job: JobItem) => {
+    setSelectedJob(job);
+    setActiveRightTab("studio");
+    setActiveVersion("v2");
   };
 
-  // Sao chép nội dung CV
-  const handleCopyResume = () => {
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  // Handler for asking AI about the selected job
+  const handleAskAiAboutJob = (job: JobItem) => {
+    setIsDrawerOpen(false);
+    setChatInput(`Phân tích mức độ tương thích giữa CV của tôi và JD ${job.title} tại ${job.company}`);
   };
 
   return (
-    <div className="pt-16 h-screen flex flex-col bg-[#090D16] text-[#e2e8f0] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif] overflow-hidden">
+    <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif] flex flex-col pt-16">
       {/* ────────────────────────────────────────────────────────────
-          MOBILE NAVIGATION BAR (Chỉ hiển thị trên Mobile / Tablet nhỏ)
+          TOP STATUS BAR (WORKSPACE HEADER)
       ──────────────────────────────────────────────────────────── */}
-      <div className="lg:hidden flex items-center justify-around border-b border-[#1E293B] bg-[#0c101b] h-12 text-sm shrink-0 font-medium font-['Plus_Jakarta_Sans',sans-serif]">
-        <button
-          type="button"
-          onClick={() => setActiveMobileTab("sources")}
-          className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
-            activeMobileTab === "sources"
-              ? "border-[#10b981] text-[#4edea3] font-semibold"
-              : "border-transparent text-[#94a3b8]"
-          }`}
-        >
-          <span>📂 Nguồn (2)</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveMobileTab("chat")}
-          className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
-            activeMobileTab === "chat"
-              ? "border-[#10b981] text-[#4edea3] font-semibold"
-              : "border-transparent text-[#94a3b8]"
-          }`}
-        >
-          <span>💬 Chat AI</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveMobileTab("studio")}
-          className={`flex items-center gap-1.5 py-2.5 px-4 border-b-2 transition-all ${
-            activeMobileTab === "studio"
-              ? "border-[#10b981] text-[#4edea3] font-semibold"
-              : "border-transparent text-[#94a3b8]"
-          }`}
-        >
-          <span>📑 CV đã tối ưu (94%)</span>
-        </button>
+      <div className="h-12 border-b border-[#1E293B] bg-[#0c101b] px-4 sm:px-8 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs text-[#94a3b8]">
+            <span className="font-medium text-[#f8fafc]">Nguyễn Văn A</span>
+            <span>/</span>
+            <span className="text-[#4edea3] font-semibold">Senior AI &amp; Backend Systems</span>
+          </div>
+          <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#10b981]/10 border border-[#10b981]/30 text-[#4edea3] text-[11px] font-['JetBrains_Mono',monospace]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+            ATS MATCH: 96%
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveRightTab("studio");
+              setActiveVersion("v2");
+            }}
+            className="inline-flex items-center gap-1.5 bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm font-['Plus_Jakarta_Sans',sans-serif]"
+          >
+            Tải PDF Đã Tối Ưu (95%)
+          </button>
+        </div>
       </div>
 
       {/* ────────────────────────────────────────────────────────────
-          BỐ CỤC 3 PHÂN VÙNG NOTEBOOKLM (3-PANE STUDIO WORKSPACE)
+          UNIFIED 3-COLUMN STUDIO LAYOUT
       ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ══════════════════════════════════════════════════════════
-            CỘT 1: NGUỒN TÀI LIỆU (SOURCES PANEL - 26% WIDTH)
-        ══════════════════════════════════════════════════════════ */}
-        <aside
-          className={`w-full lg:w-[26%] xl:w-[25%] border-r border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto slim-scrollbar ${
-            activeMobileTab === "sources" ? "flex" : "hidden lg:flex"
-          }`}
-        >
-          {/* Header Cột 1 */}
-          <div className="p-4 border-b border-[#1E293B] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
-              <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-xs font-bold uppercase tracking-wider text-[#f8fafc]">
-                Nguồn Tài Liệu (2)
-              </h2>
-            </div>
-          </div>
-
-          {/* Danh sách Nguồn đã nạp */}
-          <div className="p-4 space-y-3.5 flex-1">
-            {sources.map((src) => (
-              <div
-                key={src.id}
-                className={`p-3.5 rounded-xl border transition-all ${
-                  src.active
-                    ? "bg-[#111827] border-[#1E293B] hover:border-[#10b981]/50 shadow-sm"
-                    : "bg-[#090D16]/50 border-[#1E293B]/40 opacity-60"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2.5 mb-2">
-                  <div className="flex items-start gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={src.active}
-                      onChange={() => toggleSource(src.id)}
-                      aria-label={`Kích hoạt nguồn ${src.name}`}
-                      className="mt-1 accent-[#10b981] rounded cursor-pointer w-4 h-4"
-                    />
-                    <div>
-                      <div className="text-[13px] font-bold text-[#f8fafc] font-['JetBrains_Mono',monospace] leading-snug break-all">
-                        {src.name}
-                      </div>
-                      <div className="text-xs text-[#94a3b8] mt-1 font-['Inter',sans-serif]">
-                        {src.type === "resume"
-                          ? "File Hồ Sơ • " + src.size
-                          : "JD Tuyển Dụng • " + src.company}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-semibold shrink-0 font-['JetBrains_Mono',monospace] ${
-                      src.type === "resume"
-                        ? "bg-[#10b981]/15 text-[#4edea3] border border-[#10b981]/30"
-                        : "bg-[#06b6d4]/15 text-[#06b6d4] border border-[#06b6d4]/30"
-                    }`}
-                  >
-                    {src.type === "resume" ? "CV Gốc" : "Target JD"}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-7rem)] overflow-hidden">
+        
+        {/* ════════════════════════════════════════════════════════════
+            CỘT 1 (3/12 Col ~ 25%): MY CV & PROFILE
+        ════════════════════════════════════════════════════════════ */}
+        <aside className="lg:col-span-3 border-r border-[#1E293B] bg-[#0c101b] flex flex-col h-full overflow-y-auto scrollbar-thin">
+          <div className="p-4 sm:p-5 space-y-6">
+            
+            {/* 1.1 Uploaded File Info */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-[#10b981]/10 text-[#4edea3] border border-[#10b981]/30 flex items-center justify-center font-bold text-xs font-['JetBrains_Mono',monospace]">
+                    PDF
                   </span>
+                  <div>
+                    <h2 className="text-xs font-bold text-[#f8fafc] truncate max-w-[150px] font-['Plus_Jakarta_Sans',sans-serif]">
+                      Nguyen_Van_A_CV.pdf
+                    </h2>
+                    <p className="text-[10px] text-[#94a3b8]">1.4 MB • Đã quét 18 kỹ năng</p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-[#4edea3] bg-[#10b981]/10 px-2 py-0.5 rounded font-['JetBrains_Mono',monospace]">
+                  Sẵn sàng
+                </span>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  className="flex-1 bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] text-[#dfe2ef] text-[11px] font-medium py-1.5 rounded-lg transition-colors text-center"
+                >
+                  Thay CV Khác
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] text-[#dfe2ef] text-[11px] font-medium py-1.5 rounded-lg transition-colors text-center"
+                >
+                  Xem Bản Gốc
+                </button>
+              </div>
+            </div>
+
+            {/* 1.2 ATS Score Breakdown Gauge */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider font-['Plus_Jakarta_Sans',sans-serif]">
+                  Điểm Đánh Giá ATS
+                </span>
+                <span className="text-xs font-bold text-[#4edea3] font-['JetBrains_Mono',monospace]">
+                  82 / 100
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full h-2.5 bg-[#181b25] rounded-full overflow-hidden border border-[#1E293B] mb-4">
+                <div className="w-[82%] h-full bg-[#10b981] rounded-full"></div>
+              </div>
+
+              {/* 3 Metric Axes */}
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-[#94a3b8]">Kỹ năng công nghệ</span>
+                  <span className="text-[#4edea3] font-semibold font-['JetBrains_Mono',monospace]">18/20 (90%)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[#94a3b8]">Tác động định lượng (Metrics)</span>
+                  <span className="text-[#f59e0b] font-semibold font-['JetBrains_Mono',monospace]">12/20 (60% ⚠)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[#94a3b8]">Cấu trúc chuẩn ATS</span>
+                  <span className="text-[#4edea3] font-semibold font-['JetBrains_Mono',monospace]">19/20 (95%)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 1.3 Parsed Skills List */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider font-['Plus_Jakarta_Sans',sans-serif]">
+                  Kỹ Năng Đã Bóc Tách (18)
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="text-[11px] text-[#94a3b8] mb-1.5 font-medium">Core Backend &amp; API:</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Python", "FastAPI", "Go", "RESTful API", "AsyncIO"].map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-2 py-0.5 bg-[#181b25] border border-[#1E293B] text-[#dfe2ef] rounded text-[11px] font-['JetBrains_Mono',monospace]"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                {src.sections && (
-                  <div className="text-xs text-[#94a3b8] bg-[#181b25] px-2.5 py-1.5 rounded-lg border border-[#1E293B] mt-2.5 leading-relaxed">
-                    <span className="text-[#4edea3] font-semibold">✓ Đã bóc tách: </span>
-                    {src.sections.join(" • ")}
+                <div>
+                  <div className="text-[11px] text-[#94a3b8] mb-1.5 font-medium">AI &amp; Data Engineering:</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["RAG Pipelines", "Qdrant DB", "PyTorch", "LangChain"].map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-2 py-0.5 bg-[#10b981]/10 border border-[#10b981]/30 text-[#4edea3] rounded text-[11px] font-['JetBrains_Mono',monospace]"
+                      >
+                        {skill}
+                      </span>
+                    ))}
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
 
-            {/* Quick Upload Dropzone at Bottom of Column 1 */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#1E293B] hover:border-[#10b981]/60 bg-[#181b25]/50 rounded-xl p-4 text-center cursor-pointer transition-all mt-4"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx,.doc"
-                className="hidden"
-                aria-label="Tải file lên"
-              />
-              <div className="text-xs font-medium text-[#94a3b8] hover:text-[#dfe2ef] flex items-center justify-center gap-2">
-                <svg className="w-4 h-4 text-[#4edea3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Thả file CV mới vào đây để phân tích</span>
+                <div>
+                  <div className="text-[11px] text-[#94a3b8] mb-1.5 font-medium">Database &amp; DevOps:</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["PostgreSQL", "Redis", "Docker", "Kafka"].map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-2 py-0.5 bg-[#181b25] border border-[#1E293B] text-[#dfe2ef] rounded text-[11px] font-['JetBrains_Mono',monospace]"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Quick JD Presets in Column 1 */}
-          <div className="p-4 border-t border-[#1E293B] bg-[#090D16]">
-            <div className="text-xs text-[#94a3b8] font-bold uppercase tracking-wider mb-2.5 font-['Plus_Jakarta_Sans',sans-serif]">
-              Đổi JD Tuyển Dụng Nhanh
+            {/* 1.4 Experience Timeline */}
+            <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
+                Kinh Nghiệm Làm Việc
+              </div>
+              <div className="space-y-3 border-l-2 border-[#1E293B] pl-3 ml-1">
+                <div>
+                  <div className="text-xs font-bold text-[#f8fafc]">Senior AI / Backend Engineer</div>
+                  <div className="text-[11px] text-[#4edea3]">VNG Cloud • 2023 - Hiện tại</div>
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-[#f8fafc]">Software Engineer (Python/Go)</div>
+                  <div className="text-[11px] text-[#94a3b8]">MoMo Fintech • 2021 - 2023</div>
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedJdKey("vng")}
-                className={`text-xs p-2.5 rounded-lg text-left border transition-all ${
-                  selectedJdKey === "vng"
-                    ? "bg-[#10b981]/15 text-[#4edea3] border-[#10b981]/50 font-bold"
-                    : "bg-[#181b25] text-[#dfe2ef] border-[#1E293B] hover:border-[#3c4a42]"
-                }`}
-              >
-                <div className="truncate font-bold">VNG Corp</div>
-                <div className="text-[11px] text-[#94a3b8] mt-0.5">Senior Python</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedJdKey("momo")}
-                className={`text-xs p-2.5 rounded-lg text-left border transition-all ${
-                  selectedJdKey === "momo"
-                    ? "bg-[#10b981]/15 text-[#4edea3] border-[#10b981]/50 font-bold"
-                    : "bg-[#181b25] text-[#dfe2ef] border-[#1E293B] hover:border-[#3c4a42]"
-                }`}
-              >
-                <div className="truncate font-bold">MoMo</div>
-                <div className="text-[11px] text-[#94a3b8] mt-0.5">Lead Architect</div>
-              </button>
-            </div>
+
           </div>
         </aside>
 
-        {/* ══════════════════════════════════════════════════════════
-            CỘT 2: TRUNG TÂM HỘI THOẠI AI (CHAT CENTER - 44% WIDTH)
-        ══════════════════════════════════════════════════════════ */}
-        <section
-          className={`flex-1 flex flex-col bg-[#090D16] overflow-hidden ${
-            activeMobileTab === "chat" ? "flex" : "hidden lg:flex"
-          }`}
-        >
-          {/* Header Cột 2 */}
-          <div className="px-6 py-3.5 border-b border-[#1E293B] bg-[#0c101b] flex items-center justify-between shrink-0">
+        {/* ════════════════════════════════════════════════════════════
+            CỘT 2 (5/12 Col ~ 42%): AI ASSISTANT & STAR REASONING
+        ════════════════════════════════════════════════════════════ */}
+        <main className="lg:col-span-5 flex flex-col h-full bg-[#090D16] border-r border-[#1E293B]">
+          
+          {/* 2.1 Chat Header */}
+          <div className="h-14 px-6 border-b border-[#1E293B] bg-[#0c101b] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#10b981] text-[#090D16] font-bold text-xs flex items-center justify-center font-['Plus_Jakarta_Sans',sans-serif] shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-[#10b981] text-[#090D16] flex items-center justify-center font-bold text-sm">
                 AI
               </div>
               <div>
-                <div className="text-sm font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
-                  CareerPilot ATS Specialist
-                </div>
-                <div className="text-xs text-[#4edea3] font-['JetBrains_Mono',monospace]">
-                  ● Đang phân tích 2 nguồn tài liệu
+                <h1 className="text-xs font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
+                  Trợ Lý Tối Ưu Hóa Nghề Nghiệp AI
+                </h1>
+                <div className="flex items-center gap-1.5 text-[10px] text-[#4edea3]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+                  Đang phân tích CV và so khớp 5 việc làm
                 </div>
               </div>
             </div>
-
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-xs text-[#94a3b8] font-['JetBrains_Mono',monospace] bg-[#181b25] px-2.5 py-1 rounded-md border border-[#1E293B]">
-                Đối chiếu: VNG Corporation
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsReasoningOpen(!isReasoningOpen)}
+              className="text-[11px] text-[#94a3b8] hover:text-[#4edea3] border border-[#1E293B] px-2.5 py-1 rounded-lg bg-[#181b25] transition-colors"
+            >
+              {isReasoningOpen ? "Ẩn suy luận" : "Hiện suy luận AI"}
+            </button>
           </div>
 
-          {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 slim-scrollbar">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}
-              >
-                {/* Agent Header */}
-                {msg.sender === "ai" && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
-                      {msg.agentName}
-                    </span>
-                    <span className="text-[11px] text-[#4edea3] bg-[#10b981]/10 border border-[#10b981]/30 px-2 py-0.2 rounded font-['JetBrains_Mono',monospace]">
-                      {msg.agentRole}
-                    </span>
-                    <span className="text-xs text-[#64748b] font-['JetBrains_Mono',monospace]">
-                      {msg.timestamp}
-                    </span>
-                  </div>
-                )}
+          {/* 2.2 Chat Messages Stream */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 scrollbar-thin">
+            
+            {/* AI Welcome Message */}
+            <div className="flex gap-3">
+              <div className="w-7 h-7 rounded-lg bg-[#10b981] text-[#090D16] flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                AI
+              </div>
+              <div className="flex-1 bg-[#111827] border border-[#1E293B] rounded-2xl rounded-tl-sm p-4 text-xs text-[#dfe2ef] space-y-3 leading-relaxed shadow-sm">
+                <p className="font-medium text-[#f8fafc]">
+                  Xin chào Nguyễn Văn A! Tôi đã hoàn tất phân tích hồ sơ CV của bạn:
+                </p>
+                <div className="space-y-1.5 pl-2 border-l-2 border-[#10b981]">
+                  <div><strong className="text-[#4edea3]">Điểm mạnh:</strong> Tech stack chuẩn hiện đại (Python, FastAPI, RAG, Qdrant).</div>
+                  <div><strong className="text-[#f59e0b]">Điểm cần cải thiện:</strong> Mục kinh nghiệm dự án còn thiếu số liệu định lượng (Metrics &amp; Scale).</div>
+                  <div><strong className="text-[#06b6d4]">Cơ hội việc làm:</strong> Có <span className="font-bold text-[#4edea3]">3 vị trí phù hợp trên 90%</span> ở cột bên phải!</div>
+                </div>
+                <p className="text-[#94a3b8] text-[11px]">
+                  💡 Hãy chọn 1 Job ở Cột 3 hoặc bấm vào các câu lệnh gợi ý bên dưới để tôi bắt đầu tối ưu CV theo chuẩn STAR!
+                </p>
+              </div>
+            </div>
 
-                {/* Message Bubble */}
-                <div
-                  className={`p-5 rounded-2xl text-[14px] sm:text-[15px] leading-relaxed ${
-                    msg.sender === "user"
-                      ? "bg-[#181b25] text-[#f8fafc] border border-[#1E293B] max-w-xl"
-                      : "bg-[#111827] text-[#e2e8f0] border border-[#1E293B] w-full shadow-lg"
+            {/* AI Reasoning Box (Accordion) */}
+            {isReasoningOpen && (
+              <div className="ml-10 bg-[#181b25] border border-[#1E293B] rounded-xl p-3.5 text-xs text-[#94a3b8] space-y-2">
+                <div className="flex items-center gap-2 text-[#4edea3] font-semibold font-['JetBrains_Mono',monospace] text-[11px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                  QUÁ TRÌNH SUY LUẬN CỦA AI (DEEP REASONING)
+                </div>
+                <p className="text-[11px] leading-relaxed">
+                  1. Quét đối chiếu 18 kỹ năng với JD VNG Corp (Senior AI &amp; Backend Systems).<br />
+                  2. Khớp 5/6 yêu cầu cốt lõi (Tỷ lệ tương thích đạt 96%).<br />
+                  3. Phát hiện câu mô tả dự án RAG cũ chưa nêu rõ độ trễ (Latency) và lưu lượng truy vấn (QPS). Đã tiến hành tái cấu trúc theo mô hình STAR.
+                </p>
+              </div>
+            )}
+
+            {/* STAR Diff Comparison Box */}
+            <div className="ml-10 bg-[#111827] border border-[#1E293B] rounded-xl p-4 space-y-3 shadow-md">
+              <div className="flex items-center justify-between pb-2 border-b border-[#1E293B]">
+                <span className="text-xs font-bold text-[#4edea3] font-['JetBrains_Mono',monospace] uppercase">
+                  ⚡ Đề xuất tối ưu hóa STAR (Kinh nghiệm VNG Cloud)
+                </span>
+                <span className="text-[10px] bg-[#10b981]/10 text-[#4edea3] px-2 py-0.5 rounded font-semibold">
+                  Tăng +13% ATS
+                </span>
+              </div>
+
+              {/* Before */}
+              <div className="space-y-1">
+                <div className="text-[11px] font-semibold text-[#f87171] flex items-center gap-1.5">
+                  <span>❌</span> Bản gốc trước đây:
+                </div>
+                <p className="text-xs text-[#94a3b8] bg-[#181b25] p-2.5 rounded border border-[#1E293B] line-through">
+                  "Xây dựng hệ thống RAG tìm kiếm tài liệu cho doanh nghiệp bằng Python và Qdrant."
+                </p>
+              </div>
+
+              {/* After */}
+              <div className="space-y-1">
+                <div className="text-[11px] font-semibold text-[#4edea3] flex items-center gap-1.5">
+                  <span>✅</span> Bản đề xuất chuẩn STAR:
+                </div>
+                <p className="text-xs text-[#f8fafc] bg-[#10b981]/10 p-2.5 rounded border border-[#10b981]/30 leading-relaxed font-medium">
+                  "Kiến trúc hệ thống RAG đa luồng với Python và Qdrant, <span className="text-[#4edea3] font-bold">giảm thời gian phản hồi từ 1.8s xuống 320ms (-82%)</span>, phục vụ <span className="text-[#4edea3] font-bold">50,000+ truy vấn/ngày</span> với độ chính xác 94.6%."
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRightTab("studio");
+                    setActiveVersion("v2");
+                  }}
+                  className="bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm"
+                >
+                  Áp Dụng Vào CV Đã Tối Ưu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChatInput("Hãy đề xuất cho tôi một phương án viết khác nhấn mạnh vào tối ưu hóa chi phí")}
+                  className="bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] text-[#dfe2ef] font-medium px-3 py-1.5 rounded-lg text-xs transition-colors"
+                >
+                  Tạo Phương Án Khác
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* 2.3 Quick Action Chips & Input Dock */}
+          <div className="p-4 border-t border-[#1E293B] bg-[#0c101b] space-y-3">
+            {/* Quick Action Chips */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+              <button
+                type="button"
+                onClick={() => setChatInput("Phân tích điểm yếu lớn nhất trong CV của tôi và cách khắc phục")}
+                className="whitespace-nowrap bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] hover:border-[#10b981]/50 text-[#dfe2ef] text-[11px] px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+              >
+                <span>⚡</span> Phân tích điểm yếu lớn nhất
+              </button>
+              <button
+                type="button"
+                onClick={() => setChatInput("So sánh CV của tôi với JD VNG Corporation 96% Match")}
+                className="whitespace-nowrap bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] hover:border-[#10b981]/50 text-[#dfe2ef] text-[11px] px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+              >
+                <span>⚡</span> So sánh với JD VNG Corp
+              </button>
+              <button
+                type="button"
+                onClick={() => setChatInput("Viết lại toàn bộ phần kinh nghiệm làm việc theo chuẩn STAR có số liệu")}
+                className="whitespace-nowrap bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] hover:border-[#10b981]/50 text-[#dfe2ef] text-[11px] px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+              >
+                <span>⚡</span> Viết lại theo chuẩn STAR
+              </button>
+            </div>
+
+            {/* Prompt Input Bar */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (chatInput.trim()) {
+                  setChatInput("");
+                }
+              }}
+              className="relative flex items-center"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Nhập câu hỏi hoặc yêu cầu AI tối ưu hóa CV... (Enter để gửi)"
+                className="w-full bg-[#111827] border border-[#1E293B] focus:border-[#10b981] rounded-xl pl-4 pr-24 py-3 text-xs text-[#f8fafc] placeholder-[#64748b] outline-none transition-colors shadow-inner"
+              />
+              <button
+                type="submit"
+                aria-label="Gửi tin nhắn cho AI"
+                className="absolute right-2 bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold px-4 py-1.5 rounded-lg text-xs transition-colors shadow-sm font-['Plus_Jakarta_Sans',sans-serif]"
+              >
+                Gửi
+              </button>
+            </form>
+          </div>
+
+        </main>
+
+        {/* ════════════════════════════════════════════════════════════
+            CỘT 3 (4/12 Col ~ 33%): JOB MATCH FEED & TAILOR STUDIO
+        ════════════════════════════════════════════════════════════ */}
+        <section className="lg:col-span-4 flex flex-col h-full bg-[#0c101b]">
+          
+          {/* 3.1 Right Header Tabs */}
+          <div className="h-14 px-4 border-b border-[#1E293B] flex items-center justify-between shrink-0 bg-[#0c101b]">
+            <div className="flex gap-1 bg-[#181b25] p-1 rounded-lg border border-[#1E293B]">
+              <button
+                type="button"
+                onClick={() => setActiveRightTab("jobs")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  activeRightTab === "jobs"
+                    ? "bg-[#10b981] text-[#090D16] shadow-sm"
+                    : "text-[#94a3b8] hover:text-[#f8fafc]"
+                }`}
+              >
+                🎯 Việc Làm So Khớp (3)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveRightTab("studio")}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  activeRightTab === "studio"
+                    ? "bg-[#10b981] text-[#090D16] shadow-sm"
+                    : "text-[#94a3b8] hover:text-[#f8fafc]"
+                }`}
+              >
+                📑 CV Đã Tối Ưu
+              </button>
+            </div>
+
+            {activeRightTab === "studio" && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveVersion("v2")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                    activeVersion === "v2"
+                      ? "bg-[#10b981]/20 text-[#4edea3] border border-[#10b981]/40"
+                      : "text-[#94a3b8] hover:text-[#f8fafc]"
                   }`}
                 >
-                  <p className="whitespace-pre-line mb-4 font-['Inter',sans-serif]">{msg.content}</p>
+                  v2 (95%)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveVersion("v1")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                    activeVersion === "v1"
+                      ? "bg-[#10b981]/20 text-[#4edea3] border border-[#10b981]/40"
+                      : "text-[#94a3b8] hover:text-[#f8fafc]"
+                  }`}
+                >
+                  v1 (82%)
+                </button>
+              </div>
+            )}
+          </div>
 
-                  {/* AI Reasoning Accordion */}
-                  {msg.reasoning && msg.reasoning.length > 0 && (
-                    <div className="mb-4 bg-[#181b25] border border-[#1E293B] rounded-xl overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setIsReasoningOpen(!isReasoningOpen)}
-                        aria-label="Mở rộng quá trình suy luận của AI"
-                        className="w-full px-4 py-2.5 text-xs font-semibold flex items-center justify-between text-[#94a3b8] hover:text-[#4edea3] bg-[#141822] transition-colors"
-                      >
-                        <div className="flex items-center gap-2 font-['JetBrains_Mono',monospace]">
-                          <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-ping"></span>
-                          Tiến trình phân tích ({msg.reasoning.length} bước)
-                        </div>
-                        <svg
-                          className={`w-4 h-4 transform transition-transform duration-150 ${
-                            isReasoningOpen ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
+          {/* 3.2 Tab Content */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+            
+            {/* ───── TAB 1: JOB MATCH LIST ───── */}
+            {activeRightTab === "jobs" && (
+              <div className="space-y-4">
+                <div className="text-[11px] text-[#94a3b8] flex justify-between items-center">
+                  <span>Sắp xếp theo độ tương thích cao nhất</span>
+                  <span className="text-[#4edea3] font-['JetBrains_Mono',monospace]">3 Vị trí</span>
+                </div>
 
-                      {isReasoningOpen && (
-                        <div className="p-4 space-y-2 border-t border-[#1E293B] text-xs text-[#cbd5e1] font-['JetBrains_Mono',monospace]">
-                          {msg.reasoning.map((step, idx) => (
-                            <div key={idx} className="flex items-start gap-2">
-                              <span className="text-[#4edea3] font-bold">✓</span>
-                              <span>{step}</span>
-                            </div>
+                {jobsList.map((job) => (
+                  <div
+                    key={job.id}
+                    className="bg-[#111827] border border-[#1E293B] hover:border-[#10b981]/50 p-4 rounded-xl transition-all shadow-sm space-y-3"
+                  >
+                    {/* Job Title & Company */}
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <h2 className="text-xs font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
+                          {job.title}
+                        </h2>
+                        <p className="text-[11px] text-[#94a3b8] mt-0.5">
+                          {job.company} • {job.location}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-[#4edea3] bg-[#10b981]/10 border border-[#10b981]/30 px-2 py-0.5 rounded-full shrink-0 font-['JetBrains_Mono',monospace]">
+                        {job.matchScore}% Match
+                      </span>
+                    </div>
+
+                    <div className="text-xs font-semibold text-[#10b981] font-['JetBrains_Mono',monospace]">
+                      {job.salary}
+                    </div>
+
+                    {/* Skill Match Breakdown */}
+                    <div className="space-y-1.5 pt-1 border-t border-[#1E293B]/60 text-[11px]">
+                      <div className="flex flex-wrap gap-1 items-center">
+                        <span className="text-[#94a3b8] text-[10px]">Khớp:</span>
+                        {job.matchedSkills.slice(0, 4).map((skill) => (
+                          <span
+                            key={skill}
+                            className="bg-[#10b981]/10 text-[#4edea3] px-1.5 py-0.5 rounded text-[10px] font-['JetBrains_Mono',monospace]"
+                          >
+                            {skill} ✓
+                          </span>
+                        ))}
+                      </div>
+                      {job.missingSkills.length > 0 && (
+                        <div className="flex flex-wrap gap-1 items-center">
+                          <span className="text-[#94a3b8] text-[10px]">Thiếu:</span>
+                          {job.missingSkills.map((skill) => (
+                            <span
+                              key={skill}
+                              className="bg-[#f59e0b]/10 text-[#f59e0b] px-1.5 py-0.5 rounded text-[10px] font-['JetBrains_Mono',monospace]"
+                            >
+                              {skill} ⚠
+                            </span>
                           ))}
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {/* STAR Method Diff Comparison Block */}
-                  {msg.starDiff && (
-                    <div className="bg-[#181b25] border border-[#1E293B] rounded-xl p-4 sm:p-5 mb-4 space-y-3.5">
-                      <div className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider font-['Plus_Jakarta_Sans',sans-serif] flex items-center justify-between">
-                        <span>Đề xuất tối ưu câu mô tả (STAR Method)</span>
-                        <span className="text-[#10b981] font-['JetBrains_Mono',monospace] font-bold">
-                          +4% ATS Impact
-                        </span>
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenJobDetail(job)}
+                        className="flex-1 bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] text-[#dfe2ef] text-xs font-medium py-1.5 rounded-lg transition-colors text-center"
+                      >
+                        Xem Chi Tiết JD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTailorForJob(job)}
+                        className="flex-1 bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] text-xs font-bold py-1.5 rounded-lg transition-colors text-center font-['Plus_Jakarta_Sans',sans-serif]"
+                      >
+                        Tailor CV Này
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ───── TAB 2: TAILORED CV STUDIO ───── */}
+            {activeRightTab === "studio" && (
+              <div className="space-y-4">
+                <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-4 space-y-4 shadow-md">
+                  <div className="flex justify-between items-center pb-3 border-b border-[#1E293B]">
+                    <div>
+                      <div className="text-xs font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
+                        Bản CV Chuẩn ATS 2026
                       </div>
-
-                      {/* Original */}
-                      <div className="bg-[#111827] p-3.5 rounded-lg border border-red-900/40 text-xs sm:text-[13px]">
-                        <div className="text-red-400 font-semibold mb-1 font-['JetBrains_Mono',monospace]">
-                          - Bản gốc (Chưa định lượng):
-                        </div>
-                        <p className="text-[#94a3b8] line-through leading-relaxed">{msg.starDiff.original}</p>
-                      </div>
-
-                      {/* Improved */}
-                      <div className="bg-[#111827] p-3.5 rounded-lg border border-[#10b981]/50 text-xs sm:text-[13px]">
-                        <div className="text-[#4edea3] font-semibold mb-1 font-['JetBrains_Mono',monospace]">
-                          + Bản đề xuất (Chuẩn ATS &amp; STAR):
-                        </div>
-                        <p className="text-[#f8fafc] font-medium leading-relaxed">{msg.starDiff.improved}</p>
-                      </div>
-
-                      {/* Explanation */}
-                      <div className="text-xs text-[#94a3b8] italic border-l-2 border-[#10b981] pl-3 py-0.5 leading-relaxed">
-                        💡 {msg.starDiff.explanation}
+                      <div className="text-[10px] text-[#4edea3]">
+                        {activeVersion === "v2"
+                          ? "⚡ Đã tối ưu theo JD VNG Corp (ATS 95%)"
+                          : "📄 Bản gốc chưa tối ưu (ATS 82%)"}
                       </div>
                     </div>
-                  )}
+                    <span className="text-xs font-bold text-[#4edea3] font-['JetBrains_Mono',monospace] bg-[#10b981]/10 px-2 py-1 rounded">
+                      {activeVersion === "v2" ? "95 / 100" : "82 / 100"}
+                    </span>
+                  </div>
 
-                  {/* Interactive Action Prompt Chips */}
-                  {msg.actionChips && (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {msg.actionChips.map((chip, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setInputPrompt(chip)}
-                          aria-label={`Gợi ý: ${chip}`}
-                          className="text-xs bg-[#181b25] hover:bg-[#10b981]/15 text-[#dfe2ef] hover:text-[#4edea3] border border-[#1E293B] hover:border-[#10b981]/50 px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 font-medium"
-                        >
-                          <span>⚡</span>
-                          <span>{chip}</span>
-                        </button>
-                      ))}
+                  {/* CV Content Preview */}
+                  <div className="space-y-3 text-xs leading-relaxed">
+                    <div>
+                      <h3 className="font-bold text-[#f8fafc] uppercase tracking-wider text-[11px] mb-1">
+                        1. Tóm Tắt Chuyên Môn (Summary)
+                      </h3>
+                      {activeVersion === "v2" ? (
+                        <p className="text-[#dfe2ef] bg-[#10b981]/10 p-3 rounded border border-[#10b981]/30">
+                          Senior AI &amp; Backend Systems Engineer với hơn 4.5 năm kinh nghiệm chuyên sâu về kiến trúc Microservices (Python/FastAPI/Go) và hạ tầng RAG Pipelines. Đã triển khai thành công hệ thống phục vụ 50,000+ QPS, tối ưu hóa độ trễ truy vấn giảm 82%.
+                        </p>
+                      ) : (
+                        <p className="text-[#94a3b8] bg-[#181b25] p-3 rounded border border-[#1E293B]">
+                          Kỹ sư phần mềm có hơn 4 năm kinh nghiệm làm Backend với Python, Go và AI. Muốn tìm kiếm cơ hội làm việc trong môi trường thử thách.
+                        </p>
+                      )}
                     </div>
-                  )}
+
+                    <div>
+                      <h3 className="font-bold text-[#f8fafc] uppercase tracking-wider text-[11px] mb-1">
+                        2. Kinh Nghiệm Trọng Tâm (STAR Highlights)
+                      </h3>
+                      {activeVersion === "v2" ? (
+                        <ul className="space-y-2 text-[#dfe2ef]">
+                          <li className="bg-[#10b981]/10 p-2.5 rounded border border-[#10b981]/30">
+                            • Kiến trúc hệ thống RAG đa luồng với Python và Qdrant, giảm thời gian phản hồi từ 1.8s xuống 320ms (-82%), phục vụ 50,000+ truy vấn/ngày.
+                          </li>
+                          <li className="bg-[#10b981]/10 p-2.5 rounded border border-[#10b981]/30">
+                            • Tối ưu hóa câu lệnh PostgreSQL và Redis Caching, giảm tải CPU Database 45% trong các đợt cao điểm khuyến mãi.
+                          </li>
+                        </ul>
+                      ) : (
+                        <ul className="space-y-2 text-[#94a3b8]">
+                          <li className="bg-[#181b25] p-2.5 rounded border border-[#1E293B]">
+                            • Xây dựng hệ thống RAG tìm kiếm tài liệu cho doanh nghiệp bằng Python và Qdrant.
+                          </li>
+                          <li className="bg-[#181b25] p-2.5 rounded border border-[#1E293B]">
+                            • Viết API và tối ưu database cho hệ thống backend.
+                          </li>
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="w-full bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold py-2.5 rounded-lg text-xs transition-colors shadow-sm font-['Plus_Jakarta_Sans',sans-serif]"
+                  >
+                    Tải Xuống Bản PDF Chuẩn ATS
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Docked Input Prompt at Bottom of Column 2 */}
-          <div className="p-4 border-t border-[#1E293B] bg-[#0c101b] shrink-0">
-            <div className="relative bg-[#111827] border border-[#1E293B] focus-within:border-[#10b981] rounded-xl shadow-lg transition-all">
-              <textarea
-                rows={2}
-                value={inputPrompt}
-                onChange={(e) => setInputPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Hỏi AI: Tối ưu mục tóm tắt bản thân, tìm từ khóa còn thiếu, hoặc tạo câu hỏi phỏng vấn... (Enter để gửi)"
-                aria-label="Nhập câu lệnh hỏi AI Career Agent"
-                className="w-full bg-transparent text-sm text-[#f8fafc] placeholder-[#64748b] px-4 pt-3 pb-10 resize-none outline-none font-['Inter',sans-serif]"
-              />
-
-              <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
-                <span className="text-xs text-[#64748b] hidden sm:inline font-['JetBrains_Mono',monospace]">
-                  Shift + Enter để xuống dòng
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleSendMessage}
-                  aria-label="Gửi yêu cầu tới AI"
-                  className="bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold px-4 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-sm ml-auto font-['Plus_Jakarta_Sans',sans-serif]"
-                >
-                  <span>Gửi</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </button>
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════════════════════
-            CỘT 3: CV ĐÃ TỐI ƯU (ARTIFACTS - 30% WIDTH)
-        ══════════════════════════════════════════════════════════ */}
-        <aside
-          className={`w-full lg:w-[30%] xl:w-[31%] border-l border-[#1E293B] bg-[#0c101b] flex flex-col shrink-0 overflow-y-auto slim-scrollbar ${
-            activeMobileTab === "studio" ? "flex" : "hidden lg:flex"
-          }`}
-        >
-          {/* Header Cột 3 */}
-          <div className="p-4 border-b border-[#1E293B] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
-              <h2 className="font-['Plus_Jakarta_Sans',sans-serif] text-xs font-bold uppercase tracking-wider text-[#f8fafc]">
-                CV Đã Tối Ưu
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCopyResume}
-              aria-label="Sao chép toàn bộ văn bản CV"
-              className="text-xs bg-[#181b25] hover:bg-[#1f293d] text-[#dfe2ef] border border-[#1E293B] px-2.5 py-1 rounded-md transition-colors font-medium"
-            >
-              {isCopied ? "✓ Đã copy" : "Copy text"}
-            </button>
-          </div>
-
-          <div className="p-4 space-y-4 flex-1">
-            {/* ATS Score Gauge Card */}
-            <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-4 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-bold font-['Plus_Jakarta_Sans',sans-serif]">
-                    ATS Match Score
-                  </div>
-                  <div className="text-3xl font-extrabold text-[#4edea3] font-['JetBrains_Mono',monospace]">
-                    94%
-                  </div>
-                  <div className="text-xs text-[#10b981] font-medium mt-0.5">
-                    Khả năng vượt bộ lọc: Cực cao
-                  </div>
-                </div>
-
-                <div className="w-14 h-14 rounded-full border-4 border-[#1E293B] flex items-center justify-center relative">
-                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-[#1E293B]"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeDasharray="100, 100"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="text-[#4edea3]"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeDasharray="94, 100"
-                      strokeWidth="4"
-                    />
-                  </svg>
-                  <span className="text-xs font-bold text-[#4edea3] font-['JetBrains_Mono',monospace]">94%</span>
-                </div>
-              </div>
-
-              {/* 3 Axes */}
-              <div className="grid grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-[#1E293B] text-center text-xs">
-                <div>
-                  <div className="text-[11px] text-[#94a3b8]">Kỹ Năng</div>
-                  <div className="font-bold text-[#4edea3] font-['JetBrains_Mono',monospace]">95%</div>
-                </div>
-                <div>
-                  <div className="text-[11px] text-[#94a3b8]">Tác Động</div>
-                  <div className="font-bold text-[#4edea3] font-['JetBrains_Mono',monospace]">90%</div>
-                </div>
-                <div>
-                  <div className="text-[11px] text-[#94a3b8]">Định Dạng</div>
-                  <div className="font-bold text-[#4edea3] font-['JetBrains_Mono',monospace]">98%</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Version Switcher */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider font-['Plus_Jakarta_Sans',sans-serif]">
-                  Phiên Bản CV
-                </span>
-                <span className="text-xs text-[#4edea3] font-['JetBrains_Mono',monospace]">2 versions</span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedVersion("v2")}
-                  className={`flex-1 py-2 px-2 text-xs rounded-lg border transition-all text-center ${
-                    selectedVersion === "v2"
-                      ? "bg-[#10b981]/15 text-[#4edea3] border-[#10b981]/50 font-bold"
-                      : "bg-[#181b25] text-[#94a3b8] border-[#1E293B] hover:text-[#dfe2ef]"
-                  }`}
-                >
-                  v2 • Chuẩn STAR (94%)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedVersion("v1")}
-                  className={`flex-1 py-2 px-2 text-xs rounded-lg border transition-all text-center ${
-                    selectedVersion === "v1"
-                      ? "bg-[#10b981]/15 text-[#4edea3] border-[#10b981]/50 font-bold"
-                      : "bg-[#181b25] text-[#94a3b8] border-[#1E293B] hover:text-[#dfe2ef]"
-                  }`}
-                >
-                  v1 • Bản gốc (82%)
-                </button>
-              </div>
-            </div>
-
-            {/* Live CV Document Preview */}
-            <div className="bg-[#111827] border border-[#1E293B] rounded-xl p-5 space-y-4 text-xs leading-relaxed font-['Inter',sans-serif] shadow-lg">
-              <div className="border-b border-[#1E293B] pb-3">
-                <h3 className="text-base font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
-                  VŨ VĂN DŨNG
-                </h3>
-                <div className="text-xs text-[#4edea3] font-['JetBrains_Mono',monospace] font-semibold mt-0.5">
-                  Senior Backend Engineer • Python / FastAPI / Cloud Architecture
-                </div>
-                <div className="text-[11px] text-[#94a3b8] mt-1">
-                  TP. Hồ Chí Minh • dungvu@email.com • github.com/dungvu
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div>
-                <div className="font-bold text-[#f8fafc] uppercase tracking-wider text-xs mb-1 font-['Plus_Jakarta_Sans',sans-serif]">
-                  Tóm Tắt Chuyên Môn
-                </div>
-                <p className="text-[#cbd5e1] text-xs leading-relaxed">
-                  5+ năm kinh nghiệm phát triển hệ thống backend chịu tải cao (High-throughput APIs), kiến trúc microservices và cơ sở dữ liệu phân tán.
-                </p>
-              </div>
-
-              {/* Experience */}
-              <div>
-                <div className="font-bold text-[#f8fafc] uppercase tracking-wider text-xs mb-1 font-['Plus_Jakarta_Sans',sans-serif]">
-                  Kinh Nghiệm Làm Việc
-                </div>
-                <div className="space-y-2.5">
-                  <div>
-                    <div className="font-semibold text-[#f8fafc]">TechCorp Global • Senior Backend Lead</div>
-                    <div className="text-[11px] text-[#64748b] font-['JetBrains_Mono',monospace]">2022 - Hiện tại</div>
-                    
-                    {selectedVersion === "v2" ? (
-                      <div className="text-xs mt-1.5 text-[#f8fafc] bg-[#10b981]/10 p-2.5 rounded-lg border border-[#10b981]/40 leading-relaxed">
-                        <span className="text-[#4edea3] font-bold">✨ Đã tối ưu (STAR): </span>
-                        Thiết kế &amp; tối ưu hóa 12 microservices backend bằng <span className="text-[#4edea3] font-bold">FastAPI</span> và <span className="text-[#4edea3] font-bold">PostgreSQL</span>, giảm <span className="text-[#4edea3] font-bold">35% độ trễ API P99</span> và chịu tải ổn định <span className="text-[#4edea3] font-bold">10,000+ RPS</span> cho cổng thanh toán điện tử.
-                      </div>
-                    ) : (
-                      <div className="text-xs mt-1.5 text-[#94a3b8] bg-[#181b25] p-2.5 rounded-lg border border-[#1E293B] leading-relaxed">
-                        Phát triển và bảo trì các API backend cho hệ thống thanh toán điện tử, xử lý dữ liệu giao dịch hàng ngày.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Skills */}
-              <div>
-                <div className="font-bold text-[#f8fafc] uppercase tracking-wider text-xs mb-1.5 font-['Plus_Jakarta_Sans',sans-serif]">
-                  Kỹ Năng Đã Khớp ATS
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {["FastAPI", "PostgreSQL", "Docker", "Redis", "Kafka", "Microservices", "CI/CD", "Kubernetes"].map(
-                    (s, i) => (
-                      <span
-                        key={i}
-                        className="bg-[#181b25] text-[#4edea3] px-2 py-0.5 rounded-md border border-[#10b981]/30 text-[11px] font-['JetBrains_Mono',monospace] font-medium"
-                      >
-                        {s}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Export PDF Button */}
-            <button
-              type="button"
-              aria-label="Tải xuống bản CV chuẩn ATS PDF"
-              className="w-full bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 font-['Plus_Jakarta_Sans',sans-serif]"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              <span>Tải Xuống PDF (Chuẩn ATS 2026)</span>
-            </button>
-          </div>
-        </aside>
       </div>
+
+      {/* ────────────────────────────────────────────────────────────
+          JOB DETAIL DRAWER (SLIDE-OVER PANEL)
+      ──────────────────────────────────────────────────────────── */}
+      {isDrawerOpen && selectedJob && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-lg bg-[#0c101b] border-l border-[#1E293B] h-full flex flex-col shadow-2xl p-6 overflow-y-auto scrollbar-thin">
+            
+            {/* Drawer Header */}
+            <div className="flex justify-between items-start pb-4 border-b border-[#1E293B]">
+              <div>
+                <span className="text-xs font-bold text-[#4edea3] bg-[#10b981]/10 border border-[#10b981]/30 px-2 py-0.5 rounded-full font-['JetBrains_Mono',monospace]">
+                  {selectedJob.matchScore}% Match Với CV Của Bạn
+                </span>
+                <h2 className="text-lg font-bold text-[#f8fafc] mt-2 font-['Plus_Jakarta_Sans',sans-serif]">
+                  {selectedJob.title}
+                </h2>
+                <p className="text-xs text-[#94a3b8] mt-0.5">
+                  {selectedJob.company} • {selectedJob.location}
+                </p>
+                <div className="text-sm font-bold text-[#10b981] font-['JetBrains_Mono',monospace] mt-1">
+                  {selectedJob.salary}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDrawerOpen(false)}
+                className="w-8 h-8 rounded-lg bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] text-[#94a3b8] hover:text-[#f8fafc] flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Drawer Body */}
+            <div className="py-5 space-y-5 text-xs text-[#dfe2ef] leading-relaxed">
+              <div>
+                <h3 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider mb-2 font-['Plus_Jakarta_Sans',sans-serif]">
+                  Mô Tả Công Việc
+                </h3>
+                <p className="text-[#94a3b8]">{selectedJob.description}</p>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider mb-2 font-['Plus_Jakarta_Sans',sans-serif]">
+                  Yêu Cầu Kỹ Thuật
+                </h3>
+                <ul className="space-y-1.5 text-[#94a3b8] list-disc pl-4">
+                  {selectedJob.requirements.map((req, i) => (
+                    <li key={i}>{req}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-bold text-[#f8fafc] uppercase tracking-wider mb-2 font-['Plus_Jakarta_Sans',sans-serif]">
+                  Quyền Lợi &amp; Đãi Ngộ
+                </h3>
+                <ul className="space-y-1.5 text-[#94a3b8] list-disc pl-4">
+                  {selectedJob.benefits.map((ben, i) => (
+                    <li key={i}>{ben}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Drawer Footer Actions */}
+            <div className="pt-4 border-t border-[#1E293B] flex gap-3 mt-auto">
+              <button
+                type="button"
+                onClick={() => handleAskAiAboutJob(selectedJob)}
+                className="flex-1 bg-[#181b25] hover:bg-[#1f293d] border border-[#1E293B] text-[#dfe2ef] font-semibold py-2.5 rounded-lg text-xs transition-colors"
+              >
+                💬 Hỏi AI Về Job Này
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDrawerOpen(false);
+                  handleTailorForJob(selectedJob);
+                }}
+                className="flex-1 bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] font-bold py-2.5 rounded-lg text-xs transition-colors shadow-sm font-['Plus_Jakarta_Sans',sans-serif]"
+              >
+                ⚡ Tối Ưu CV Ngay
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
