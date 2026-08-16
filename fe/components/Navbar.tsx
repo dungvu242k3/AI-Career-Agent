@@ -9,7 +9,7 @@ export default function Navbar() {
 
   const navItems = [
     { label: "Phân tích CV", href: "/workspace" },
-    { label: "Tìm việc & So khớp", href: "/jobs" },
+    { label: "Tìm việc", href: "/jobs" },
     { label: "Phỏng vấn AI", href: "/interview" },
     { label: "Lộ trình kỹ năng", href: "/learning" },
     { label: "Quản lý ứng tuyển", href: "/applications" },

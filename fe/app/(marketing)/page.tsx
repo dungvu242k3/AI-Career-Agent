@@ -324,7 +324,7 @@ export default function LandingPage() {
                 </li>
                 <li>
                   <span className="hover:text-[#4edea3] transition-colors cursor-default">
-                    Tìm việc &amp; So khớp JD
+                    Tìm việc
                   </span>
                 </li>
                 <li>
