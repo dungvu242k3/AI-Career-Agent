@@ -76,3 +76,11 @@ async def test_cv_ingestion_pipeline_raises_when_both_fail():
         await pipeline.process_bytes(b"%PDF-1.4 sample bytes")
 
     assert "thất bại trên cả 2 nhà cung cấp" in str(exc_info.value)
+
+
+def test_cv_ingestion_pipeline_default_providers():
+    pipeline = CVIngestionPipeline()
+    assert pipeline.primary_extractor.__class__.__name__ == "OpenAICVExtractor"
+    assert pipeline.fallback_extractor.__class__.__name__ == "GeminiCVExtractor"
+    assert pipeline.enable_fallback is True
+

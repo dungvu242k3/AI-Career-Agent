@@ -7,5 +7,10 @@
   },
   "editor.quickSuggestions": {
     "strings": "on"
-  }
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/be/.venv/Scripts/python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/be"
+  ]
 }

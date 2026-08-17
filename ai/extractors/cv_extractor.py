@@ -150,12 +150,11 @@ class GeminiCVExtractor(BaseProfileExtractor):
 
     async def extract_profile(self, raw_text: str) -> CandidateProfile:
         """Extract structured CandidateProfile from raw text via non-blocking async Gemini call."""
-        client = get_gemini_client()
-
         # Prompt Injection Defense: Send System Instructions separately and encapsulate raw document
         user_content = f"<cv_document>\n{raw_text}\n</cv_document>"
 
         try:
+            client = get_gemini_client()
             response = await client.aio.models.generate_content(
                 model=self.config.gemini_flash_lite_model,
                 contents=user_content,

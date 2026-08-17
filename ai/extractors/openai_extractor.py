@@ -139,11 +139,10 @@ class OpenAICVExtractor(BaseProfileExtractor):
 
     async def extract_profile(self, raw_text: str) -> CandidateProfile:
         """Extract structured CandidateProfile via OpenAI Structured Outputs."""
-        client = self._get_client()
-
         user_content = f"<cv_document>\n{raw_text}\n</cv_document>"
 
         try:
+            client = self._get_client()
             completion = await client.beta.chat.completions.parse(
                 model=self.config.openai_extraction_model,
                 messages=[
