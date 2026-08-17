@@ -70,7 +70,7 @@ class PyMuPDFParser(BaseDocumentParser):
         spanning_blocks = []
 
         for b in text_blocks:
-            x0, y0, x1, y1, text = b[0], b[1], b[2], b[3], b[4]
+            x0, _y0, x1, _y1, _text = b[0], b[1], b[2], b[3], b[4]
             if x1 <= midpoint * 1.15:
                 left_blocks.append(b)
             elif x0 >= midpoint * 0.85:
@@ -90,47 +90,51 @@ class PyMuPDFParser(BaseDocumentParser):
         return [self._normalize_text(b[4]) for b in ordered_blocks if b[4].strip()]
 
     def extract_text_from_bytes(self, content_bytes: bytes, filename: str = "upload.pdf") -> str:
-        """Extract and de-noise text from raw PDF bytes."""
+        """Extract and de-noise text from raw PDF bytes safely."""
         if not content_bytes.startswith(b"%PDF"):
             raise PDFInvalidFormatError(f"Tệp '{filename}' không phải là định dạng PDF hợp lệ (thiếu header %PDF).")
 
+        doc = None
         try:
             doc = fitz.open(stream=content_bytes, filetype="pdf")
+
+            if doc.is_encrypted:
+                raise PDFInvalidFormatError(f"Tệp PDF '{filename}' đã bị khóa bằng mật khẩu. Vui lòng mở khóa trước khi tải lên.")
+
+            page_count = doc.page_count
+            if page_count == 0:
+                raise PDFInvalidFormatError(f"Tệp PDF '{filename}' không chứa trang nào.")
+            if page_count > self.config.max_pdf_pages:
+                raise PDFInvalidFormatError(
+                    f"Tệp PDF '{filename}' có {page_count} trang (vượt quá giới hạn tối đa {self.config.max_pdf_pages} trang)."
+                )
+
+            all_page_texts: list[str] = []
+            for page_idx in range(page_count):
+                page = doc[page_idx]
+                page_blocks = self._extract_page_blocks(page)
+                if page_blocks:
+                    all_page_texts.append("\n\n".join(page_blocks))
+
+            full_text = "\n\n---\n\n".join(all_page_texts).strip()
+
+            # Check if scanned / image-only (< min_text_length)
+            clean_char_count = len(re.sub(r"\s+", "", full_text))
+            if clean_char_count < self.config.min_text_length:
+                raise PDFScanDetectedError(
+                    "CV của bạn ở dạng hình ảnh scan (không có lớp chữ). "
+                    "Vui lòng xuất lại tệp PDF trực tiếp từ Word, Canva hoặc Google Docs để AI có thể đọc chính xác."
+                )
+
+            return full_text
+
+        except (PDFParsingError, fitz.FileDataError):
+            raise
         except Exception as e:
-            raise PDFInvalidFormatError(f"Không thể mở tệp PDF '{filename}': {e}")
-
-        if doc.is_encrypted:
-            doc.close()
-            raise PDFInvalidFormatError(f"Tệp PDF '{filename}' đã bị khóa bằng mật khẩu. Vui lòng mở khóa trước khi tải lên.")
-
-        page_count = doc.page_count
-        if page_count == 0:
-            doc.close()
-            raise PDFInvalidFormatError(f"Tệp PDF '{filename}' không chứa trang nào.")
-        if page_count > self.config.max_pdf_pages:
-            doc.close()
-            raise PDFInvalidFormatError(f"Tệp PDF '{filename}' có {page_count} trang (vượt quá giới hạn tối đa {self.config.max_pdf_pages} trang).")
-
-        all_page_texts: list[str] = []
-        for page_idx in range(page_count):
-            page = doc[page_idx]
-            page_blocks = self._extract_page_blocks(page)
-            if page_blocks:
-                all_page_texts.append("\n\n".join(page_blocks))
-
-        doc.close()
-
-        full_text = "\n\n---\n\n".join(all_page_texts).strip()
-
-        # Check if scanned / image-only (< min_text_length)
-        clean_char_count = len(re.sub(r"\s+", "", full_text))
-        if clean_char_count < self.config.min_text_length:
-            raise PDFScanDetectedError(
-                "CV của bạn ở dạng hình ảnh scan (không có lớp chữ). "
-                "Vui lòng xuất lại tệp PDF trực tiếp từ Word, Canva hoặc Google Docs để AI có thể đọc chính xác."
-            )
-
-        return full_text
+            raise PDFInvalidFormatError(f"Không thể phân tích tệp PDF '{filename}': {e}")
+        finally:
+            if doc is not None:
+                doc.close()
 
     def extract_text_from_file(self, file_path: str | Path) -> str:
         """Extract text from local file."""

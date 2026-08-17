@@ -4,6 +4,7 @@ Designed for production-grade CV extraction across English and Vietnamese format
 supporting 7 core sections, 8-group skills taxonomy, and dynamic additional sections.
 """
 
+import math
 from typing import Literal
 from pydantic import BaseModel, Field
 
@@ -124,7 +125,6 @@ class CandidateProfile(BaseModel):
     additional_sections: list[AdditionalSectionItem] = Field(default_factory=list)
     metadata: CVMetadata = Field(default_factory=CVMetadata)
 
-    # Convenience properties for backward compatibility and quick access
     @property
     def full_name(self) -> str:
         return self.personal_info.full_name
@@ -139,4 +139,5 @@ class CandidateProfile(BaseModel):
 
     @property
     def experience_years(self) -> int:
-        return int(round(self.metadata.total_experience_years))
+        """Conservative integer years (never inflated)."""
+        return math.floor(self.metadata.total_experience_years)

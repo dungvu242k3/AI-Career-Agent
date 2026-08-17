@@ -84,5 +84,8 @@ playwright-report/
 test-results/
 
 # Backend data
+data/
 be/data/
+*.db
+*.sqlite3
 be/.venv/

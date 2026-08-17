@@ -92,7 +92,7 @@ def test_candidate_profile_full_instantiation():
             )
         ],
         metadata=CVMetadata(
-            total_experience_years=3.5,
+            total_experience_years=3.8,
             cv_language="vi",
             extraction_confidence=98,
         ),
@@ -102,7 +102,8 @@ def test_candidate_profile_full_instantiation():
     assert profile.full_name == "Nguyễn Văn An"
     assert profile.email == "an.nguyen@example.com"
     assert profile.title == "Senior AI Engineer"
-    assert profile.experience_years == 4
+    # math.floor(3.8) -> 3 years (conservative, non-inflated)
+    assert profile.experience_years == 3
     assert len(profile.skills_taxonomy.programming_languages) == 3
     assert len(profile.work_experience[0].raw_bullets) == 2
     assert profile.languages[1].proficiency == "IELTS 7.5"
@@ -118,3 +119,4 @@ def test_candidate_profile_minimal_defaults():
     assert profile.title == ""
     assert profile.skills_taxonomy.programming_languages == []
     assert profile.work_experience == []
+    assert profile.experience_years == 0
