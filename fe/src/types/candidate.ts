@@ -103,6 +103,8 @@ export interface UploadResponse {
   filename: string;
   text_length: number;
   profile: CandidateProfile;
+  storage_key?: string | null;
+  presigned_url?: string | null;
   is_cached: boolean;
 }
 

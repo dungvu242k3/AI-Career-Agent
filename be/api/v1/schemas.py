@@ -11,6 +11,8 @@ class UploadResponse(BaseModel):
     filename: str = Field(description="Original uploaded filename")
     text_length: int = Field(description="Character length of extracted text")
     profile: CandidateProfile = Field(description="Structured canonical candidate profile")
+    storage_key: str | None = Field(default=None, description="Storage object key in MinIO / S3 / Local")
+    presigned_url: str | None = Field(default=None, description="Temporary presigned URL for secure viewing")
     is_cached: bool = Field(default=False, description="True if retrieved from checksum cache")
 
 

@@ -1,6 +1,6 @@
 """High-level CV Ingestion Pipeline Orchestrator (Dependency Inversion & Multi-Provider Fallback).
 
-Coordinates Document Parser -> Primary Extractor (OpenAI) -> Fallback Extractor (Gemini).
+Coordinates Document Parser (PDF / DOCX) -> Primary Extractor (OpenAI) -> Fallback Extractor (Gemini).
 """
 
 import logging
@@ -8,6 +8,7 @@ from pathlib import Path
 from ai.interfaces.parser import BaseDocumentParser
 from ai.interfaces.extractor import BaseProfileExtractor
 from ai.parsers.pdf_parser import PyMuPDFParser
+from ai.parsers.docx_parser import DocxDocumentParser, DOCX_MAGIC_BYTES
 from ai.extractors.openai_extractor import OpenAICVExtractor
 from ai.extractors.cv_extractor import GeminiCVExtractor
 from ai.models.candidate import CandidateProfile
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class CVIngestionPipeline:
-    """Orchestrates parsing, AI extraction, and normalization of CV documents with multi-provider fallback."""
+    """Orchestrates parsing, AI extraction, and normalization of CV documents (PDF & DOCX) with multi-provider fallback."""
 
     def __init__(
         self,
@@ -27,7 +28,9 @@ class CVIngestionPipeline:
         enable_fallback: bool | None = None,
     ):
         self.config = get_ai_config()
-        self.parser = parser or PyMuPDFParser()
+        self._custom_parser = parser
+        self.pdf_parser = PyMuPDFParser()
+        self.docx_parser = DocxDocumentParser()
 
         # Determine primary and fallback extractors
         if primary_extractor:
@@ -48,14 +51,26 @@ class CVIngestionPipeline:
             enable_fallback if enable_fallback is not None else self.config.enable_fallback
         )
 
+    def _resolve_parser(self, content_bytes: bytes, filename: str) -> BaseDocumentParser:
+        """Resolve appropriate document parser based on custom override, file extension, or magic bytes."""
+        if self._custom_parser:
+            return self._custom_parser
+
+        lower_name = filename.lower()
+        if lower_name.endswith(".docx") or content_bytes.startswith(DOCX_MAGIC_BYTES):
+            return self.docx_parser
+
+        return self.pdf_parser
+
     async def process_bytes(
         self,
         content_bytes: bytes,
         filename: str = "upload.pdf",
     ) -> tuple[str, CandidateProfile]:
-        """Execute end-to-end ingestion pipeline from raw PDF bytes with auto-fallback."""
-        # Step 1: Extract and de-noise document text
-        raw_text = self.parser.extract_text_from_bytes(content_bytes, filename=filename)
+        """Execute end-to-end ingestion pipeline from raw PDF / DOCX bytes with auto-fallback."""
+        # Step 1: Extract and de-noise document text using resolved parser
+        parser = self._resolve_parser(content_bytes, filename)
+        raw_text = parser.extract_text_from_bytes(content_bytes, filename=filename)
 
         # Step 2: Extract structured profile via Primary Provider (e.g. OpenAI)
         try:

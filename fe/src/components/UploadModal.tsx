@@ -24,8 +24,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) return;
 
-    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
-      setErrorMessage("Chỉ chấp nhận tệp định dạng PDF (.pdf).");
+    const lowerName = selectedFile.name.toLowerCase();
+    if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
+      setErrorMessage("Chỉ chấp nhận tệp định dạng PDF (.pdf) hoặc Microsoft Word (.docx).");
       setStep("error");
       return;
     }
@@ -130,12 +131,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
                   : "border-[#1E293B] bg-[#0c101b] hover:border-[#10b981]/50 hover:bg-[#111827]"
               }`}
             >
-              <label htmlFor="cv-file-upload" className="sr-only">Tải lên tệp CV PDF</label>
+              <label htmlFor="cv-file-upload" className="sr-only">Tải lên tệp CV PDF hoặc Word (.docx)</label>
               <input
                 id="cv-file-upload"
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,application/pdf"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="hidden"
                 onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
               />
@@ -154,7 +155,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
                 <div className="space-y-1.5">
                   <p className="text-sm font-semibold text-[#f8fafc]">Kéo &amp; thả file CV của bạn vào đây</p>
                   <p className="text-xs text-[#94a3b8]">hoặc <span className="text-[#4edea3] underline underline-offset-2">chọn tệp từ máy tính</span></p>
-                  <p className="text-[11px] text-[#64748b] pt-1">Định dạng PDF • Dung lượng $\le 10$ MB • Tối đa 2 trang</p>
+                  <p className="text-[11px] text-[#64748b] pt-1">Hỗ trợ PDF &amp; Word (.docx) • Tối đa 10 MB • 1-2 trang</p>
                 </div>
               )}
             </div>

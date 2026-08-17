@@ -37,7 +37,13 @@ class Settings(BaseSettings):
     openai_extraction_model: str = Field(default="gpt-4o-mini")
     openai_reasoning_model: str = Field(default="gpt-4o")
 
-    # Uploads
+    # Uploads & Object Storage (MinIO / S3 / Local)
+    storage_backend: str = Field(default="minio", description="Storage provider: 'minio' or 'local'")
+    minio_endpoint: str = Field(default="localhost:9000", description="MinIO S3 endpoint (host:port)")
+    minio_access_key: SecretStr = Field(default=SecretStr("minioadmin"))
+    minio_secret_key: SecretStr = Field(default=SecretStr("minioadmin"))
+    minio_bucket: str = Field(default="careerpilot-cvs")
+    minio_secure: bool = Field(default=False, description="Use SSL/TLS (HTTPS) for MinIO connection")
     upload_dir: Path = Field(default=WORKSPACE_ROOT / "data" / "uploads")
     max_upload_size_mb: int = Field(default=10, gt=0, le=50)
 

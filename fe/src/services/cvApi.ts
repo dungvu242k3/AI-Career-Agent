@@ -24,8 +24,9 @@ export class ApiError extends Error {
  */
 export async function uploadCv(file: File): Promise<UploadResponse> {
   // Client-side validations
-  if (!file.name.toLowerCase().endsWith(".pdf")) {
-    throw new ApiError(400, "Chỉ chấp nhận tệp định dạng PDF (.pdf).");
+  const lowerName = file.name.toLowerCase();
+  if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
+    throw new ApiError(400, "Chỉ chấp nhận tệp định dạng PDF (.pdf) hoặc Microsoft Word (.docx).");
   }
 
   const MAX_SIZE_MB = 10;

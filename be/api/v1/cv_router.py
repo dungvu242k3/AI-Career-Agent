@@ -1,20 +1,29 @@
-"""CV Router — API endpoints for CV upload, preview, and update."""
+"""CV Router — API endpoints for CV upload, preview, update, and secure file streaming."""
 
 from functools import lru_cache
 import hashlib
+import io
 import logging
 from pathlib import Path
 import re
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi.responses import StreamingResponse
 
 from ai.models.candidate import CandidateProfile
-from ai.parsers import PDFInvalidFormatError, PDFParsingError, PDFScanDetectedError
+from ai.parsers import (
+    PDFInvalidFormatError,
+    PDFParsingError,
+    PDFScanDetectedError,
+    DocxInvalidFormatError,
+    DocxParsingError,
+)
 from ai.pipeline import CVIngestionPipeline, get_default_ingestion_pipeline
 from be.api.v1.schemas import MessageResponse, UpdateProfileRequest, UploadResponse
 from be.config import Settings, get_settings
 from be.core.rate_limiter import upload_rate_limiter, read_rate_limiter
+from be.core.storage import BaseStorageService, get_storage_service
 from be.db.database import (
     get_candidate,
     get_upload_by_checksum,
@@ -26,19 +35,23 @@ from be.db.database import (
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+ALLOWED_EXTENSIONS = {".pdf", ".docx"}
+
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize upload filename to prevent Path Traversal and illegal filesystem characters."""
-    # 1. Extract only the basename (strips any directory traversal prefixes ../ or ..\)
     basename = Path(filename).name
-    # 2. Allow only alphanumeric characters, underscores, hyphens, and dots
-    safe_name = re.sub(r"[^a-zA-Z0-9_.-]", "_", basename)
-    # 3. Guard against empty or hidden file edge cases (. or ..)
-    if not safe_name or safe_name.startswith("."):
-        safe_name = f"cv_{uuid.uuid4().hex[:6]}.pdf"
-    if not safe_name.lower().endswith(".pdf"):
-        safe_name = f"{safe_name}.pdf"
-    return safe_name
+    # Extract extension
+    ext = Path(basename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        ext = ".pdf"
+
+    stem = Path(basename).stem
+    safe_stem = re.sub(r"[^a-zA-Z0-9_.-]", "_", stem)
+    if not safe_stem or safe_stem.startswith("."):
+        safe_stem = f"cv_{uuid.uuid4().hex[:6]}"
+
+    return f"{safe_stem}{ext}"
 
 
 @lru_cache(maxsize=1)
@@ -51,20 +64,28 @@ def get_cached_ingestion_pipeline() -> CVIngestionPipeline:
     "/upload",
     response_model=UploadResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Upload & Parse CV Document",
-    description="Accepts a PDF document, performs layout deconstruction, and extracts structured CandidateProfile via Gemini/OpenAI AI.",
+    summary="Upload & Parse CV Document (PDF / DOCX)",
+    description="Accepts a PDF or Word (.docx) document, uploads to MinIO/S3 object storage, and extracts structured CandidateProfile via AI pipeline.",
     dependencies=[Depends(upload_rate_limiter)],
 )
 async def upload_cv(
-    file: UploadFile = File(..., description="PDF CV file (max 10MB, up to 2 pages)"),
+    file: UploadFile = File(..., description="PDF or Word CV file (max 10MB, up to 2 pages)"),
     settings: Settings = Depends(get_settings),
     pipeline: CVIngestionPipeline = Depends(get_cached_ingestion_pipeline),
+    storage: BaseStorageService = Depends(get_storage_service),
 ):
-    """Upload a CV PDF file, deconstruct layout, extract structured profile via AI pipeline."""
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    """Upload a CV file (PDF/DOCX), store in MinIO/S3, deconstruct layout, extract structured profile via AI pipeline."""
+    if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Chỉ chấp nhận tệp định dạng PDF (.pdf).",
+            detail="Tên tệp không hợp lệ.",
+        )
+
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chỉ chấp nhận tệp định dạng PDF (.pdf) hoặc Microsoft Word (.docx).",
         )
 
     content = await file.read()
@@ -85,32 +106,40 @@ async def upload_cv(
         candidate = await get_candidate(cached_upload["candidate_id"])
         if candidate:
             profile = CandidateProfile.model_validate_json(candidate["profile_json"])
+            presigned_url = await storage.get_presigned_url(cached_upload["file_path"])
             return UploadResponse(
                 candidate_id=candidate["id"],
                 filename=cached_upload["filename"],
                 text_length=len(cached_upload["raw_text"] or ""),
                 profile=profile,
+                storage_key=cached_upload["file_path"],
+                presigned_url=presigned_url,
                 is_cached=True,
             )
 
-    # Save physical file to disk safely with unique ID and sanitized name
-    file_id = uuid.uuid4().hex[:8]
-    upload_dir = settings.upload_dir
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    file_path = upload_dir / f"{file_id}_{safe_filename}"
-    file_path.write_bytes(content)
+    # Determine MIME content type
+    content_type = file.content_type or (
+        "application/pdf" if file_ext == ".pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 
-    # Execute AI Ingestion Pipeline (PyMuPDF -> OpenAI/Gemini -> CandidateProfile v3)
+    # Upload to MinIO / S3 Object Storage (with local disk fallback)
+    storage_key, presigned_url = await storage.upload_file(
+        content=content,
+        filename=safe_filename,
+        content_type=content_type,
+    )
+
+    # Execute AI Ingestion Pipeline (PDF / DOCX -> AI Extractor -> CandidateProfile v3)
     try:
         raw_text, profile = await pipeline.process_bytes(content, filename=safe_filename)
     except PDFScanDetectedError as e:
-        file_path.unlink(missing_ok=True)  # Clean up failed upload file
+        await storage.delete_file(storage_key)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
-    except (PDFInvalidFormatError, PDFParsingError) as e:
-        file_path.unlink(missing_ok=True)  # Clean up failed upload file
+    except (PDFInvalidFormatError, PDFParsingError, DocxInvalidFormatError, DocxParsingError) as e:
+        await storage.delete_file(storage_key)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        file_path.unlink(missing_ok=True)  # Clean up failed upload file
+        await storage.delete_file(storage_key)
         logger.error("Unhandled error during AI extraction: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -126,7 +155,7 @@ async def upload_cv(
     )
     await save_upload(
         filename=safe_filename,
-        file_path=str(file_path),
+        file_path=storage_key,
         checksum=checksum,
         raw_text=raw_text,
         candidate_id=candidate_id,
@@ -137,6 +166,8 @@ async def upload_cv(
         filename=safe_filename,
         text_length=len(raw_text),
         profile=profile,
+        storage_key=storage_key,
+        presigned_url=presigned_url,
         is_cached=False,
     )
 
@@ -192,3 +223,29 @@ async def update_candidate_preview(candidate_id: int, payload: UpdateProfileRequ
         message="Cập nhật thông tin hồ sơ thành công.",
         candidate_id=candidate_id,
     )
+
+
+@router.get(
+    "/file/{storage_key:path}",
+    summary="Download or View Stored CV Document",
+    dependencies=[Depends(read_rate_limiter)],
+)
+async def get_stored_file(
+    storage_key: str,
+    storage: BaseStorageService = Depends(get_storage_service),
+):
+    """Stream stored file bytes securely (for local storage or proxy mode)."""
+    try:
+        content = await storage.get_file_bytes(storage_key)
+        ext = Path(storage_key).suffix.lower()
+        media_type = "application/pdf" if ext == ".pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type=media_type,
+            headers={"Content-Disposition": f"inline; filename={Path(storage_key).name}"},
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tệp.")
+    except Exception as e:
+        logger.error("Error retrieving file %s: %s", storage_key, e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Lỗi khi tải tệp.")

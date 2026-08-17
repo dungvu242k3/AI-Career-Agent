@@ -39,19 +39,19 @@ def test_health_check_and_security_headers(client):
 
 def test_filename_sanitization_path_traversal():
     assert sanitize_filename("../../etc/passwd.pdf") == "passwd.pdf"
-    assert sanitize_filename("..\\..\\windows\\system32\\calc.pdf") == "calc.pdf"
+    assert sanitize_filename("..\\..\\windows\\system32\\calc.docx") == "calc.docx"
     assert sanitize_filename("my resume (1).pdf") == "my_resume__1_.pdf"
     assert sanitize_filename(".hidden.pdf").endswith(".pdf")
     assert not sanitize_filename(".hidden.pdf").startswith(".")
 
 
-def test_upload_non_pdf_rejected(client):
+def test_upload_unsupported_extension_rejected(client):
     response = client.post(
         "/api/v1/cv/upload",
         files={"file": ("test.txt", b"plain text", "text/plain")},
     )
     assert response.status_code == 400
-    assert "PDF" in response.json()["detail"]
+    assert "PDF" in response.json()["detail"] or "Word" in response.json()["detail"]
 
 
 def test_upload_success_and_preview_workflow(client):
@@ -59,7 +59,7 @@ def test_upload_success_and_preview_workflow(client):
     unique_token = uuid.uuid4().hex.encode()
     dummy_pdf_bytes = b"%PDF-1.4 " + unique_token + b" dummy pdf content"
 
-    # 1. Upload
+    # 1. Upload PDF
     response = client.post(
         "/api/v1/cv/upload",
         files={"file": ("my_cv.pdf", dummy_pdf_bytes, "application/pdf")},
@@ -69,6 +69,7 @@ def test_upload_success_and_preview_workflow(client):
     assert "candidate_id" in data
     candidate_id = data["candidate_id"]
     assert data["profile"]["personal_info"]["full_name"] == "Le Van Test"
+    assert data["storage_key"] is not None
     assert data["is_cached"] is False
 
     # 2. Get Preview
@@ -89,3 +90,24 @@ def test_upload_success_and_preview_workflow(client):
     recheck_res = client.get(f"/api/v1/cv/preview/{candidate_id}")
     assert recheck_res.status_code == 200
     assert recheck_res.json()["personal_info"]["full_name"] == "Le Van Updated"
+
+    # 5. File streaming download route
+    storage_key = data["storage_key"]
+    file_res = client.get(f"/api/v1/cv/file/{storage_key}")
+    assert file_res.status_code == 200
+    assert file_res.content == dummy_pdf_bytes
+
+
+def test_upload_docx_success(client):
+    """Test uploading Word .docx document through API."""
+    unique_token = uuid.uuid4().hex.encode()
+    dummy_docx_bytes = b"\x50\x4B\x03\x04" + unique_token
+
+    response = client.post(
+        "/api/v1/cv/upload",
+        files={"file": ("my_resume.docx", dummy_docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")},
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["filename"].endswith(".docx")
+    assert data["profile"]["personal_info"]["full_name"] == "Le Van Test"
