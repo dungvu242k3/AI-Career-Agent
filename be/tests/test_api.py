@@ -1,12 +1,12 @@
 """Integration tests for Backend API routes."""
 
+import uuid
 import pytest
 from fastapi.testclient import TestClient
 from ai.models.candidate import CandidateProfile, PersonalInfo, SkillsTaxonomy, SummarySection
 from ai.pipeline import CVIngestionPipeline
 from be.main import app
 from be.api.v1.cv_router import get_cached_ingestion_pipeline
-
 
 
 class MockPipeline(CVIngestionPipeline):
@@ -20,7 +20,6 @@ class MockPipeline(CVIngestionPipeline):
 
 @pytest.fixture
 def client():
-    # Override dependency
     app.dependency_overrides[get_cached_ingestion_pipeline] = lambda: MockPipeline()
     with TestClient(app) as test_client:
         yield test_client
@@ -43,8 +42,11 @@ def test_upload_non_pdf_rejected(client):
 
 
 def test_upload_success_and_preview_workflow(client):
+    # Use unique bytes to avoid colliding with cached test runs
+    unique_token = uuid.uuid4().hex.encode()
+    dummy_pdf_bytes = b"%PDF-1.4 " + unique_token + b" dummy pdf content"
+
     # 1. Upload
-    dummy_pdf_bytes = b"%PDF-1.4 dummy pdf content for testing api upload endpoint"
     response = client.post(
         "/api/v1/cv/upload",
         files={"file": ("my_cv.pdf", dummy_pdf_bytes, "application/pdf")},
@@ -54,6 +56,7 @@ def test_upload_success_and_preview_workflow(client):
     assert "candidate_id" in data
     candidate_id = data["candidate_id"]
     assert data["profile"]["personal_info"]["full_name"] == "Le Van Test"
+    assert data["is_cached"] is False
 
     # 2. Get Preview
     preview_res = client.get(f"/api/v1/cv/preview/{candidate_id}")
