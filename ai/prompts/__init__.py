@@ -25,3 +25,16 @@ def load_prompt(prompt_name: str) -> str:
         return txt_path.read_text(encoding="utf-8")
 
     raise FileNotFoundError(f"Prompt template '{prompt_name}' not found in {PROMPTS_DIR}")
+
+
+def load_composed_prompt(*prompt_names: str, separator: str = "\n\n---\n\n") -> str:
+    """Load and compose multiple prompt files into a single instruction string.
+
+    Args:
+        *prompt_names: Variable number of prompt filenames to load and concatenate.
+        separator: String used to join prompt sections (default: markdown horizontal rule).
+
+    Returns:
+        Single composed prompt string with all sections joined.
+    """
+    return separator.join(load_prompt(name) for name in prompt_names)
