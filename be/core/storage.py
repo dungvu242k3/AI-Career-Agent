@@ -77,21 +77,38 @@ class LocalStorageService(BaseStorageService):
         return storage_key, presigned_url
 
     async def get_file_bytes(self, storage_key: str) -> bytes:
-        file_path = self.base_dir / storage_key
-        if not file_path.exists():
+        # Enforce canonical path boundary to prevent Path Traversal
+        safe_key = Path(storage_key).as_posix().lstrip("/")
+        resolved_path = (self.base_dir / safe_key).resolve()
+        resolved_base = self.base_dir.resolve()
+
+        if not str(resolved_path).startswith(str(resolved_base)):
+            logger.warning("Path traversal attempt blocked: %s", storage_key)
+            raise PermissionError("Truy cập tệp ngoài thư mục cho phép bị từ chối.")
+
+        if not resolved_path.exists() or not resolved_path.is_file():
             raise FileNotFoundError(f"File not found: {storage_key}")
-        return file_path.read_bytes()
+
+        return resolved_path.read_bytes()
 
     async def delete_file(self, storage_key: str) -> bool:
-        file_path = self.base_dir / storage_key
-        if file_path.exists():
-            file_path.unlink()
+        safe_key = Path(storage_key).as_posix().lstrip("/")
+        resolved_path = (self.base_dir / safe_key).resolve()
+        resolved_base = self.base_dir.resolve()
+
+        if not str(resolved_path).startswith(str(resolved_base)):
+            logger.warning("Path traversal delete attempt blocked: %s", storage_key)
+            return False
+
+        if resolved_path.exists() and resolved_path.is_file():
+            resolved_path.unlink()
             return True
         return False
 
     async def get_presigned_url(self, storage_key: str, expiry_seconds: int = 900) -> str:
         settings = get_settings()
-        return f"{settings.api_prefix}/cv/file/{storage_key}"
+        safe_key = Path(storage_key).as_posix().lstrip("/")
+        return f"{settings.api_prefix}/cv/file/{safe_key}"
 
 
 class MinIOStorageService(BaseStorageService):

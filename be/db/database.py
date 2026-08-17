@@ -338,3 +338,42 @@ async def get_analysis(candidate_id: int) -> dict[str, Any] | None:
         )
         row = await cursor.fetchone()
         return dict(row) if row else None
+
+
+async def get_candidate_analyses(candidate_id: int, limit: int = 20) -> list[dict[str, Any]]:
+    """Get all past analyses for a candidate."""
+    global _pg_pool
+    if _pg_pool is not None:
+        async with _pg_pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM analyses WHERE candidate_id = $1 ORDER BY created_at DESC LIMIT $2",
+                candidate_id,
+                limit,
+            )
+            records = []
+            for r in rows:
+                rec = dict(r)
+                if isinstance(rec.get("report_json"), dict):
+                    rec["report_json"] = json.dumps(rec["report_json"])
+                if rec.get("created_at"):
+                    rec["created_at"] = str(rec["created_at"])
+                records.append(rec)
+            return records
+
+    # SQLite fallback
+    settings = get_settings()
+    async with aiosqlite.connect(str(settings.db_path)) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT * FROM analyses WHERE candidate_id = ? ORDER BY created_at DESC LIMIT ?",
+            (candidate_id, limit),
+        )
+        rows = await cursor.fetchall()
+        records = []
+        for r in rows:
+            rec = dict(r)
+            if rec.get("created_at"):
+                rec["created_at"] = str(rec["created_at"])
+            records.append(rec)
+        return records
+

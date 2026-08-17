@@ -52,3 +52,18 @@ def test_get_storage_service_singleton():
     """Test get_storage_service returns a valid instance."""
     service = get_storage_service()
     assert service is not None
+
+
+@pytest.mark.asyncio
+async def test_local_storage_blocks_path_traversal(tmp_path: Path):
+    """Test LocalStorageService strictly blocks Path Traversal outside base_dir."""
+    storage = LocalStorageService(base_dir=tmp_path)
+
+    # Attempt to access parent directory files
+    with pytest.raises(PermissionError) as exc:
+        await storage.get_file_bytes("../../../windows/win.ini")
+    assert "ngoài thư mục cho phép bị từ chối" in str(exc.value)
+
+    # Attempt to delete parent directory files
+    deleted = await storage.delete_file("../../../etc/passwd")
+    assert deleted is False

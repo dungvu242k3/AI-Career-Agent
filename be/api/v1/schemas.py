@@ -27,3 +27,30 @@ class MessageResponse(BaseModel):
 
     message: str
     candidate_id: int
+
+
+class STARRewriteRequest(BaseModel):
+    """Payload for requesting STAR bullet point rewrite."""
+
+    raw_input: str = Field(description="Weak bullet point or missing skill name", min_length=2)
+    target_role: str = Field(default="Software Engineer", description="Target job title")
+    context: str | None = Field(default=None, description="Optional background context")
+
+
+class JDMatchRequest(BaseModel):
+    """JSON payload for JD matching via raw text."""
+
+    candidate_id: int = Field(description="Candidate profile ID")
+    jd_text: str = Field(description="Raw Job Description text", min_length=15, max_length=10000)
+
+
+class ATSHistoryItem(BaseModel):
+    """Single historical ATS analysis record."""
+
+    id: int
+    candidate_id: int
+    ats_score: int
+    ats_grade: str
+    report_json: str
+    created_at: str | None = None
+

@@ -140,10 +140,10 @@ async def upload_cv(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         await storage.delete_file(storage_key)
-        logger.error("Unhandled error during AI extraction: %s", e)
+        logger.error("Unhandled error during AI extraction: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi khi AI trích xuất hồ sơ: {e}",
+            detail="Lỗi khi AI trích xuất hồ sơ. Vui lòng thử lại sau.",
         )
 
     # Persist in Database

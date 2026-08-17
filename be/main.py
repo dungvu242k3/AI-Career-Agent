@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from be.api.v1.cv_router import router as cv_router
+from be.api.v1.ats_router import router as ats_router
 from be.config import get_settings
 from be.db.database import init_db, close_db
 
@@ -78,6 +79,11 @@ def create_app() -> FastAPI:
         cv_router,
         prefix=f"{settings.api_prefix}/cv",
         tags=["CV Ingestion & Preview"],
+    )
+    app.include_router(
+        ats_router,
+        prefix=f"{settings.api_prefix}/ats",
+        tags=["ATS Studio & STAR Rewriter"],
     )
 
     @app.get("/health", tags=["Monitoring"])

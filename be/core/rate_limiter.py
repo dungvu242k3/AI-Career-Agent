@@ -85,3 +85,7 @@ class SlidingWindowRateLimiter:
 upload_rate_limiter = SlidingWindowRateLimiter(max_requests=5, window_seconds=60)
 # 60 preview/get requests per minute
 read_rate_limiter = SlidingWindowRateLimiter(max_requests=60, window_seconds=60)
+# 10 ATS match requests per minute per IP
+ats_rate_limiter = SlidingWindowRateLimiter(max_requests=10, window_seconds=60)
+# 20 STAR rewrite requests per minute per IP
+star_rate_limiter = SlidingWindowRateLimiter(max_requests=20, window_seconds=60)

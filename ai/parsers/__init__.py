@@ -11,6 +11,10 @@ from ai.parsers.docx_parser import (
     DocxParsingError,
     DocxInvalidFormatError,
 )
+from ai.parsers.jd_parser import (
+    JDParser,
+    get_default_jd_parser,
+)
 
 __all__ = [
     "PyMuPDFParser",
@@ -20,4 +24,6 @@ __all__ = [
     "DocxDocumentParser",
     "DocxParsingError",
     "DocxInvalidFormatError",
+    "JDParser",
+    "get_default_jd_parser",
 ]
