@@ -31,12 +31,19 @@ class OpenAICVExtractor(BaseProfileExtractor):
         return self._client or get_openai_client()
 
     def _sanitize_url(self, url: str | None) -> str | None:
-        """Ensure URLs have a valid scheme and are cleaned."""
+        """Ensure URLs have a valid web scheme and reject dangerous protocols (javascript:, data:, vbscript:, file:)."""
         if not url:
             return None
         url = url.strip()
         if not url:
             return None
+
+        # Block dangerous pseudo-protocols explicitly
+        lower_url = url.lower()
+        if lower_url.startswith(("javascript:", "data:", "vbscript:", "file:", "about:", "blob:")):
+            logger.warning("Rejected malicious/unsupported URL scheme: %s", url)
+            return None
+
         if not url.startswith(("http://", "https://")):
             return f"https://{url}"
         return url

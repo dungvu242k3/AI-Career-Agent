@@ -4,6 +4,7 @@ from functools import lru_cache
 import hashlib
 import logging
 from pathlib import Path
+import re
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -25,6 +26,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def sanitize_filename(filename: str) -> str:
+    """Sanitize upload filename to prevent Path Traversal and illegal filesystem characters."""
+    # 1. Extract only the basename (strips any directory traversal prefixes ../ or ..\)
+    basename = Path(filename).name
+    # 2. Allow only alphanumeric characters, underscores, hyphens, and dots
+    safe_name = re.sub(r"[^a-zA-Z0-9_.-]", "_", basename)
+    # 3. Guard against empty or hidden file edge cases (. or ..)
+    if not safe_name or safe_name.startswith("."):
+        safe_name = f"cv_{uuid.uuid4().hex[:6]}.pdf"
+    if not safe_name.lower().endswith(".pdf"):
+        safe_name = f"{safe_name}.pdf"
+    return safe_name
+
+
 @lru_cache(maxsize=1)
 def get_cached_ingestion_pipeline() -> CVIngestionPipeline:
     """Cached pipeline singleton to avoid reloading prompt templates per request."""
@@ -36,7 +51,7 @@ def get_cached_ingestion_pipeline() -> CVIngestionPipeline:
     response_model=UploadResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Upload & Parse CV Document",
-    description="Accepts a PDF document, performs layout deconstruction, and extracts structured CandidateProfile via Gemini AI.",
+    description="Accepts a PDF document, performs layout deconstruction, and extracts structured CandidateProfile via Gemini/OpenAI AI.",
 )
 async def upload_cv(
     file: UploadFile = File(..., description="PDF CV file (max 10MB, up to 5 pages)"),
@@ -58,6 +73,9 @@ async def upload_cv(
             detail=f"Kích thước tệp quá lớn ({len(content) / (1024*1024):.1f}MB). Giới hạn tối đa là {settings.max_upload_size_mb}MB.",
         )
 
+    # Sanitize filename against Path Traversal attacks
+    safe_filename = sanitize_filename(file.filename)
+
     # Compute SHA256 checksum for deduplication & instant cache retrieval
     checksum = hashlib.sha256(content).hexdigest()
     cached_upload = await get_upload_by_checksum(checksum)
@@ -73,16 +91,16 @@ async def upload_cv(
                 is_cached=True,
             )
 
-    # Save physical file to disk safely
+    # Save physical file to disk safely with unique ID and sanitized name
     file_id = uuid.uuid4().hex[:8]
     upload_dir = settings.upload_dir
     upload_dir.mkdir(parents=True, exist_ok=True)
-    file_path = upload_dir / f"{file_id}_{file.filename}"
+    file_path = upload_dir / f"{file_id}_{safe_filename}"
     file_path.write_bytes(content)
 
-    # Execute AI Ingestion Pipeline (PyMuPDF -> Gemini Flash -> CandidateProfile v3)
+    # Execute AI Ingestion Pipeline (PyMuPDF -> OpenAI/Gemini -> CandidateProfile v3)
     try:
-        raw_text, profile = await pipeline.process_bytes(content, filename=file.filename)
+        raw_text, profile = await pipeline.process_bytes(content, filename=safe_filename)
     except PDFScanDetectedError as e:
         file_path.unlink(missing_ok=True)  # Clean up failed upload file
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
@@ -105,7 +123,7 @@ async def upload_cv(
         title=profile.title,
     )
     await save_upload(
-        filename=file.filename,
+        filename=safe_filename,
         file_path=str(file_path),
         checksum=checksum,
         raw_text=raw_text,
@@ -114,7 +132,7 @@ async def upload_cv(
 
     return UploadResponse(
         candidate_id=candidate_id,
-        filename=file.filename,
+        filename=safe_filename,
         text_length=len(raw_text),
         profile=profile,
         is_cached=False,

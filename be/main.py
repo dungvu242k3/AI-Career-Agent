@@ -9,12 +9,26 @@ WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from be.api.v1.cv_router import router as cv_router
 from be.config import get_settings
 from be.db.database import init_db, close_db
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware enforcing OWASP-recommended HTTP security headers."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        return response
 
 
 @asynccontextmanager
@@ -46,6 +60,9 @@ def create_app() -> FastAPI:
         description="CareerPilot AI — Next-Gen AI Career Agent & Automation Suite",
         lifespan=lifespan,
     )
+
+    # Security Headers Middleware
+    app.add_middleware(SecurityHeadersMiddleware)
 
     # CORS Configuration
     app.add_middleware(

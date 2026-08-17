@@ -1,4 +1,4 @@
-"""Integration tests for Backend API routes."""
+"""Integration tests for Backend API routes and Security Hardening."""
 
 import uuid
 import pytest
@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from ai.models.candidate import CandidateProfile, PersonalInfo, SkillsTaxonomy, SummarySection
 from ai.pipeline import CVIngestionPipeline
 from be.main import app
-from be.api.v1.cv_router import get_cached_ingestion_pipeline
+from be.api.v1.cv_router import get_cached_ingestion_pipeline, sanitize_filename
 
 
 class MockPipeline(CVIngestionPipeline):
@@ -26,10 +26,23 @@ def client():
     app.dependency_overrides.clear()
 
 
-def test_health_check(client):
+def test_health_check_and_security_headers(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    # Verify OWASP Security Headers
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-XSS-Protection"] == "1; mode=block"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+
+
+def test_filename_sanitization_path_traversal():
+    assert sanitize_filename("../../etc/passwd.pdf") == "passwd.pdf"
+    assert sanitize_filename("..\\..\\windows\\system32\\calc.pdf") == "calc.pdf"
+    assert sanitize_filename("my resume (1).pdf") == "my_resume__1_.pdf"
+    assert sanitize_filename(".hidden.pdf").endswith(".pdf")
+    assert not sanitize_filename(".hidden.pdf").startswith(".")
 
 
 def test_upload_non_pdf_rejected(client):

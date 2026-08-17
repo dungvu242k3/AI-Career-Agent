@@ -1,4 +1,4 @@
-"""Unit tests for GeminiCVExtractor auto-healing and experience interval merging."""
+"""Unit tests for GeminiCVExtractor auto-healing, protocol validation, and experience interval merging."""
 
 import pytest
 from unittest.mock import MagicMock
@@ -12,15 +12,11 @@ def extractor():
 
 
 def test_experience_estimation_merges_overlapping_intervals(extractor):
-    # Two overlapping jobs:
-    # Job 1: 2021-01 to 2022-12 (24 months)
-    # Job 2: 2022-06 to 2023-06 (overlaps by 6 months, spans to 2023-06 -> total 30 months = 2.5 years)
     work_history = [
         WorkExperienceItem(company="A", role="Dev", start_date="2021-01", end_date="2022-12"),
         WorkExperienceItem(company="B", role="Lead", start_date="2022-06", end_date="2023-06"),
     ]
     years = extractor._estimate_total_experience(work_history)
-    # 2021-01 to 2023-06 is 30 months / 12 = 2.5 years
     assert years == 2.5
 
 
@@ -55,3 +51,12 @@ def test_auto_heal_sanitizes_urls_and_deduplicates_skills(extractor):
     assert profile.skills_taxonomy.programming_languages == ["Python", "Go"]
     assert profile.skills_taxonomy.databases == ["PostgreSQL", "redis"]
     assert profile.projects[0].url == "https://myproject.dev"
+
+
+def test_malicious_protocols_rejected(extractor):
+    assert extractor._sanitize_url("javascript:alert(document.cookie)") is None
+    assert extractor._sanitize_url("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==") is None
+    assert extractor._sanitize_url("vbscript:msgbox(1)") is None
+    assert extractor._sanitize_url("file:///etc/passwd") is None
+    assert extractor._sanitize_url("https://github.com/user") == "https://github.com/user"
+    assert extractor._sanitize_url("github.com/user") == "https://github.com/user"
