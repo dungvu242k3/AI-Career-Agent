@@ -16,13 +16,26 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, description="Debug mode flag — disabled by default in prod")
     api_prefix: str = Field(default="/api/v1")
 
+    # Database (PostgreSQL default connection URL)
+    # Examples:
+    # - Local: postgresql+asyncpg://postgres:password@localhost:5432/careerpilot
+    # - Supabase / Neon: postgresql+asyncpg://user:pass@ep-xyz.aws.neon.tech/careerpilot?ssl=require
+    # - SQLite fallback: sqlite+aiosqlite:///./data/careerpilot.db
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/careerpilot",
+        description="Async database connection URL (PostgreSQL / SQLite)",
+    )
+    db_path: Path = Field(default=WORKSPACE_ROOT / "data" / "careerpilot.db")
+
     # Gemini AI Credentials & Models
     gemini_api_key: SecretStr = Field(default=SecretStr(""))
     gemini_flash_model: str = Field(default="gemini-2.5-flash-preview-05-20")
     gemini_flash_lite_model: str = Field(default="gemini-2.0-flash")
 
-    # Database
-    db_path: Path = Field(default=WORKSPACE_ROOT / "data" / "careerpilot.db")
+    # OpenAI AI Credentials & Models
+    openai_api_key: SecretStr = Field(default=SecretStr(""))
+    openai_extraction_model: str = Field(default="gpt-4o-mini")
+    openai_reasoning_model: str = Field(default="gpt-4o")
 
     # Uploads
     upload_dir: Path = Field(default=WORKSPACE_ROOT / "data" / "uploads")

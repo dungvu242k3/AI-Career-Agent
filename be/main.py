@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from be.api.v1.cv_router import router as cv_router
 from be.config import get_settings
-from be.db.database import init_db
+from be.db.database import init_db, close_db
 
 
 @asynccontextmanager
@@ -26,10 +26,13 @@ async def lifespan(app: FastAPI):
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     settings.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Initialize SQLite tables & indexes
+    # Initialize Database (PostgreSQL / SQLite)
     await init_db()
 
     yield
+
+    # Graceful shutdown of connection pools
+    await close_db()
 
 
 def create_app() -> FastAPI:
