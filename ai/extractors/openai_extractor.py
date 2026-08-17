@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from ai.interfaces.extractor import BaseProfileExtractor
 from ai.models.candidate import CandidateProfile
-from ai.prompts import load_prompt
+from ai.prompts import load_composed_prompt
 from ai.config import get_ai_config
 from ai.client import get_openai_client
 
@@ -25,7 +25,11 @@ class OpenAICVExtractor(BaseProfileExtractor):
     def __init__(self, client: AsyncOpenAI | None = None):
         self.config = get_ai_config()
         self._client = client
-        self.system_instruction = load_prompt("extract_cv.md")
+        self.system_instruction = load_composed_prompt(
+            "system_prompt.md",
+            "extract_cv.md",
+            "few_shot_examples.md",
+        )
 
     def _get_client(self) -> AsyncOpenAI:
         return self._client or get_openai_client()

@@ -14,6 +14,7 @@ from ai.parsers import PDFInvalidFormatError, PDFParsingError, PDFScanDetectedEr
 from ai.pipeline import CVIngestionPipeline, get_default_ingestion_pipeline
 from be.api.v1.schemas import MessageResponse, UpdateProfileRequest, UploadResponse
 from be.config import Settings, get_settings
+from be.core.rate_limiter import upload_rate_limiter, read_rate_limiter
 from be.db.database import (
     get_candidate,
     get_upload_by_checksum,
@@ -52,6 +53,7 @@ def get_cached_ingestion_pipeline() -> CVIngestionPipeline:
     status_code=status.HTTP_201_CREATED,
     summary="Upload & Parse CV Document",
     description="Accepts a PDF document, performs layout deconstruction, and extracts structured CandidateProfile via Gemini/OpenAI AI.",
+    dependencies=[Depends(upload_rate_limiter)],
 )
 async def upload_cv(
     file: UploadFile = File(..., description="PDF CV file (max 10MB, up to 2 pages)"),
@@ -143,6 +145,7 @@ async def upload_cv(
     "/preview/{candidate_id}",
     response_model=CandidateProfile,
     summary="Get Candidate Profile for Preview",
+    dependencies=[Depends(read_rate_limiter)],
 )
 async def get_candidate_preview(candidate_id: int):
     """Retrieve CandidateProfile for preview and editing."""
@@ -160,6 +163,7 @@ async def get_candidate_preview(candidate_id: int):
     "/preview/{candidate_id}",
     response_model=MessageResponse,
     summary="Update Candidate Profile after User Edits",
+    dependencies=[Depends(read_rate_limiter)],
 )
 async def update_candidate_preview(candidate_id: int, payload: UpdateProfileRequest):
     """Update CandidateProfile after user edits information on Preview Card."""

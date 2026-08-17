@@ -107,6 +107,10 @@ class CVMetadata(BaseModel):
 
     total_experience_years: float = Field(default=0.0, description="Total years of work experience calculated from history")
     cv_language: Literal["en", "vi", "mixed"] = Field(default="en", description="Primary detected language of the CV")
+    cv_format_type: Literal["chronological", "functional", "academic", "creative", "combination"] = Field(
+        default="chronological", description="Detected CV layout format type"
+    )
+    has_clear_sections: bool = Field(default=True, description="Whether the CV has clearly labeled section headers")
     extraction_confidence: int = Field(default=95, description="Confidence score (0-100) of parsing completeness")
     detected_sections: list[str] = Field(default_factory=list, description="List of recognized sections from the document")
 

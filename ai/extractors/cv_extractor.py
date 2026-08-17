@@ -1,6 +1,6 @@
 """Gemini CV Extractor — Converts raw text to structured CandidateProfile (v3).
 
-Implements BaseProfileExtractor with prompt loading, Pydantic auto-healing,
+Implements BaseProfileExtractor with modular prompt composition, Pydantic auto-healing,
 non-blocking async API, prompt injection defense, and resilient validation.
 """
 
@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from ai.interfaces.extractor import BaseProfileExtractor
 from ai.models.candidate import CandidateProfile
-from ai.prompts import load_prompt
+from ai.prompts import load_composed_prompt
 from ai.config import get_ai_config
 from ai.client import get_gemini_client
 
@@ -25,7 +25,11 @@ class GeminiCVExtractor(BaseProfileExtractor):
 
     def __init__(self):
         self.config = get_ai_config()
-        self.system_instruction = load_prompt("extract_cv.md")
+        self.system_instruction = load_composed_prompt(
+            "system_prompt.md",
+            "extract_cv.md",
+            "few_shot_examples.md",
+        )
 
     def _sanitize_url(self, url: str | None) -> str | None:
         """Ensure URLs have a valid web scheme and reject dangerous protocols (javascript:, data:, vbscript:, file:)."""
@@ -161,6 +165,7 @@ class GeminiCVExtractor(BaseProfileExtractor):
                 config=types.GenerateContentConfig(
                     system_instruction=self.system_instruction,
                     response_mime_type="application/json",
+                    response_schema=CandidateProfile,
                     temperature=self.config.extraction_temperature,
                     max_output_tokens=self.config.extraction_max_tokens,
                 ),

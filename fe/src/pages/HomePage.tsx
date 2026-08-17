@@ -1,7 +1,17 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Sparkles, ArrowRight } from "lucide-react";
+import { UploadModal } from "../components/UploadModal";
+import { UploadResponse } from "../types/candidate";
 
 export default function HomePage() {
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleUploadSuccess = (_data: UploadResponse) => {
+    navigate("/workspace");
+  };
+
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
       {/* ────────────────────────────────────────────────────────
@@ -26,26 +36,16 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
-              <Link
-                to="/workspace"
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
                 aria-label="Phân tích CV miễn phí ngay"
-                className="bg-[#10b981] text-[#090D16] font-semibold px-6 py-3 rounded-md border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base font-['Inter',sans-serif]"
+                className="bg-[#10b981] text-[#090D16] font-semibold px-6 py-3 rounded-md border border-[#10b981] hover:bg-[#4edea3] transition-colors flex items-center gap-2 shadow-sm text-sm sm:text-base font-['Inter',sans-serif] cursor-pointer"
               >
+                <Sparkles className="w-4 h-4" />
                 <span>Phân tích CV miễn phí</span>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </Link>
+                <ArrowRight className="w-4 h-4" />
+              </button>
 
               <Link
                 to="/workspace"
@@ -322,6 +322,13 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Upload CV Modal */}
+      <UploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={handleUploadSuccess}
+      />
     </div>
   );
 }
