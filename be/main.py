@@ -1,25 +1,31 @@
-"""CareerPilot AI — FastAPI Application Entry Point"""
+"""CareerPilot AI — FastAPI Application Entry Point."""
 
-from contextlib import asynccontextmanager
+import sys
 from pathlib import Path
+from contextlib import asynccontextmanager
+
+# Add workspace root to Python path so 'ai' package is always resolvable
+WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+if str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import get_settings
-from api.v1.cv_router import router as cv_router
-from db.database import init_db
+from be.config import get_settings
+from be.api.v1.cv_router import router as cv_router
+from be.db.database import init_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
 
-    # Ensure data directories exist
+    # Ensure data and upload directories exist
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     Path("./data").mkdir(parents=True, exist_ok=True)
 
-    # Initialize database
+    # Initialize SQLite tables
     await init_db()
 
     yield
@@ -31,11 +37,11 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
-        description="AI-powered career automation agent",
+        description="CareerPilot AI — Next-Gen AI Career Agent & Automation Suite",
         lifespan=lifespan,
     )
 
-    # CORS
+    # CORS Configuration
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -44,12 +50,12 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Routers
-    app.include_router(cv_router, prefix=f"{settings.api_prefix}/cv", tags=["CV"])
+    # Mount API Routers
+    app.include_router(cv_router, prefix=f"{settings.api_prefix}/cv", tags=["CV Ingestion & Preview"])
 
     @app.get("/health")
     async def health_check():
-        return {"status": "ok", "app": settings.app_name}
+        return {"status": "ok", "app": settings.app_name, "version": "0.1.0"}
 
     return app
 
