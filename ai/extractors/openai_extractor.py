@@ -25,7 +25,7 @@ class OpenAICVExtractor(BaseProfileExtractor):
     def __init__(self, client: AsyncOpenAI | None = None):
         self.config = get_ai_config()
         self._client = client
-        self.system_instruction = load_prompt("extract_cv.txt")
+        self.system_instruction = load_prompt("extract_cv.md")
 
     def _get_client(self) -> AsyncOpenAI:
         return self._client or get_openai_client()

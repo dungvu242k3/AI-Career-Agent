@@ -25,7 +25,7 @@ class GeminiCVExtractor(BaseProfileExtractor):
 
     def __init__(self):
         self.config = get_ai_config()
-        self.system_instruction = load_prompt("extract_cv.txt")
+        self.system_instruction = load_prompt("extract_cv.md")
 
     def _sanitize_url(self, url: str | None) -> str | None:
         """Ensure URLs have a valid web scheme and reject dangerous protocols (javascript:, data:, vbscript:, file:)."""

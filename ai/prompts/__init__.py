@@ -1,13 +1,27 @@
 """Prompts registry and loader."""
 
+from functools import lru_cache
 from pathlib import Path
 
 PROMPTS_DIR = Path(__file__).parent
 
 
+@lru_cache(maxsize=32)
 def load_prompt(prompt_name: str) -> str:
-    """Load prompt template text by filename."""
+    """Load prompt template text by filename (supports .md and .txt)."""
+    # 1. Direct match
     file_path = PROMPTS_DIR / prompt_name
-    if not file_path.exists():
-        raise FileNotFoundError(f"Prompt template '{prompt_name}' not found at {file_path}")
-    return file_path.read_text(encoding="utf-8")
+    if file_path.exists():
+        return file_path.read_text(encoding="utf-8")
+
+    # 2. Try with .md extension if omitted
+    md_path = PROMPTS_DIR / f"{prompt_name}.md"
+    if md_path.exists():
+        return md_path.read_text(encoding="utf-8")
+
+    # 3. Try with .txt extension as legacy fallback
+    txt_path = PROMPTS_DIR / f"{prompt_name}.txt"
+    if txt_path.exists():
+        return txt_path.read_text(encoding="utf-8")
+
+    raise FileNotFoundError(f"Prompt template '{prompt_name}' not found in {PROMPTS_DIR}")
