@@ -67,3 +67,19 @@ def test_pdf_parser_invalid_header_rejection():
     with pytest.raises(PDFInvalidFormatError) as exc_info:
         parser.extract_text_from_bytes(corrupt_bytes)
     assert "%PDF" in str(exc_info.value)
+
+
+def test_pdf_parser_exceeds_max_pages_rejection():
+    parser = PyMuPDFParser()
+    # Create a 3-page PDF
+    doc = fitz.open()
+    for i in range(3):
+        p = doc.new_page()
+        p.insert_text(fitz.Point(50, 50), f"Page {i+1} sample text content for CV testing")
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    with pytest.raises(PDFInvalidFormatError) as exc_info:
+        parser.extract_text_from_bytes(pdf_bytes)
+    assert "vượt quá giới hạn tối đa 2 trang" in str(exc_info.value)
+

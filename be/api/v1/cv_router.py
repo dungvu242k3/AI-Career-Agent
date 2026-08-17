@@ -54,7 +54,7 @@ def get_cached_ingestion_pipeline() -> CVIngestionPipeline:
     description="Accepts a PDF document, performs layout deconstruction, and extracts structured CandidateProfile via Gemini/OpenAI AI.",
 )
 async def upload_cv(
-    file: UploadFile = File(..., description="PDF CV file (max 10MB, up to 5 pages)"),
+    file: UploadFile = File(..., description="PDF CV file (max 10MB, up to 2 pages)"),
     settings: Settings = Depends(get_settings),
     pipeline: CVIngestionPipeline = Depends(get_cached_ingestion_pipeline),
 ):

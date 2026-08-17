@@ -59,7 +59,7 @@ class AIConfig(BaseSettings):
     reasoning_max_tokens: int = Field(default=8192, gt=0)
 
     # Document Limits & Guardrails
-    max_pdf_pages: int = Field(default=5, gt=0, le=20)
+    max_pdf_pages: int = Field(default=2, gt=0, le=20, description="Maximum allowed PDF pages (default 2)")
     max_file_size_mb: int = Field(default=10, gt=0, le=50)
     min_text_length: int = Field(default=50, gt=0)
 
