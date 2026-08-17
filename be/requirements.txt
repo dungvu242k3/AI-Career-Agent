@@ -1,0 +1,15 @@
+fastapi==0.115.*
+uvicorn[standard]==0.34.*
+pydantic==2.11.*
+pydantic-settings==2.9.*
+python-multipart==0.0.*
+PyMuPDF==1.25.*
+google-genai==1.14.*
+aiosqlite==0.21.*
+httpx==0.28.*
+python-dotenv==1.1.*
+
+# Dev / Testing
+pytest==8.4.*
+pytest-asyncio==0.26.*
+pytest-cov==6.1.*
