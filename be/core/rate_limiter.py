@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class SlidingWindowRateLimiter:
     """In-memory sliding window rate limiter tracking client IP requests."""
 
-    def __init__(self, max_requests: int = 10, window_seconds: int = 60):
+    def __init__(self, max_requests: int = 5, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         # Storage: ip -> list of unix timestamps
@@ -81,7 +81,7 @@ class SlidingWindowRateLimiter:
 
 
 # Pre-configured rate limiters
-# 10 uploads per minute per IP (enough for normal users, blocks automated spamming)
-upload_rate_limiter = SlidingWindowRateLimiter(max_requests=10, window_seconds=60)
+# 5 uploads per minute per IP (strict AI token cost and anti-spam protection)
+upload_rate_limiter = SlidingWindowRateLimiter(max_requests=5, window_seconds=60)
 # 60 preview/get requests per minute
 read_rate_limiter = SlidingWindowRateLimiter(max_requests=60, window_seconds=60)
