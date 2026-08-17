@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     minio_bucket: str = Field(default="careerpilot-cvs")
     minio_secure: bool = Field(default=False, description="Use SSL/TLS (HTTPS) for MinIO connection")
     upload_dir: Path = Field(default=WORKSPACE_ROOT / "data" / "uploads")
-    max_upload_size_mb: int = Field(default=10, gt=0, le=50)
+    max_upload_size_mb: int = Field(default=2, gt=0, le=50)
 
     # Security & CORS
     cors_origins: list[str] = Field(

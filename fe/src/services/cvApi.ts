@@ -29,7 +29,7 @@ export async function uploadCv(file: File): Promise<UploadResponse> {
     throw new ApiError(400, "Chỉ chấp nhận tệp định dạng PDF (.pdf) hoặc Microsoft Word (.docx).");
   }
 
-  const MAX_SIZE_MB = 10;
+  const MAX_SIZE_MB = 2;
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
     throw new ApiError(
       400,

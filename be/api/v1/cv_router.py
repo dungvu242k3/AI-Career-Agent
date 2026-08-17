@@ -69,7 +69,7 @@ def get_cached_ingestion_pipeline() -> CVIngestionPipeline:
     dependencies=[Depends(upload_rate_limiter)],
 )
 async def upload_cv(
-    file: UploadFile = File(..., description="PDF or Word CV file (max 10MB, up to 2 pages)"),
+    file: UploadFile = File(..., description="PDF or Word CV file (max 2MB, up to 2 pages)"),
     settings: Settings = Depends(get_settings),
     pipeline: CVIngestionPipeline = Depends(get_cached_ingestion_pipeline),
     storage: BaseStorageService = Depends(get_storage_service),

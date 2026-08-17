@@ -31,8 +31,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
       return;
     }
 
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setErrorMessage("Kích thước tệp quá lớn. Giới hạn tối đa là 10MB.");
+    if (selectedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Kích thước tệp quá lớn. Giới hạn tối đa là 2MB.");
       setStep("error");
       return;
     }
@@ -155,7 +155,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSuc
                 <div className="space-y-1.5">
                   <p className="text-sm font-semibold text-[#f8fafc]">Kéo &amp; thả file CV của bạn vào đây</p>
                   <p className="text-xs text-[#94a3b8]">hoặc <span className="text-[#4edea3] underline underline-offset-2">chọn tệp từ máy tính</span></p>
-                  <p className="text-[11px] text-[#64748b] pt-1">Hỗ trợ PDF &amp; Word (.docx) • Tối đa 10 MB • 1-2 trang</p>
+                  <p className="text-[11px] text-[#64748b] pt-1">Hỗ trợ PDF &amp; Word (.docx) • Tối đa 2 MB • 1-2 trang</p>
                 </div>
               )}
             </div>

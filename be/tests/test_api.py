@@ -111,3 +111,15 @@ def test_upload_docx_success(client):
     data = response.json()
     assert data["filename"].endswith(".docx")
     assert data["profile"]["personal_info"]["full_name"] == "Le Van Test"
+
+
+def test_upload_file_exceeds_2mb_rejected(client):
+    """Test that uploading a file larger than 2MB is rejected with 400 Bad Request."""
+    oversized_bytes = b"0" * (2 * 1024 * 1024 + 1024)  # 2MB + 1KB
+    response = client.post(
+        "/api/v1/cv/upload",
+        files={"file": ("large_cv.pdf", oversized_bytes, "application/pdf")},
+    )
+    assert response.status_code == 400
+    assert "quá lớn" in response.json()["detail"]
+    assert "2MB" in response.json()["detail"]
