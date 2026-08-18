@@ -5,7 +5,7 @@ import { updateCandidatePreview } from "../services/cvApi";
 
 interface ProfileEditModalProps {
   isOpen: boolean;
-  candidateId: number | null;
+  candidateId: string | null;
   profile: CandidateProfile;
   onClose: () => void;
   onSaved: (updatedProfile: CandidateProfile) => void;

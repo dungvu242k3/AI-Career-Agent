@@ -99,7 +99,7 @@ export interface CandidateProfile {
 }
 
 export interface UploadResponse {
-  candidate_id: number;
+  candidate_id: string;
   filename: string;
   text_length: number;
   profile: CandidateProfile;
@@ -114,7 +114,7 @@ export interface UpdateProfileRequest {
 
 export interface MessageResponse {
   message: string;
-  candidate_id: number | null;
+  candidate_id: string | null;
 }
 
 export type SkillCategoryKey = keyof SkillsTaxonomy;

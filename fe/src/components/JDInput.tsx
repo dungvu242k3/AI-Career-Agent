@@ -14,8 +14,8 @@ import { matchJd } from "../services/atsApi";
 import { JDMatchReport } from "../types/ats";
 
 interface JDInputProps {
-  candidateId: number;
-  onAnalysisSuccess: (report: JDMatchReport) => void;
+  candidateId: string;
+  onAnalysisSuccess: (report: JDMatchReport, rawJdText?: string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
@@ -75,7 +75,7 @@ export const JDInput: React.FC<JDInputProps> = ({
         jdText: activeTab === "text" ? jdText : undefined,
         jdFile: activeTab === "file" ? selectedFile || undefined : undefined,
       });
-      onAnalysisSuccess(report);
+      onAnalysisSuccess(report, activeTab === "text" ? jdText : report.jd_title);
     } catch (err: any) {
       setErrorMessage(err.detail || err.message || "Lỗi khi so khớp JD.");
     } finally {

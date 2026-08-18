@@ -9,6 +9,9 @@ export interface SkillMatchItem {
   cv_evidence: string | null;
   jd_requirement: string;
   importance: "required" | "preferred";
+  has_contextual_proof?: boolean;
+  recency_tier?: "recent" | "legacy" | "unspecified";
+  proof_snippet?: string | null;
 }
 
 export interface JDMatchReport {
@@ -19,6 +22,11 @@ export interface JDMatchReport {
   skill_match_score: number;
   experience_fit_score: number;
   format_quality_score: number;
+
+  skill_density_status?: "optimal" | "bloated" | "sparse";
+  total_cv_skills_count?: number;
+  verified_skills_ratio?: number;
+  pruning_suggestions?: string[];
 
   matched_skills: SkillMatchItem[];
   missing_skills: SkillMatchItem[];
@@ -41,7 +49,7 @@ export interface STARResult {
 
 export interface ATSHistoryItem {
   id: number;
-  candidate_id: number;
+  candidate_id: string;
   ats_score: number;
   ats_grade: string;
   report_json: string;

@@ -11,11 +11,11 @@ const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
  * Match a candidate's CV against a target Job Description (text or file).
  */
 export async function matchJd(
-  candidateId: number,
+  candidateId: string,
   options: { jdText?: string; jdFile?: File }
 ): Promise<JDMatchReport> {
   const formData = new FormData();
-  formData.append("candidate_id", candidateId.toString());
+  formData.append("candidate_id", candidateId);
 
   if (options.jdFile) {
     const file = options.jdFile;
@@ -99,7 +99,7 @@ export async function rewriteBulletToStar(payload: {
 /**
  * Fetch analysis history for candidate.
  */
-export async function getAtsHistory(candidateId: number): Promise<ATSHistoryItem[]> {
+export async function getAtsHistory(candidateId: string): Promise<ATSHistoryItem[]> {
   try {
     const response = await fetch(`${API_BASE}/ats/history/${candidateId}`);
     if (!response.ok) {
@@ -110,3 +110,57 @@ export async function getAtsHistory(candidateId: number): Promise<ATSHistoryItem
     return [];
   }
 }
+
+/**
+ * Generate 1-Page Tailored Harvard CV in PDF format.
+ */
+export async function generateHarvardCVPdf(payload: {
+  candidate_id: string;
+  jd_text: string;
+  language?: "vi" | "en";
+}): Promise<{ blob: Blob; filename: string; estimatedScore: number; wordCount: number }> {
+  try {
+    const response = await fetch(`${API_BASE}/ats/generate-cv`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        candidate_id: payload.candidate_id,
+        jd_text: payload.jd_text,
+        language: payload.language || "vi",
+        format: "pdf",
+      }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Không thể tạo CV tối ưu chuẩn Harvard.";
+      try {
+        const errorJson = await response.json();
+        errorMessage = errorJson.detail || errorMessage;
+      } catch {
+        errorMessage = `Lỗi HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new ApiError(response.status, errorMessage);
+    }
+
+    const disposition = response.headers.get("Content-Disposition");
+    let filename = `Harvard_CV_${payload.language || "vi"}.pdf`;
+    if (disposition && disposition.includes("filename=")) {
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) {
+        filename = match[1];
+      }
+    }
+
+    const estimatedScore = parseInt(response.headers.get("X-Estimated-ATS-Score") || "88", 10);
+    const wordCount = parseInt(response.headers.get("X-Estimated-Word-Count") || "450", 10);
+
+    const blob = await response.blob();
+    return { blob, filename, estimatedScore, wordCount };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(500, `Lỗi khi xuất PDF CV: ${(error as Error).message}`);
+  }
+}
+

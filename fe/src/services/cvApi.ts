@@ -72,7 +72,7 @@ export async function uploadCv(file: File): Promise<UploadResponse> {
 /**
  * Fetch candidate profile for preview by ID.
  */
-export async function getCandidatePreview(candidateId: number): Promise<CandidateProfile> {
+export async function getCandidatePreview(candidateId: string): Promise<CandidateProfile> {
   try {
     const response = await fetch(`${API_BASE}/cv/preview/${candidateId}`);
     if (!response.ok) {
@@ -96,7 +96,7 @@ export async function getCandidatePreview(candidateId: number): Promise<Candidat
  * Update candidate profile after user edits.
  */
 export async function updateCandidatePreview(
-  candidateId: number,
+  candidateId: string,
   profile: CandidateProfile
 ): Promise<MessageResponse> {
   try {
@@ -136,9 +136,9 @@ const STORAGE_KEYS = {
   PROFILE: "careerpilot_profile",
 };
 
-export function saveActiveCandidateLocally(candidateId: number, filename: string, profile: CandidateProfile) {
+export function saveActiveCandidateLocally(candidateId: string, filename: string, profile: CandidateProfile) {
   try {
-    localStorage.setItem(STORAGE_KEYS.CANDIDATE_ID, candidateId.toString());
+    localStorage.setItem(STORAGE_KEYS.CANDIDATE_ID, candidateId);
     localStorage.setItem(STORAGE_KEYS.FILENAME, filename);
     localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
   } catch (e) {
@@ -147,7 +147,7 @@ export function saveActiveCandidateLocally(candidateId: number, filename: string
 }
 
 export function getActiveCandidateLocally(): {
-  candidateId: number | null;
+  candidateId: string | null;
   filename: string | null;
   profile: CandidateProfile | null;
 } {
@@ -157,7 +157,7 @@ export function getActiveCandidateLocally(): {
     const profileStr = localStorage.getItem(STORAGE_KEYS.PROFILE);
 
     return {
-      candidateId: idStr ? parseInt(idStr, 10) : null,
+      candidateId: idStr || null,
       filename: filename || null,
       profile: profileStr ? JSON.parse(profileStr) : null,
     };

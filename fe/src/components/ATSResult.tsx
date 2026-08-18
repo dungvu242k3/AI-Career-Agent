@@ -54,7 +54,10 @@ export const ATSResult: React.FC<ATSResultProps> = ({
   const strokeDashoffset = circumference - (report.overall_score / 100) * circumference;
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 backdrop-blur-md shadow-xl flex flex-col gap-6 animate-fadeIn">
+    <div
+      aria-label="Kết quả đánh giá ATS"
+      className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 backdrop-blur-md shadow-xl flex flex-col gap-6 animate-fadeIn"
+    >
       {/* Header with Title & Reset Button */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
@@ -198,6 +201,37 @@ export const ATSResult: React.FC<ATSResultProps> = ({
         </div>
       </div>
 
+      {/* Skill Depth & Proof Metrics (10-15 Elite Standard) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-950/30 border border-slate-800/60 rounded-xl text-xs">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" />
+            {Math.round((report.verified_skills_ratio ?? 1) * 100)}% Kỹ năng có dự án chứng minh
+          </span>
+          <span className="text-slate-400">
+            Tổng: <strong className="text-white">{report.total_cv_skills_count ?? report.matched_skills.length}</strong> kỹ năng trên CV
+          </span>
+        </div>
+
+        <div>
+          {report.skill_density_status === "bloated" && (
+            <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">
+              ⚠️ Quá nhiều kỹ năng (Nên tinh gọn về 10-15 kỹ năng)
+            </span>
+          )}
+          {report.skill_density_status === "optimal" && (
+            <span className="px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">
+              ✨ Mật độ chuẩn (10-15 kỹ năng tinh gọn)
+            </span>
+          )}
+          {report.skill_density_status === "sparse" && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
+              💡 Nên bổ sung thêm kỹ năng then chốt
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Interactive Skill Chips Section */}
       <div className="space-y-4">
         {/* Missing Skills (Clickable for STAR generation) */}
@@ -251,10 +285,19 @@ export const ATSResult: React.FC<ATSResultProps> = ({
                       ? "bg-emerald-950/30 border-emerald-800/50 text-emerald-300"
                       : "bg-amber-950/30 border-amber-800/50 text-amber-300"
                   }`}
-                  title={skill.cv_evidence || skill.jd_requirement}
+                  title={skill.proof_snippet || skill.cv_evidence || skill.jd_requirement}
                 >
                   <span>{skill.match_type === "exact" ? "🟢" : "🟡"}</span>
                   <span>{skill.skill_name}</span>
+                  {skill.has_contextual_proof ? (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-normal">
+                      ✓ Có dự án
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-normal">
+                      ⚠ Chỉ liệt kê
+                    </span>
+                  )}
                   {skill.match_type === "semantic" && (
                     <span className="text-[10px] text-amber-400 font-normal">
                       (Tương đương)
@@ -287,6 +330,26 @@ export const ATSResult: React.FC<ATSResultProps> = ({
                   +{report.excess_skills.length - 10} kỹ năng khác
                 </span>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Smart Pruning Suggestions Card */}
+        {report.pruning_suggestions && report.pruning_suggestions.length > 0 && (
+          <div className="p-4 bg-amber-950/20 border border-amber-800/40 rounded-xl space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-400 text-sm">✂️</span>
+              <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                Lời Khuyên Tinh Gọn Kỹ Năng (Chuẩn 10 - 15 Kỹ Năng)
+              </h4>
+            </div>
+            <div className="space-y-1.5 text-xs text-slate-300">
+              {report.pruning_suggestions.map((sug, idx) => (
+                <p key={idx} className="leading-relaxed flex items-start gap-2">
+                  <span className="text-amber-400">•</span>
+                  <span>{sug}</span>
+                </p>
+              ))}
             </div>
           </div>
         )}
