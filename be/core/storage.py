@@ -124,11 +124,17 @@ class MinIOStorageService(BaseStorageService):
     def _init_minio_client(self):
         """Initialize MinIO client and ensure bucket exists."""
         try:
+            import urllib3
+            http_client = urllib3.PoolManager(
+                timeout=urllib3.Timeout(connect=0.8, read=1.5),
+                retries=False,
+            )
             self._client = Minio(
                 endpoint=self.settings.minio_endpoint,
                 access_key=self.settings.minio_access_key.get_secret_value(),
                 secret_key=self.settings.minio_secret_key.get_secret_value(),
                 secure=self.settings.minio_secure,
+                http_client=http_client,
             )
             # Create bucket if not exists
             if not self._client.bucket_exists(self.bucket_name):

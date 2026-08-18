@@ -18,6 +18,20 @@ class MockPipeline(CVIngestionPipeline):
         )
 
 
+from be.core.rate_limiter import upload_rate_limiter, read_rate_limiter, ats_rate_limiter, star_rate_limiter
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiters():
+    upload_rate_limiter.reset()
+    read_rate_limiter.reset()
+    ats_rate_limiter.reset()
+    star_rate_limiter.reset()
+    yield
+    upload_rate_limiter.reset()
+    read_rate_limiter.reset()
+    ats_rate_limiter.reset()
+    star_rate_limiter.reset()
+
 @pytest.fixture
 def client():
     app.dependency_overrides[get_cached_ingestion_pipeline] = lambda: MockPipeline()

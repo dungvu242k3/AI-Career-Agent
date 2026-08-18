@@ -1,5 +1,6 @@
 """API Request and Response DTO Schemas for CV Endpoints."""
 
+from typing import Literal
 from pydantic import BaseModel, Field
 from ai.models.candidate import CandidateProfile
 
@@ -7,7 +8,7 @@ from ai.models.candidate import CandidateProfile
 class UploadResponse(BaseModel):
     """Response payload returned upon CV file upload and parsing."""
 
-    candidate_id: int = Field(description="Database unique ID for candidate")
+    candidate_id: str = Field(description="Database UUIDv7 for candidate")
     filename: str = Field(description="Original uploaded filename")
     text_length: int = Field(description="Character length of extracted text")
     profile: CandidateProfile = Field(description="Structured canonical candidate profile")
@@ -26,7 +27,7 @@ class MessageResponse(BaseModel):
     """Generic status/message response."""
 
     message: str
-    candidate_id: int
+    candidate_id: str | None = None
 
 
 class STARRewriteRequest(BaseModel):
@@ -40,7 +41,7 @@ class STARRewriteRequest(BaseModel):
 class JDMatchRequest(BaseModel):
     """JSON payload for JD matching via raw text."""
 
-    candidate_id: int = Field(description="Candidate profile ID")
+    candidate_id: str = Field(description="Candidate profile UUIDv7 ID")
     jd_text: str = Field(description="Raw Job Description text", min_length=15, max_length=10000)
 
 
@@ -48,9 +49,19 @@ class ATSHistoryItem(BaseModel):
     """Single historical ATS analysis record."""
 
     id: int
-    candidate_id: int
+    candidate_id: str
     ats_score: int
     ats_grade: str
     report_json: str
     created_at: str | None = None
+
+
+class GenerateCVRequest(BaseModel):
+    """Payload for generating tailored Harvard 1-Page CV."""
+
+    candidate_id: str = Field(description="Candidate profile UUIDv7 ID")
+    jd_text: str = Field(description="Raw Job Description text", min_length=15, max_length=10000)
+    language: Literal["vi", "en"] = Field(default="vi", description="Target CV language: 'vi' or 'en'")
+    format: Literal["pdf"] = Field(default="pdf", description="Export format: 'pdf'")
+
 

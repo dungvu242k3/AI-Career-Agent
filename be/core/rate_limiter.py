@@ -9,27 +9,64 @@ import logging
 import time
 from fastapi import HTTPException, Request, status
 
+import os
+
 logger = logging.getLogger(__name__)
+
+# Trusted proxy IP list (can be configured via env var for deployment behind Nginx / Cloudflare)
+TRUSTED_PROXIES = set(
+    filter(
+        None,
+        [
+            ip.strip()
+            for ip in os.getenv("TRUSTED_PROXIES", "127.0.0.1,::1,localhost,testclient").split(",")
+        ],
+    )
+)
 
 
 class SlidingWindowRateLimiter:
     """In-memory sliding window rate limiter tracking client IP requests."""
 
-    def __init__(self, max_requests: int = 5, window_seconds: int = 60):
+    def __init__(
+        self,
+        max_requests: int = 5,
+        window_seconds: int = 60,
+        custom_detail: str | None = None,
+        trusted_proxies: set[str] | None = None,
+    ):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
+        self.custom_detail = custom_detail
+        self.trusted_proxies = (
+            trusted_proxies if trusted_proxies is not None else TRUSTED_PROXIES
+        )
         # Storage: ip -> list of unix timestamps
         self._history: dict[str, list[float]] = defaultdict(list)
         self._last_cleanup: float = time.time()
 
+    def reset(self):
+        """Clear all rate limit history (useful for test suite isolation)."""
+        self._history.clear()
+
     def _get_client_ip(self, request: Request) -> str:
-        """Extract client IP handling reverse proxy headers (X-Forwarded-For)."""
+        """Extract client IP with trusted proxy validation to prevent IP spoofing attacks."""
+        client_host = request.client.host if request.client else None
+
+        # Only trust X-Forwarded-For if request comes from an authenticated/configured trusted proxy
+        if client_host and (client_host in self.trusted_proxies or "*" in self.trusted_proxies):
+            forwarded = request.headers.get("X-Forwarded-For")
+            if forwarded:
+                return forwarded.split(",")[0].strip()
+
+        if client_host:
+            return client_host
+
+        # Fallback for synthetic requests where request.client is None
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
-            # First IP in comma-separated list is client IP
             return forwarded.split(",")[0].strip()
-        if request.client:
-            return request.client.host
+
         return "127.0.0.1"
 
     def _cleanup_stale_entries(self, current_time: float):
@@ -39,13 +76,15 @@ class SlidingWindowRateLimiter:
 
         cutoff = current_time - self.window_seconds
         stale_ips = []
-        for ip, timestamps in self._history.items():
-            self._history[ip] = [t for t in timestamps if t > cutoff]
-            if not self._history[ip]:
+        for ip in list(self._history.keys()):
+            timestamps = [t for t in self._history[ip] if t > cutoff]
+            if timestamps:
+                self._history[ip] = timestamps
+            else:
                 stale_ips.append(ip)
 
         for ip in stale_ips:
-            del self._history[ip]
+            self._history.pop(ip, None)
 
         self._last_cleanup = current_time
 
@@ -70,9 +109,10 @@ class SlidingWindowRateLimiter:
                 len(timestamps),
                 self.max_requests,
             )
+            detail = self.custom_detail or f"Bạn đã gửi quá nhiều yêu cầu ({len(timestamps)}/{self.max_requests} lần). Vui lòng thử lại sau {retry_after} giây."
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Bạn đã gửi quá nhiều yêu cầu ({len(timestamps)}/{self.max_requests} lần/phút). Vui lòng thử lại sau {retry_after} giây.",
+                detail=detail,
                 headers={"Retry-After": str(retry_after)},
             )
 
@@ -89,3 +129,10 @@ read_rate_limiter = SlidingWindowRateLimiter(max_requests=60, window_seconds=60)
 ats_rate_limiter = SlidingWindowRateLimiter(max_requests=10, window_seconds=60)
 # 20 STAR rewrite requests per minute per IP
 star_rate_limiter = SlidingWindowRateLimiter(max_requests=20, window_seconds=60)
+# 5 Harvard CV generations per day per IP (Free user tier protection)
+cv_generation_rate_limiter = SlidingWindowRateLimiter(
+    max_requests=5,
+    window_seconds=86400,
+    custom_detail="Bạn đã đạt giới hạn 5 lần tạo CV tối ưu miễn phí trong ngày. Vui lòng quay lại vào ngày mai!",
+)
+

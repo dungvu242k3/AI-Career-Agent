@@ -3,6 +3,8 @@
 from functools import lru_cache
 import logging
 from pathlib import Path
+import re
+import unicodedata
 
 from fastapi import (
     APIRouter,
@@ -16,6 +18,7 @@ from fastapi import (
 
 from ai.analysis.ats_matcher import ATSMatcher, get_default_ats_matcher
 from ai.analysis.star_rewriter import STARRewriter, get_default_star_rewriter
+from ai.analysis.harvard_synthesizer import HarvardCVSynthesizer
 from ai.models.candidate import CandidateProfile
 from ai.models.jd import JDMatchReport, JDProfile
 from ai.models.star import STARResult
@@ -28,17 +31,21 @@ from ai.parsers.jd_parser import (
 from be.api.v1.schemas import (
     ATSHistoryItem,
     STARRewriteRequest,
+    GenerateCVRequest,
 )
+from be.core.cv_renderer import HarvardPDFRenderer
 from be.core.rate_limiter import (
     ats_rate_limiter,
     read_rate_limiter,
     star_rate_limiter,
+    cv_generation_rate_limiter,
 )
 from be.db.database import (
     get_candidate,
     get_candidate_analyses,
     save_analysis,
 )
+from fastapi.responses import Response
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -59,6 +66,12 @@ def get_cached_star_rewriter() -> STARRewriter:
     return get_default_star_rewriter()
 
 
+@lru_cache(maxsize=1)
+def get_cached_harvard_synthesizer() -> HarvardCVSynthesizer:
+    return HarvardCVSynthesizer()
+
+
+
 @router.post(
     "/match",
     response_model=JDMatchReport,
@@ -68,7 +81,7 @@ def get_cached_star_rewriter() -> STARRewriter:
     dependencies=[Depends(ats_rate_limiter)],
 )
 async def match_jd(
-    candidate_id: int = Form(..., description="Candidate ID in database"),
+    candidate_id: str = Form(..., description="Candidate UUIDv7 ID in database"),
     jd_text: str | None = Form(None, description="Raw JD text content (up to 10,000 chars)"),
     jd_file: UploadFile | None = File(None, description="Optional JD file (PDF or DOCX, max 2MB)"),
     jd_parser: JDParser = Depends(get_cached_jd_parser),
@@ -201,7 +214,7 @@ async def rewrite_bullet_to_star(
     summary="Get ATS Analysis History for Candidate",
     dependencies=[Depends(read_rate_limiter)],
 )
-async def get_ats_history(candidate_id: int):
+async def get_ats_history(candidate_id: str):
     """Retrieve historical ATS reports for a given candidate profile."""
     candidate = await get_candidate(candidate_id)
     if not candidate:
@@ -222,3 +235,106 @@ async def get_ats_history(candidate_id: int):
         )
         for r in records
     ]
+
+
+@router.post(
+    "/generate-cv",
+    status_code=status.HTTP_200_OK,
+    summary="Generate 1-Page Tailored Harvard CV in PDF Format",
+    description="Synthesizes CandidateProfile and target JD into a tailored, single-page Harvard CV, returning a pure PDF stream.",
+    dependencies=[Depends(cv_generation_rate_limiter)],
+)
+async def generate_harvard_cv(
+    payload: GenerateCVRequest,
+    jd_parser: JDParser = Depends(get_cached_jd_parser),
+    ats_matcher: ATSMatcher = Depends(get_cached_ats_matcher),
+    synthesizer: HarvardCVSynthesizer = Depends(get_cached_harvard_synthesizer),
+):
+    """Generate a single-page Harvard CV tailored to a Job Description in PDF binary format."""
+    # 1. Verify candidate exists
+    candidate = await get_candidate(payload.candidate_id)
+    if not candidate:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy hồ sơ ứng viên #{payload.candidate_id}",
+        )
+
+    try:
+        profile = CandidateProfile.model_validate_json(candidate["profile_json"])
+    except Exception as e:
+        logger.error("Failed to parse candidate profile JSON: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Hồ sơ ứng viên trong cơ sở dữ liệu không hợp lệ.",
+        )
+
+    # 2. Parse JD
+    cleaned_text = payload.jd_text.strip()
+    if len(cleaned_text) < 15:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nội dung mô tả công việc (JD) quá ngắn (tối thiểu 15 ký tự).",
+        )
+
+    try:
+        jd_profile = await jd_parser.parse_jd_text(cleaned_text)
+    except Exception as e:
+        logger.error("Error parsing JD text: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi khi phân tích nội dung JD. Vui lòng thử lại sau.",
+        )
+
+    # 3. Match profile against JD for scoring and keyword targeting
+    try:
+        match_report = await ats_matcher.match(profile, jd_profile)
+    except Exception as e:
+        logger.error("Error during ATS matching: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi khi đánh giá mức độ tương thích ATS. Vui lòng thử lại sau.",
+        )
+
+    # 4. Synthesize Harvard CV
+    target_lang = payload.language
+    try:
+        cv_data = await synthesizer.synthesize(
+            profile=profile,
+            jd=jd_profile,
+            report=match_report,
+            target_language=target_lang,
+        )
+    except Exception as e:
+        logger.error("Error during Harvard CV synthesis: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi khi AI tổng hợp dữ liệu CV chuẩn Harvard. Vui lòng thử lại sau.",
+        )
+
+    # 5. Render PDF
+    try:
+        pdf_bytes = HarvardPDFRenderer.render(cv_data)
+    except Exception as e:
+        logger.error("Error rendering Harvard PDF: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Lỗi khi xuất tệp PDF CV. Vui lòng thử lại sau.",
+        )
+
+    # Sanitize filename to ASCII for safe HTTP header transmission
+    raw_name = profile.personal_info.full_name or "Candidate"
+    ascii_name = unicodedata.normalize("NFKD", raw_name).encode("ascii", "ignore").decode("ascii")
+    safe_name = re.sub(r"[^\w\-_]", "_", ascii_name).strip("_") or "Candidate"
+    filename = f"Harvard_CV_{safe_name}_{target_lang}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Estimated-ATS-Score": str(cv_data.ats_score_estimate),
+            "X-Estimated-Word-Count": str(cv_data.estimated_word_count),
+        },
+    )
+
+

@@ -77,6 +77,20 @@ class MockSTARRewriter(STARRewriter):
         )
 
 
+from be.core.rate_limiter import upload_rate_limiter, read_rate_limiter, ats_rate_limiter, star_rate_limiter
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiters():
+    upload_rate_limiter.reset()
+    read_rate_limiter.reset()
+    ats_rate_limiter.reset()
+    star_rate_limiter.reset()
+    yield
+    upload_rate_limiter.reset()
+    read_rate_limiter.reset()
+    ats_rate_limiter.reset()
+    star_rate_limiter.reset()
+
 @pytest.fixture
 def client():
     app.dependency_overrides[get_cached_jd_parser] = lambda: MockJDParser()
@@ -108,7 +122,7 @@ async def sample_candidate_id():
 async def test_match_candidate_not_found_returns_404(client):
     response = client.post(
         "/api/v1/ats/match",
-        data={"candidate_id": 999999, "jd_text": "Tuyển dụng kỹ sư Backend Python 3 năm kinh nghiệm"},
+        data={"candidate_id": "018db000-0000-7000-8000-000000000000", "jd_text": "Tuyển dụng kỹ sư Backend Python 3 năm kinh nghiệm"},
     )
     assert response.status_code == 404
     assert "Không tìm thấy" in response.json()["detail"]

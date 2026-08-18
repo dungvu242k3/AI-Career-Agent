@@ -178,7 +178,7 @@ async def upload_cv(
     summary="Get Candidate Profile for Preview",
     dependencies=[Depends(read_rate_limiter)],
 )
-async def get_candidate_preview(candidate_id: int):
+async def get_candidate_preview(candidate_id: str):
     """Retrieve CandidateProfile for preview and editing."""
     candidate = await get_candidate(candidate_id)
     if not candidate:
@@ -196,7 +196,7 @@ async def get_candidate_preview(candidate_id: int):
     summary="Update Candidate Profile after User Edits",
     dependencies=[Depends(read_rate_limiter)],
 )
-async def update_candidate_preview(candidate_id: int, payload: UpdateProfileRequest):
+async def update_candidate_preview(candidate_id: str, payload: UpdateProfileRequest):
     """Update CandidateProfile after user edits information on Preview Card."""
     candidate = await get_candidate(candidate_id)
     if not candidate:

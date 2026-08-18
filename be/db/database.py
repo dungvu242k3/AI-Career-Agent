@@ -5,6 +5,7 @@ import logging
 from typing import Any
 import aiosqlite
 import asyncpg
+import uuid6
 
 from be.config import get_settings
 
@@ -13,10 +14,10 @@ logger = logging.getLogger(__name__)
 # Global connection pool for PostgreSQL
 _pg_pool: asyncpg.Pool | None = None
 
-# --- PostgreSQL DDL with Native JSONB and GIN Indexing ---
+# --- PostgreSQL DDL with Native UUIDv7, JSONB and GIN Indexing ---
 PG_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS candidates (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     title VARCHAR(255),
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 
 CREATE TABLE IF NOT EXISTS uploads (
     id SERIAL PRIMARY KEY,
-    candidate_id INTEGER REFERENCES candidates(id) ON DELETE SET NULL,
+    candidate_id UUID REFERENCES candidates(id) ON DELETE SET NULL,
     filename VARCHAR(255) NOT NULL,
     file_path TEXT NOT NULL,
     checksum VARCHAR(64),
@@ -37,7 +38,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 
 CREATE TABLE IF NOT EXISTS analyses (
     id SERIAL PRIMARY KEY,
-    candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+    candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
     ats_score INTEGER NOT NULL,
     ats_grade VARCHAR(10) NOT NULL,
     report_json JSONB NOT NULL,
@@ -56,7 +57,7 @@ PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 
 CREATE TABLE IF NOT EXISTS candidates (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY,
     full_name TEXT NOT NULL,
     email TEXT,
     title TEXT,
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 
 CREATE TABLE IF NOT EXISTS uploads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER,
+    candidate_id TEXT,
     filename TEXT NOT NULL,
     file_path TEXT NOT NULL,
     checksum TEXT,
@@ -78,7 +79,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 
 CREATE TABLE IF NOT EXISTS analyses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER NOT NULL,
+    candidate_id TEXT NOT NULL,
     ats_score INTEGER NOT NULL,
     ats_grade TEXT NOT NULL,
     report_json TEXT NOT NULL,
@@ -139,36 +140,50 @@ async def close_db() -> None:
         _pg_pool = None
 
 
-async def save_candidate(profile_json: str, full_name: str, email: str | None, title: str) -> int:
-    """Save candidate profile and return new ID."""
+async def save_candidate(
+    profile_json: str,
+    full_name: str,
+    email: str | None,
+    title: str,
+    candidate_id: str | None = None,
+) -> str:
+    """Save candidate profile with time-ordered UUIDv7 and return ID string."""
+    cid = candidate_id or str(uuid6.uuid7())
     global _pg_pool
     if _pg_pool is not None:
         async with _pg_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                INSERT INTO candidates (full_name, email, title, profile_json) 
-                VALUES ($1, $2, $3, $4::jsonb) 
+                INSERT INTO candidates (id, full_name, email, title, profile_json) 
+                VALUES ($1::uuid, $2, $3, $4, $5::jsonb) 
                 RETURNING id
                 """,
+                cid,
                 full_name,
                 email,
                 title,
                 profile_json,
             )
-            return int(row["id"])
+            return str(row["id"])
 
     # SQLite fallback
     settings = get_settings()
     async with aiosqlite.connect(str(settings.db_path)) as db:
-        cursor = await db.execute(
-            "INSERT INTO candidates (full_name, email, title, profile_json) VALUES (?, ?, ?, ?)",
-            (full_name, email, title, profile_json),
+        await db.execute(
+            "INSERT INTO candidates (id, full_name, email, title, profile_json) VALUES (?, ?, ?, ?, ?)",
+            (cid, full_name, email, title, profile_json),
         )
         await db.commit()
-        return int(cursor.lastrowid)
+        return cid
 
 
-async def update_candidate(candidate_id: int, profile_json: str, full_name: str, email: str | None, title: str) -> bool:
+async def update_candidate(
+    candidate_id: str,
+    profile_json: str,
+    full_name: str,
+    email: str | None,
+    title: str,
+) -> bool:
     """Update candidate profile."""
     global _pg_pool
     if _pg_pool is not None:
@@ -177,7 +192,7 @@ async def update_candidate(candidate_id: int, profile_json: str, full_name: str,
                 """
                 UPDATE candidates 
                 SET profile_json = $1::jsonb, full_name = $2, email = $3, title = $4, updated_at = CURRENT_TIMESTAMP
-                WHERE id = $5
+                WHERE id = $5::uuid
                 """,
                 profile_json,
                 full_name,
@@ -196,32 +211,39 @@ async def update_candidate(candidate_id: int, profile_json: str, full_name: str,
             SET profile_json = ?, full_name = ?, email = ?, title = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
-            (profile_json, full_name, email, title, candidate_id),
+            (profile_json, full_name, email, title, str(candidate_id)),
         )
         await db.commit()
         return cursor.rowcount > 0
 
 
-async def get_candidate(candidate_id: int) -> dict[str, Any] | None:
-    """Get candidate record by ID."""
+async def get_candidate(candidate_id: str) -> dict[str, Any] | None:
+    """Get candidate record by UUIDv7 string ID."""
     global _pg_pool
     if _pg_pool is not None:
         async with _pg_pool.acquire() as conn:
-            row = await conn.fetchrow("SELECT * FROM candidates WHERE id = $1", candidate_id)
+            row = await conn.fetchrow("SELECT * FROM candidates WHERE id = $1::uuid", candidate_id)
             if not row:
                 return None
             record = dict(row)
             if isinstance(record.get("profile_json"), dict):
                 record["profile_json"] = json.dumps(record["profile_json"])
+            if record.get("id"):
+                record["id"] = str(record["id"])
             return record
 
     # SQLite fallback
     settings = get_settings()
     async with aiosqlite.connect(str(settings.db_path)) as db:
         db.row_factory = aiosqlite.Row
-        cursor = await db.execute("SELECT * FROM candidates WHERE id = ?", (candidate_id,))
+        cursor = await db.execute("SELECT * FROM candidates WHERE id = ?", (str(candidate_id),))
         row = await cursor.fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        rec = dict(row)
+        if rec.get("id"):
+            rec["id"] = str(rec["id"])
+        return rec
 
 
 async def save_upload(
@@ -229,7 +251,7 @@ async def save_upload(
     file_path: str,
     raw_text: str,
     checksum: str | None = None,
-    candidate_id: int | None = None,
+    candidate_id: str | None = None,
 ) -> int:
     """Save upload record with checksum."""
     global _pg_pool
@@ -238,7 +260,7 @@ async def save_upload(
             row = await conn.fetchrow(
                 """
                 INSERT INTO uploads (candidate_id, filename, file_path, checksum, raw_text) 
-                VALUES ($1, $2, $3, $4, $5) 
+                VALUES ($1::uuid, $2, $3, $4, $5) 
                 RETURNING id
                 """,
                 candidate_id,
@@ -254,7 +276,7 @@ async def save_upload(
     async with aiosqlite.connect(str(settings.db_path)) as db:
         cursor = await db.execute(
             "INSERT INTO uploads (candidate_id, filename, file_path, checksum, raw_text) VALUES (?, ?, ?, ?, ?)",
-            (candidate_id, filename, file_path, checksum, raw_text),
+            (str(candidate_id) if candidate_id else None, filename, file_path, checksum, raw_text),
         )
         await db.commit()
         return int(cursor.lastrowid)
@@ -269,7 +291,12 @@ async def get_upload_by_checksum(checksum: str) -> dict[str, Any] | None:
                 "SELECT * FROM uploads WHERE checksum = $1 ORDER BY created_at DESC LIMIT 1",
                 checksum,
             )
-            return dict(row) if row else None
+            if not row:
+                return None
+            rec = dict(row)
+            if rec.get("candidate_id"):
+                rec["candidate_id"] = str(rec["candidate_id"])
+            return rec
 
     # SQLite fallback
     settings = get_settings()
@@ -280,10 +307,15 @@ async def get_upload_by_checksum(checksum: str) -> dict[str, Any] | None:
             (checksum,),
         )
         row = await cursor.fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        rec = dict(row)
+        if rec.get("candidate_id"):
+            rec["candidate_id"] = str(rec["candidate_id"])
+        return rec
 
 
-async def save_analysis(candidate_id: int, ats_score: int, ats_grade: str, report_json: str) -> int:
+async def save_analysis(candidate_id: str, ats_score: int, ats_grade: str, report_json: str) -> int:
     """Save analysis report."""
     global _pg_pool
     if _pg_pool is not None:
@@ -291,7 +323,7 @@ async def save_analysis(candidate_id: int, ats_score: int, ats_grade: str, repor
             row = await conn.fetchrow(
                 """
                 INSERT INTO analyses (candidate_id, ats_score, ats_grade, report_json) 
-                VALUES ($1, $2, $3, $4::jsonb) 
+                VALUES ($1::uuid, $2, $3, $4::jsonb) 
                 RETURNING id
                 """,
                 candidate_id,
@@ -306,19 +338,19 @@ async def save_analysis(candidate_id: int, ats_score: int, ats_grade: str, repor
     async with aiosqlite.connect(str(settings.db_path)) as db:
         cursor = await db.execute(
             "INSERT INTO analyses (candidate_id, ats_score, ats_grade, report_json) VALUES (?, ?, ?, ?)",
-            (candidate_id, ats_score, ats_grade, report_json),
+            (str(candidate_id), ats_score, ats_grade, report_json),
         )
         await db.commit()
         return int(cursor.lastrowid)
 
 
-async def get_analysis(candidate_id: int) -> dict[str, Any] | None:
+async def get_analysis(candidate_id: str) -> dict[str, Any] | None:
     """Get latest analysis report for a candidate."""
     global _pg_pool
     if _pg_pool is not None:
         async with _pg_pool.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT * FROM analyses WHERE candidate_id = $1 ORDER BY created_at DESC LIMIT 1",
+                "SELECT * FROM analyses WHERE candidate_id = $1::uuid ORDER BY created_at DESC LIMIT 1",
                 candidate_id,
             )
             if not row:
@@ -326,6 +358,8 @@ async def get_analysis(candidate_id: int) -> dict[str, Any] | None:
             record = dict(row)
             if isinstance(record.get("report_json"), dict):
                 record["report_json"] = json.dumps(record["report_json"])
+            if record.get("candidate_id"):
+                record["candidate_id"] = str(record["candidate_id"])
             return record
 
     # SQLite fallback
@@ -334,19 +368,24 @@ async def get_analysis(candidate_id: int) -> dict[str, Any] | None:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
             "SELECT * FROM analyses WHERE candidate_id = ? ORDER BY created_at DESC LIMIT 1",
-            (candidate_id,),
+            (str(candidate_id),),
         )
         row = await cursor.fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        rec = dict(row)
+        if rec.get("candidate_id"):
+            rec["candidate_id"] = str(rec["candidate_id"])
+        return rec
 
 
-async def get_candidate_analyses(candidate_id: int, limit: int = 20) -> list[dict[str, Any]]:
+async def get_candidate_analyses(candidate_id: str, limit: int = 20) -> list[dict[str, Any]]:
     """Get all past analyses for a candidate."""
     global _pg_pool
     if _pg_pool is not None:
         async with _pg_pool.acquire() as conn:
             rows = await conn.fetch(
-                "SELECT * FROM analyses WHERE candidate_id = $1 ORDER BY created_at DESC LIMIT $2",
+                "SELECT * FROM analyses WHERE candidate_id = $1::uuid ORDER BY created_at DESC LIMIT $2",
                 candidate_id,
                 limit,
             )
@@ -357,6 +396,8 @@ async def get_candidate_analyses(candidate_id: int, limit: int = 20) -> list[dic
                     rec["report_json"] = json.dumps(rec["report_json"])
                 if rec.get("created_at"):
                     rec["created_at"] = str(rec["created_at"])
+                if rec.get("candidate_id"):
+                    rec["candidate_id"] = str(rec["candidate_id"])
                 records.append(rec)
             return records
 
@@ -366,7 +407,7 @@ async def get_candidate_analyses(candidate_id: int, limit: int = 20) -> list[dic
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
             "SELECT * FROM analyses WHERE candidate_id = ? ORDER BY created_at DESC LIMIT ?",
-            (candidate_id, limit),
+            (str(candidate_id), limit),
         )
         rows = await cursor.fetchall()
         records = []
@@ -374,6 +415,8 @@ async def get_candidate_analyses(candidate_id: int, limit: int = 20) -> list[dic
             rec = dict(r)
             if rec.get("created_at"):
                 rec["created_at"] = str(rec["created_at"])
+            if rec.get("candidate_id"):
+                rec["candidate_id"] = str(rec["candidate_id"])
             records.append(rec)
         return records
 
