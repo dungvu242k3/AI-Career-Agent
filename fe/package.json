@@ -10,12 +10,17 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "axios": "^1.19.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.85.0",
+    "react-icons": "^5.7.0",
     "react-router-dom": "^7.1.5",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

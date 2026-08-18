@@ -8,11 +8,12 @@ import InterviewPage from "./pages/InterviewPage";
 import LearningPage from "./pages/LearningPage";
 import ApplicationsPage from "./pages/ApplicationsPage";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function AppLayout() {
   const location = useLocation();
-  const hideNavbarRoutes = ["/login"];
+  const hideNavbarRoutes = ["/login", "/register"];
   const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
@@ -26,6 +27,7 @@ function AppLayout() {
         <Route path="/learning" element={<LearningPage />} />
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>

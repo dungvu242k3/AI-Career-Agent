@@ -6,15 +6,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FaGoogle, FaGithub, FaLinkedin } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
 
-// Validation schema
-const loginSchema = z.object({
+// Validation schema for Registration
+const registerSchema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
-  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+  password: z.string()
+    .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 
+      "Mật khẩu phải chứa chữ hoa, chữ thường, số và ký tự đặc biệt"),
+  confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Mật khẩu xác nhận không khớp",
+  path: ["confirmPassword"],
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type RegisterForm = z.infer<typeof registerSchema>;
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   
@@ -22,16 +29,15 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: LoginForm) => {
-    // TODO: Connect to actual Auth Service
-    console.log("Login data:", data);
+  const onSubmit = async (data: RegisterForm) => {
+    console.log("Register data:", data);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    navigate("/workspace");
+    navigate("/login");
   };
 
   return (
@@ -45,28 +51,24 @@ export default function LoginPage() {
         
         <div className="z-10 max-w-lg text-left">
           <div className="mb-8">
-             {/* Use an abstract SVG for growth/career */}
              <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-white opacity-90"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           </div>
           <h1 className="text-5xl font-bold mb-6 tracking-tight leading-tight">Elevate Your<br/>Career Path.</h1>
           <p className="text-lg text-blue-100 mb-10 leading-relaxed font-light">
-            Access exclusive resources, connect with AI mentors, and track your professional development journey seamlessly.
+            Join thousands of professionals accelerating their careers with AI-powered resume building and interview prep.
           </p>
-          <button className="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all">
-            LEARN MORE
-          </button>
         </div>
       </div>
 
-      {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[#F8FAFC]">
-        <div className="w-full max-w-[420px] bg-white p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+      {/* Right side - Register Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[#F8FAFC] overflow-y-auto">
+        <div className="w-full max-w-[420px] bg-white p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 my-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome to ProGrowth</h2>
-            <p className="text-sm text-gray-500 mt-2">Sign in to your account</p>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Create an Account</h2>
+            <p className="text-sm text-gray-500 mt-2">Start your journey with ProGrowth</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
               <input
@@ -98,39 +100,44 @@ export default function LoginPage() {
               {errors.password && <p className="text-red-500 text-xs mt-1.5">{errors.password.message}</p>}
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
+              <input
+                {...register("confirmPassword")}
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className={`w-full px-4 py-3 rounded-lg border ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-600 focus:ring-blue-600'} bg-white text-gray-900 text-sm focus:ring-1 outline-none transition-all`}
+              />
+              {errors.confirmPassword && <p className="text-red-500 text-xs mt-1.5">{errors.confirmPassword.message}</p>}
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#0A3D7C] hover:bg-[#082E5C] text-white font-semibold py-3 rounded-lg text-sm transition-all shadow-sm mt-2 disabled:opacity-70 flex justify-center items-center"
+              className="w-full bg-[#0A3D7C] hover:bg-[#082E5C] text-white font-semibold py-3 rounded-lg text-sm transition-all shadow-sm mt-4 disabled:opacity-70 flex justify-center items-center"
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                "SIGN IN"
+                "CREATE ACCOUNT"
               )}
             </button>
             
-            <div className="flex flex-col items-center gap-3 text-sm mt-4">
-              <a href="#" className="text-gray-500 hover:text-[#0A3D7C] transition-colors">Forgot password?</a>
-              <Link to="/register" className="text-[#0A3D7C] font-semibold hover:underline">Create an account</Link>
+            <div className="text-center text-sm mt-4">
+              <span className="text-gray-500">Already have an account? </span>
+              <Link to="/login" className="text-[#0A3D7C] font-semibold hover:underline">Sign in</Link>
             </div>
           </form>
 
           <div className="mt-8 flex items-center">
             <div className="flex-1 border-t border-gray-200"></div>
-            <span className="px-3 text-xs text-gray-400 font-medium bg-white">or sign in with</span>
+            <span className="px-3 text-xs text-gray-400 font-medium bg-white">or sign up with</span>
             <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
           <div className="mt-6 flex flex-col gap-3">
             <button className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg text-sm transition-all shadow-sm">
-              <FaGoogle className="text-red-500" /> Continue with Google
-            </button>
-            <button className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg text-sm transition-all shadow-sm">
-              <FaGithub /> Continue with GitHub
-            </button>
-            <button className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg text-sm transition-all shadow-sm">
-              <FaLinkedin className="text-blue-600" /> Continue with LinkedIn
+              <FaGoogle className="text-red-500" /> Sign up with Google
             </button>
           </div>
         </div>
