@@ -88,13 +88,21 @@ async def upload_cv(
             detail="Chỉ chấp nhận tệp định dạng PDF (.pdf) hoặc Microsoft Word (.docx).",
         )
 
-    content = await file.read()
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
-    if len(content) > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Kích thước tệp quá lớn ({len(content) / (1024*1024):.1f}MB). Giới hạn tối đa là {settings.max_upload_size_mb}MB.",
-        )
+    chunk_size = 64 * 1024
+    file_chunks = bytearray()
+
+    while chunk := await file.read(chunk_size):
+        file_chunks.extend(chunk)
+        if len(file_chunks) > max_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Kích thước tệp quá lớn. Giới hạn tối đa là {settings.max_upload_size_mb}MB.",
+            )
+
+
+    content = bytes(file_chunks)
+
 
     # Sanitize filename against Path Traversal attacks
     safe_filename = sanitize_filename(file.filename)

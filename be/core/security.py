@@ -7,8 +7,15 @@ import os
 security = HTTPBearer()
 
 # Must match the Auth Service JWT_SECRET
-JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key-for-dev-only")
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "development").lower() == "production"
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    if IS_PRODUCTION:
+        raise RuntimeError("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is mandatory in production mode.")
+    JWT_SECRET = "super-secret-key-for-dev-only"
+
 ALGORITHM = "HS256"
+
 
 def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     token = credentials.credentials

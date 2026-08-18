@@ -3,8 +3,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-for-dev-only';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'super-refresh-secret-for-dev-only';
+const isProduction = process.env.NODE_ENV === 'production';
+const JWT_SECRET = process.env.JWT_SECRET || (isProduction ? (() => { throw new Error('JWT_SECRET must be defined in production'); })() : 'super-secret-key-for-dev-only');
+const REFRESH_SECRET = process.env.REFRESH_SECRET || (isProduction ? (() => { throw new Error('REFRESH_SECRET must be defined in production'); })() : 'super-refresh-secret-for-dev-only');
+
 
 export const generateAccessToken = (userId: number, email: string, tier: string): string => {
   return jwt.sign({ sub: userId, email, tier }, JWT_SECRET, { expiresIn: '15m' });

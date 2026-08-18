@@ -85,6 +85,20 @@ export class AuthController {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  async logout(req: Request, res: Response) {
+    try {
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+      res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
 }
 
 export const authController = new AuthController();
+

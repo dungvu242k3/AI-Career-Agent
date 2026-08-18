@@ -69,9 +69,11 @@ class SlidingWindowRateLimiter:
 
         return "127.0.0.1"
 
+    MAX_IN_MEMORY_IPS = 10000
+
     def _cleanup_stale_entries(self, current_time: float):
-        """Periodically purge expired timestamps to prevent memory growth."""
-        if current_time - self._last_cleanup < 300:  # Cleanup every 5 minutes
+        """Periodically purge expired timestamps and enforce memory bounds."""
+        if current_time - self._last_cleanup < 60 and len(self._history) < self.MAX_IN_MEMORY_IPS:
             return
 
         cutoff = current_time - self.window_seconds
@@ -86,7 +88,14 @@ class SlidingWindowRateLimiter:
         for ip in stale_ips:
             self._history.pop(ip, None)
 
+        # If memory is still full after pruning, evict the oldest 20% of entries
+        if len(self._history) >= self.MAX_IN_MEMORY_IPS:
+            excess = len(self._history) - int(self.MAX_IN_MEMORY_IPS * 0.8)
+            for ip in list(self._history.keys())[:excess]:
+                self._history.pop(ip, None)
+
         self._last_cleanup = current_time
+
 
     async def __call__(self, request: Request):
         """FastAPI Dependency check for rate limiting."""

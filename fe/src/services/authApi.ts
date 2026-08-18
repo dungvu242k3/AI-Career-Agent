@@ -54,3 +54,18 @@ authApi.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const logoutUser = async (): Promise<void> => {
+  try {
+    await authApi.post("/logout");
+  } catch (err) {
+    console.error("Logout request error:", err);
+  } finally {
+    localStorage.removeItem("accessToken");
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+      window.location.href = "/login";
+    }
+  }
+};
+
