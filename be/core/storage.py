@@ -131,8 +131,9 @@ class MinIOStorageService(BaseStorageService):
             )
             self._client = Minio(
                 endpoint=self.settings.minio_endpoint,
-                access_key=self.settings.minio_access_key.get_secret_value(),
-                secret_key=self.settings.minio_secret_key.get_secret_value(),
+                access_key=self.settings.get_minio_access_key(),
+                secret_key=self.settings.get_minio_secret_key(),
+
                 secure=self.settings.minio_secure,
                 http_client=http_client,
             )

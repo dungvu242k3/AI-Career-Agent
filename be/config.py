@@ -40,12 +40,13 @@ class Settings(BaseSettings):
     # Uploads & Object Storage (MinIO / S3 / Local)
     storage_backend: str = Field(default="minio", description="Storage provider: 'minio' or 'local'")
     minio_endpoint: str = Field(default="localhost:9000", description="MinIO S3 endpoint (host:port)")
-    minio_access_key: SecretStr = Field(default=SecretStr("minioadmin"))
-    minio_secret_key: SecretStr = Field(default=SecretStr("minioadmin"))
+    minio_access_key: SecretStr = Field(default=SecretStr(""))
+    minio_secret_key: SecretStr = Field(default=SecretStr(""))
     minio_bucket: str = Field(default="careerpilot-cvs")
     minio_secure: bool = Field(default=False, description="Use SSL/TLS (HTTPS) for MinIO connection")
     upload_dir: Path = Field(default=WORKSPACE_ROOT / "data" / "uploads")
     max_upload_size_mb: int = Field(default=2, gt=0, le=50)
+
 
     # Security, Auth & CORS
     jwt_secret: SecretStr = Field(
@@ -69,6 +70,15 @@ class Settings(BaseSettings):
     def get_jwt_secret_value(self) -> str:
         import os
         return self.jwt_secret.get_secret_value() or os.getenv("JWT_SECRET", "")
+
+    def get_minio_access_key(self) -> str:
+        import os
+        return self.minio_access_key.get_secret_value() or os.getenv("MINIO_ACCESS_KEY", "minioadmin")
+
+    def get_minio_secret_key(self) -> str:
+        import os
+        return self.minio_secret_key.get_secret_value() or os.getenv("MINIO_SECRET_KEY", "minioadmin")
+
 
 
 
