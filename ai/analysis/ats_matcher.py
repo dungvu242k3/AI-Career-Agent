@@ -48,13 +48,55 @@ class ATSMatcher:
             f"<target_job_description>\n{jd.model_dump_json(indent=2)}\n</target_job_description>"
         )
 
-    def _normalize_report(self, report: JDMatchReport, jd: JDProfile) -> JDMatchReport:
-        """Ensure mathematical consistency across sub-scores and bound values."""
+    def _normalize_report(
+        self,
+        report: JDMatchReport,
+        jd: JDProfile,
+        profile: CandidateProfile | None = None,
+    ) -> JDMatchReport:
+        """Ensure mathematical consistency, contextual proof weighting, and 10-15 skills anti-stuffing checks."""
         report.skill_match_score = max(0, min(100, report.skill_match_score))
         report.experience_fit_score = max(0, min(100, report.experience_fit_score))
         report.format_quality_score = max(0, min(100, report.format_quality_score))
 
-        # Re-compute weighted overall score deterministically
+        # 1. Calculate CV Skills Count and Density Status (10-15 Elite Standard)
+        if profile:
+            total_skills = sum(
+                len(list_skills)
+                for list_skills in profile.skills_taxonomy.model_dump().values()
+                if isinstance(list_skills, list)
+            )
+            report.total_cv_skills_count = total_skills
+
+            # Check for Skill Bloating / Stuffing (>25 skills)
+            if total_skills > 25:
+                report.skill_density_status = "bloated"
+                # Penalize format score for bloated keyword stuffing
+                report.format_quality_score = max(0, report.format_quality_score - 10)
+                if not report.pruning_suggestions:
+                    report.pruning_suggestions.append(
+                        f"Hồ sơ đang liệt kê {total_skills} kỹ năng (vượt quá chuẩn 10-15 kỹ năng tinh gọn). "
+                        "Hãy ẩn bớt các kỹ năng phụ hoặc không liên quan đến vị trí mục tiêu để làm nổi bật kỹ năng cốt lõi."
+                    )
+            elif total_skills < 6:
+                report.skill_density_status = "sparse"
+            else:
+                report.skill_density_status = "optimal"
+
+        # 2. Contextual Proof Ratio (Proven vs Listed-only)
+        matched_items = report.matched_skills
+        if matched_items:
+            proven_count = sum(1 for m in matched_items if m.has_contextual_proof)
+            report.verified_skills_ratio = round(proven_count / len(matched_items), 2)
+
+            # If less than 60% of matched skills have proof in work experience, scale skill score
+            if report.verified_skills_ratio < 0.6:
+                penalty_factor = 0.70 + 0.30 * report.verified_skills_ratio
+                report.skill_match_score = max(0, min(100, round(report.skill_match_score * penalty_factor)))
+        else:
+            report.verified_skills_ratio = 1.0
+
+        # 3. Re-compute weighted overall score deterministically
         calculated_overall = round(
             report.skill_match_score * WEIGHT_SKILLS
             + report.experience_fit_score * WEIGHT_EXPERIENCE
@@ -90,7 +132,7 @@ class ATSMatcher:
                 raise ValueError(f"OpenAI từ chối đánh giá ATS: {refusal}")
             raise ValueError("OpenAI trả về phản hồi rỗng khi đánh giá ATS.")
 
-        return self._normalize_report(parsed_report, jd)
+        return self._normalize_report(parsed_report, jd, profile=profile)
 
     async def _match_with_gemini(self, profile: CandidateProfile, jd: JDProfile) -> JDMatchReport:
         """Match CV against JD via Google Gemini response schema."""
@@ -127,7 +169,7 @@ class ATSMatcher:
         except ValidationError as e:
             raise ValueError(f"Dữ liệu báo cáo ATS không đúng cấu trúc quy định: {e}")
 
-        return self._normalize_report(report, jd)
+        return self._normalize_report(report, jd, profile=profile)
 
     async def match(self, profile: CandidateProfile, jd: JDProfile) -> JDMatchReport:
         """Execute end-to-end ATS matching with automatic multi-provider fallback."""

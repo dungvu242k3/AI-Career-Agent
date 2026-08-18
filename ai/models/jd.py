@@ -97,6 +97,18 @@ class SkillMatchItem(BaseModel):
     importance: Literal["required", "preferred"] = Field(
         description="Skill priority: required(must-have) or preferred(nice-to-have)",
     )
+    has_contextual_proof: bool = Field(
+        default=True,
+        description="True if skill is proven with project or work experience bullet points",
+    )
+    recency_tier: Literal["recent", "legacy", "unspecified"] = Field(
+        default="recent",
+        description="Recency tier: recent (1-2 yrs), legacy (past), unspecified",
+    )
+    proof_snippet: str | None = Field(
+        default=None,
+        description="Excerpt from work experience or project proving this skill",
+    )
 
 
 # ──────────────────────────────────────────────
@@ -113,6 +125,24 @@ class JDMatchReport(BaseModel):
     skill_match_score: int = Field(ge=0, le=100, description="Keyword and semantic skill match score")
     experience_fit_score: int = Field(ge=0, le=100, description="Years of experience and depth fit score")
     format_quality_score: int = Field(ge=0, le=100, description="CV format, STAR structure, metrics usage score")
+
+    # Skill depth & anti-stuffing metrics
+    skill_density_status: Literal["optimal", "bloated", "sparse"] = Field(
+        default="optimal",
+        description="Skill density: optimal (10-15), bloated (>25), sparse (<6)",
+    )
+    total_cv_skills_count: int = Field(
+        default=0,
+        description="Total count of skills found on CV",
+    )
+    verified_skills_ratio: float = Field(
+        default=1.0,
+        description="Ratio of matched skills backed by contextual proof (0.0 to 1.0)",
+    )
+    pruning_suggestions: list[str] = Field(
+        default_factory=list,
+        description="Advice on removing irrelevant/bloated skills to sharpen CV focus (Vietnamese)",
+    )
 
     # Skill breakdown
     matched_skills: list[SkillMatchItem] = Field(

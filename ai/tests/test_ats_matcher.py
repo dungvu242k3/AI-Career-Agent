@@ -167,3 +167,55 @@ async def test_ats_matcher_raises_when_both_fail(sample_profile, sample_jd):
     with pytest.raises(ValueError) as exc:
         await matcher.match(sample_profile, sample_jd)
     assert "thất bại trên cả 2 nhà cung cấp" in str(exc.value)
+
+
+def test_contextual_proof_calculation(sample_report, sample_jd, sample_profile):
+    matcher = ATSMatcher()
+    
+    # 2 out of 2 matched skills are proven (100% verified)
+    sample_report.matched_skills[0].has_contextual_proof = True
+    sample_report.matched_skills[1].has_contextual_proof = True
+    normalized = matcher._normalize_report(sample_report, sample_jd, profile=sample_profile)
+    assert normalized.verified_skills_ratio == 1.0
+    assert normalized.skill_density_status == "optimal"
+
+    # Only 1 out of 4 is proven (25% verified < 60% threshold -> penalty applied)
+    sample_report.matched_skills = [
+        SkillMatchItem(skill_name="Python", match_type="exact", jd_requirement="req", importance="required", has_contextual_proof=True),
+        SkillMatchItem(skill_name="FastAPI", match_type="exact", jd_requirement="req", importance="required", has_contextual_proof=False),
+        SkillMatchItem(skill_name="PostgreSQL", match_type="exact", jd_requirement="req", importance="required", has_contextual_proof=False),
+        SkillMatchItem(skill_name="Docker", match_type="exact", jd_requirement="req", importance="required", has_contextual_proof=False),
+    ]
+    sample_report.skill_match_score = 100
+    normalized_penalized = matcher._normalize_report(sample_report, sample_jd, profile=sample_profile)
+    assert normalized_penalized.verified_skills_ratio == 0.25
+    # penalty factor = 0.70 + 0.30 * 0.25 = 0.775 -> 100 * 0.775 = 77 or 78 depending on float precision
+    assert normalized_penalized.skill_match_score in (77, 78)
+
+
+def test_skill_density_bloating_penalty(sample_report, sample_jd):
+    matcher = ATSMatcher()
+
+    # Create bloated profile with 30 skills (>25 threshold)
+    bloated_profile = CandidateProfile(
+        personal_info=PersonalInfo(full_name="Nguyễn Văn B", email="b@example.com"),
+        summary=SummarySection(detected_title="Backend Developer"),
+        skills_taxonomy=SkillsTaxonomy(
+            programming_languages=["Python", "Go", "Java", "C++", "Rust", "PHP", "Ruby", "C#"],
+            frameworks=["FastAPI", "Django", "Flask", "Spring", "Laravel", "Rails", "Express", "NestJS"],
+            databases=["PostgreSQL", "MySQL", "MongoDB", "Redis", "Elasticsearch", "Cassandra", "Neo4j"],
+            devops_and_cloud=["Docker", "Kubernetes", "AWS", "GCP", "Azure", "Terraform", "Ansible", "Jenkins"],
+        ),
+        work_experience=[],
+    )
+
+    sample_report.format_quality_score = 80
+    normalized = matcher._normalize_report(sample_report, sample_jd, profile=bloated_profile)
+    
+    assert normalized.total_cv_skills_count == 31
+    assert normalized.skill_density_status == "bloated"
+    # Format score reduced by 10 points for bloated keyword stuffing (80 - 10 = 70)
+    assert normalized.format_quality_score == 70
+    assert len(normalized.pruning_suggestions) > 0
+    assert "tinh gọn" in normalized.pruning_suggestions[0]
+
