@@ -3,23 +3,35 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const isProduction = process.env.NODE_ENV === 'production';
-const JWT_SECRET = process.env.JWT_SECRET || (isProduction ? (() => { throw new Error('JWT_SECRET must be defined in production'); })() : 'super-secret-key-for-dev-only');
-const REFRESH_SECRET = process.env.REFRESH_SECRET || (isProduction ? (() => { throw new Error('REFRESH_SECRET must be defined in production'); })() : 'super-refresh-secret-for-dev-only');
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is missing. Please define it in your .env file.');
+  }
+  return secret;
+};
 
+const getRefreshSecret = (): string => {
+  const secret = process.env.REFRESH_SECRET;
+  if (!secret) {
+    throw new Error('REFRESH_SECRET environment variable is missing. Please define it in your .env file.');
+  }
+  return secret;
+};
 
 export const generateAccessToken = (userId: number, email: string, tier: string): string => {
-  return jwt.sign({ sub: userId, email, tier }, JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign({ sub: userId, email, tier }, getJwtSecret(), { expiresIn: '15m' });
 };
 
 export const generateRefreshToken = (userId: number): string => {
-  return jwt.sign({ sub: userId }, REFRESH_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ sub: userId }, getRefreshSecret(), { expiresIn: '7d' });
 };
 
 export const verifyRefreshToken = (token: string): any => {
   try {
-    return jwt.verify(token, REFRESH_SECRET, { algorithms: ['HS256'] });
+    return jwt.verify(token, getRefreshSecret(), { algorithms: ['HS256'] });
   } catch (error) {
     return null;
   }
 };
+

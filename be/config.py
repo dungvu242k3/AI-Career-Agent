@@ -47,7 +47,12 @@ class Settings(BaseSettings):
     upload_dir: Path = Field(default=WORKSPACE_ROOT / "data" / "uploads")
     max_upload_size_mb: int = Field(default=2, gt=0, le=50)
 
-    # Security & CORS
+    # Security, Auth & CORS
+    jwt_secret: SecretStr = Field(
+        default=SecretStr(""),
+        description="Shared secret key for signing and verifying JWT tokens",
+    )
+    jwt_algorithm: str = Field(default="HS256")
     cors_origins: list[str] = Field(
         default=["http://localhost:5173", "http://localhost:3000"]
     )
@@ -60,6 +65,11 @@ class Settings(BaseSettings):
 
     def get_api_key_value(self) -> str:
         return self.gemini_api_key.get_secret_value()
+
+    def get_jwt_secret_value(self) -> str:
+        import os
+        return self.jwt_secret.get_secret_value() or os.getenv("JWT_SECRET", "")
+
 
 
 @lru_cache

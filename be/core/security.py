@@ -4,23 +4,30 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import decode, ExpiredSignatureError, InvalidTokenError
 import os
 
+from be.config import get_settings
+
 security = HTTPBearer()
 
-# Must match the Auth Service JWT_SECRET
-IS_PRODUCTION = os.getenv("ENVIRONMENT", "development").lower() == "production"
-JWT_SECRET = os.getenv("JWT_SECRET")
-if not JWT_SECRET:
-    if IS_PRODUCTION:
-        raise RuntimeError("CRITICAL SECURITY ERROR: JWT_SECRET environment variable is mandatory in production mode.")
-    JWT_SECRET = "super-secret-key-for-dev-only"
 
-ALGORITHM = "HS256"
+def get_jwt_secret() -> str:
+    """Retrieve JWT secret from settings/env. Raises error if not configured."""
+    secret = get_settings().get_jwt_secret_value()
+    if not secret:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Hệ thống xác thực chưa được cấu hình khóa bảo mật (JWT_SECRET).",
+        )
+    return secret
 
 
 def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     token = credentials.credentials
+    jwt_secret = get_jwt_secret()
+    algorithm = get_settings().jwt_algorithm
+
     try:
-        payload = decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+        payload = decode(token, jwt_secret, algorithms=[algorithm])
+
         return payload
     except ExpiredSignatureError:
         raise HTTPException(
