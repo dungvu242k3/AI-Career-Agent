@@ -95,8 +95,14 @@ def scan_file(file_path: Path) -> list[dict]:
 
 
 def run_scan() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
     print("=" * 60)
-    print(" 🛡️  AI-CAREER-AGENT AUTOMATED SECURITY SCANNER ")
+    print(" [SECURITY] AI-CAREER-AGENT AUTOMATED SECURITY SCANNER ")
     print("=" * 60)
 
     target_dirs = [WORKSPACE / "be", WORKSPACE / "ai", WORKSPACE / "fe" / "src"]
@@ -116,17 +122,17 @@ def run_scan() -> int:
                     findings = scan_file(file_path)
                     all_findings.extend(findings)
 
-    print(f"\n📁 Scanned {total_files} source files across backend, AI core, and frontend.\n")
+    print(f"\n[INFO] Scanned {total_files} source files across backend, AI core, and frontend.\n")
 
     if not all_findings:
-        print("✅ NO CRITICAL / HIGH STATIC SECURITY VULNERABILITIES FOUND!")
+        print("[SUCCESS] NO CRITICAL / HIGH STATIC SECURITY VULNERABILITIES FOUND!")
         print("   - SQL Injection: 0 findings")
         print("   - Code/Command Injection: 0 findings")
         print("   - Hardcoded Secrets: 0 findings")
         print("   - Unsanitized Frontend HTML: 0 findings")
         print("   - Insecure Deserialization: 0 findings\n")
     else:
-        print(f"⚠️ Found {len(all_findings)} potential security findings:")
+        print(f"[WARNING] Found {len(all_findings)} potential security findings:")
         for f in all_findings:
             print(f"  [{f['severity']}] {f['rule_id']} - {f['rule_name']}")
             print(f"    File: {f['file']}:{f['line']}")

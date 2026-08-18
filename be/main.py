@@ -15,6 +15,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from be.api.v1.cv_router import router as cv_router
 from be.api.v1.ats_router import router as ats_router
+from be.api.v1.chat_router import router as chat_router
+from be.api.v1.interview_router import router as interview_router
 from be.config import get_settings
 from be.db.database import init_db, close_db
 
@@ -72,6 +74,14 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=[
+            "Content-Disposition",
+            "X-Estimated-ATS-Score",
+            "X-Estimated-Word-Count",
+            "X-Critic-Score",
+            "X-Critic-Approved",
+            "X-Reflection-Iterations",
+        ],
     )
 
     # Mount API Routers
@@ -84,6 +94,16 @@ def create_app() -> FastAPI:
         ats_router,
         prefix=f"{settings.api_prefix}/ats",
         tags=["ATS Studio & STAR Rewriter"],
+    )
+    app.include_router(
+        chat_router,
+        prefix=f"{settings.api_prefix}",
+        tags=["Chat & Job Search"],
+    )
+    app.include_router(
+        interview_router,
+        prefix=f"{settings.api_prefix}",
+        tags=["Mock Interview Arena"],
     )
 
     @app.get("/health", tags=["Monitoring"])

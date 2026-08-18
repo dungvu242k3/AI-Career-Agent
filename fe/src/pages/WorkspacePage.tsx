@@ -21,6 +21,10 @@ import { JDInput } from "../components/JDInput";
 import { ATSResult } from "../components/ATSResult";
 import { STARModal } from "../components/STARModal";
 import { TailoredCVHub } from "../components/TailoredCVHub";
+import JobCardItem from "../components/JobCardItem";
+import JobDetailModal from "../components/JobDetailModal";
+import { JobItem, ChatMessage } from "../types/job";
+import { sendChatMessage } from "../services/chatApi";
 import {
   CandidateProfile,
   UploadResponse,
@@ -36,6 +40,14 @@ export default function WorkspacePage() {
   const [isExpAccordionOpen, setIsExpAccordionOpen] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [isReasoningOpen, setIsReasoningOpen] = useState(true);
+
+  // Chat & Job Search State
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [selectedJobForDetail, setSelectedJobForDetail] = useState<JobItem | null>(null);
+  const [isJobDetailModalOpen, setIsJobDetailModalOpen] = useState(false);
+  const [appliedJdNotice, setAppliedJdNotice] = useState<string | null>(null);
+  const chatMessagesEndRef = React.useRef<HTMLDivElement>(null);
 
   // ATS & STAR State
   const [atsReport, setAtsReport] = useState<JDMatchReport | null>(null);
@@ -73,6 +85,11 @@ export default function WorkspacePage() {
     setProfile(updated);
   };
 
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isChatLoading]);
+
   // Compute total skills count across 8 buckets
   const totalSkillsCount = profile
     ? Object.values(profile.skills_taxonomy).reduce(
@@ -80,6 +97,77 @@ export default function WorkspacePage() {
         0
       )
     : 0;
+
+  // Infer primary domain from profile
+  const candidateDomain = React.useMemo(() => {
+    if (!profile) return "backend";
+    const text = `${profile.summary.detected_title || ""} ${(profile.work_experience && profile.work_experience[0]?.role) || ""}`.toLowerCase();
+    if (text.includes("fullstack") || text.includes("full stack")) return "fullstack";
+    if (text.includes("frontend") || text.includes("front-end") || text.includes("react")) return "frontend";
+    if (text.includes("devops") || text.includes("cloud") || text.includes("kubernetes")) return "devops";
+    if (text.includes("mobile") || text.includes("flutter") || text.includes("ios") || text.includes("android")) return "mobile";
+    if (text.includes("ai") || text.includes("data") || text.includes("machine learning")) return "ai_data";
+    return "backend";
+  }, [profile]);
+
+  const handleSendMessage = async (textToSend?: string) => {
+    const query = (textToSend || chatInput).trim();
+    if (!query || isChatLoading) return;
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: "user",
+      text: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setChatInput("");
+    setIsChatLoading(true);
+
+    try {
+      const response = await sendChatMessage({
+        message: query,
+        candidateId: candidateId || undefined,
+        domainOverride: candidateDomain,
+      });
+
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: "ai",
+        text: response.reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        intent: response.detected_intent,
+        jobs: response.jobs_found,
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (err: any) {
+      const errorMsg: ChatMessage = {
+        id: `ai-err-${Date.now()}`,
+        sender: "ai",
+        text: `⚠️ Lỗi: ${err.message || "Không thể kết nối đến máy chủ."}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleApplyJdFromJob = (job: JobItem) => {
+    const compiledJd = `Vị trí: ${job.title}\nCông ty: ${job.company}\nNền tảng tuyển dụng: ${job.platform}\nKinh nghiệm yêu cầu: ${job.experience_required}\nĐịa điểm: ${job.location}\nMức lương: ${job.salary_range}\n\nKỹ năng chính:\n${job.skills.join(", ")}\n\nMô tả công việc:\n${job.description}\n\nYêu cầu ứng viên:\n${job.requirements}\n\nQuyền lợi:\n${job.benefits}`;
+
+    setCurrentJdText(compiledJd);
+    setAtsReport(null);
+    setAppliedJdNotice(`Đã nạp JD "${job.title}" (${job.company}) vào Cột 1 thành công!`);
+    setTimeout(() => setAppliedJdNotice(null), 5000);
+  };
+
+  const handleViewJobDetails = (job: JobItem) => {
+    setSelectedJobForDetail(job);
+    setIsJobDetailModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif] flex flex-col pt-16">
@@ -328,6 +416,7 @@ export default function WorkspacePage() {
               ) : !atsReport ? (
                 <JDInput
                   candidateId={candidateId}
+                  initialJdText={currentJdText}
                   onAnalysisSuccess={(report, rawText) => {
                     setAtsReport(report);
                     if (rawText) setCurrentJdText(rawText);
@@ -348,7 +437,7 @@ export default function WorkspacePage() {
         </aside>
 
         {/* ════════════════════════════════════════════════════════════
-            CỘT 2 (5/12 Col ~ 42%): AI CAREER COPILOT & CHAT
+            CỘT 2 (5/12 Col ~ 42%): AI CAREER COPILOT & JOB SEARCH
         ════════════════════════════════════════════════════════════ */}
         <main className="lg:col-span-5 flex flex-col h-full bg-[#090D16] border-r border-[#1E293B]">
           
@@ -360,11 +449,11 @@ export default function WorkspacePage() {
               </div>
               <div>
                 <h1 className="text-xs font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
-                  Trợ Lý Tối Ưu Hóa Nghề Nghiệp AI
+                  Trợ Lý Tối Ưu Hóa &amp; Tìm Việc AI
                 </h1>
                 <div className="flex items-center gap-1.5 text-[10px] text-[#4edea3]">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                  {profile ? `Hồ sơ: ${profile.personal_info.full_name || "Đã nạp"}` : "Chờ nạp CV..."}
+                  {profile ? `Hồ sơ: ${profile.personal_info.full_name || "Đã nạp"} • ${candidateDomain.toUpperCase()}` : "Chờ nạp CV..."}
                 </div>
               </div>
             </div>
@@ -379,6 +468,14 @@ export default function WorkspacePage() {
             )}
           </div>
 
+          {/* Toast Notification when JD is loaded */}
+          {appliedJdNotice && (
+            <div className="bg-emerald-950/90 border-b border-emerald-500/40 px-4 py-2 text-center text-xs text-emerald-300 flex items-center justify-center gap-2 animate-in fade-in">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span className="font-medium">{appliedJdNotice}</span>
+            </div>
+          )}
+
           {/* Chat Messages Stream */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin">
             
@@ -388,20 +485,25 @@ export default function WorkspacePage() {
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#10b981]"></span>
                   <span className="text-xs font-bold text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif]">
-                    CareerPilot AI Analyzer
+                    CareerPilot AI Copilot
                   </span>
                 </div>
-                <span className="text-[10px] text-[#94a3b8] font-['JetBrains_Mono',monospace]">AI Ready</span>
+                <span className="text-[10px] text-[#94a3b8] font-['JetBrains_Mono',monospace]">AI Active</span>
               </div>
               
               {!profile ? (
                 <p className="text-xs sm:text-sm text-[#dfe2ef] leading-relaxed">
-                  Xin chào! Tôi là Trợ lý AI Hướng nghiệp của bạn. Hãy nhấn nút <strong className="text-[#4edea3]">"Tải Lên CV Ngay"</strong> ở Cột 1 để tôi trích xuất hồ sơ và bắt đầu tính toán độ tương thích ATS với các mô tả công việc (JD) mục tiêu nhé.
+                  Xin chào! Tôi là Trợ lý AI Hướng nghiệp của bạn. Hãy nhấn nút <strong className="text-[#4edea3]">"Tải Lên CV Ngay"</strong> ở Cột 1 để tôi trích xuất hồ sơ, tìm các việc làm phù hợp và hỗ trợ bạn tối ưu hóa CV nhé.
                 </p>
               ) : (
-                <p className="text-xs sm:text-sm text-[#dfe2ef] leading-relaxed">
-                  Chào <span className="text-[#4edea3] font-semibold">{profile.personal_info.full_name || "bạn"}</span>! Tôi đã bóc tách hồ sơ CV của bạn với độ tin cậy <strong className="text-[#4edea3]">{profile.metadata.extraction_confidence}%</strong> (tìm thấy {totalSkillsCount} kỹ năng). Bạn có thể dán JD mục tiêu ở Tầng Dưới Cột 1 để xem điểm ATS và tạo các bản CV may đo lưu tại Cột 3.
-                </p>
+                <div className="space-y-2 text-xs sm:text-sm text-[#dfe2ef] leading-relaxed">
+                  <p>
+                    Chào <span className="text-[#4edea3] font-semibold">{profile.personal_info.full_name || "bạn"}</span>! Tôi đã nhận diện hồ sơ của bạn thuộc chuyên ngành <strong className="text-[#4edea3] uppercase">{candidateDomain}</strong> ({profile.metadata.total_experience_years || 0} năm kinh nghiệm).
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Bạn có thể hỏi tôi bất kỳ điều gì, hoặc bấm các nút bên dưới để tôi quét và gợi ý ngay các việc làm thực tế trên **ITviec, TopCV, VietnamWorks, LinkedIn**!
+                  </p>
+                </div>
               )}
             </div>
 
@@ -420,43 +522,127 @@ export default function WorkspacePage() {
 
                 <div className="text-[11px] text-[#94a3b8] space-y-2 border-l-2 border-[#1E293B] pl-3">
                   <p>
-                    <span className="text-[#dfe2ef] font-semibold">1. Cấu trúc CV:</span> Định dạng <code className="text-[#4edea3]">{profile.metadata.cv_format_type}</code>, ngôn ngữ <code className="text-[#38bdf8]">{profile.metadata.cv_language}</code>.
+                    <span className="text-[#dfe2ef] font-semibold">1. Chuyên ngành &amp; Cấu trúc:</span> Lĩnh vực <code className="text-[#4edea3]">{candidateDomain.toUpperCase()}</code>, định dạng <code className="text-[#38bdf8]">{profile.metadata.cv_format_type}</code>.
                   </p>
                   <p>
-                    <span className="text-[#dfe2ef] font-semibold">2. Kỹ năng nhận diện:</span> Phân loại thành công {totalSkillsCount} kỹ năng qua chuẩn 8 nhóm chuyên ngành (Đạt chuẩn 10-15 kỹ năng cốt lõi).
+                    <span className="text-[#dfe2ef] font-semibold">2. Kỹ năng nhận diện:</span> Phân loại thành công {totalSkillsCount} kỹ năng qua chuẩn 8 nhóm chuyên ngành.
                   </p>
                   <p>
-                    <span className="text-[#dfe2ef] font-semibold">3. Kinh nghiệm làm việc:</span> Ghi nhận {profile.work_experience.length} vị trí công tác ({profile.metadata.total_experience_years} năm tích lũy).
+                    <span className="text-[#dfe2ef] font-semibold">3. Kinh nghiệm làm việc:</span> Ghi nhận {profile.work_experience.length} vị trí ({profile.metadata.total_experience_years} năm tích lũy).
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Quick Prompt Chips */}
+            {/* Dynamic Conversation Stream */}
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex flex-col space-y-2 ${
+                  msg.sender === "user" ? "items-end" : "items-start"
+                }`}
+              >
+                {/* Message Bubble */}
+                <div
+                  className={`max-w-[85%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed shadow-sm ${
+                    msg.sender === "user"
+                      ? "bg-emerald-600 text-white rounded-br-none"
+                      : "bg-[#111827] text-slate-200 border border-[#1E293B] rounded-bl-none"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-4 mb-1.5 text-[10px] text-slate-400">
+                    <span className="font-bold">
+                      {msg.sender === "user" ? "Bạn" : "Career Copilot"}
+                    </span>
+                    <span className="font-['JetBrains_Mono',monospace]">{msg.timestamp}</span>
+                  </div>
+                  <div className="whitespace-pre-line">{msg.text}</div>
+                </div>
+
+                {/* Job Cards if Intent was Job Search */}
+                {msg.jobs && msg.jobs.length > 0 && (
+                  <div className="w-full space-y-2.5 pt-2 pl-2">
+                    <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider font-['JetBrains_Mono',monospace]">
+                      <span>💼 {msg.jobs.length} Cơ Hội Tuyển Dụng Đã Lọc:</span>
+                      <span className="text-[10px] text-emerald-400 font-normal">ITviec • TopCV • VietnamWorks • LinkedIn</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {msg.jobs.map((job) => (
+                        <JobCardItem
+                          key={job.id}
+                          job={job}
+                          onViewDetails={handleViewJobDetails}
+                          onApplyJd={handleApplyJdFromJob}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Loading Indicator */}
+            {isChatLoading && (
+              <div className="flex items-center gap-2 text-xs text-emerald-400 bg-[#111827] border border-[#1E293B] p-3.5 rounded-2xl w-fit">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>AI đang phân tích và quét cơ hội việc làm...</span>
+              </div>
+            )}
+
+            {/* Quick Job Search Chips */}
             {profile && (
               <div className="space-y-2 pt-2">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  Gợi Ý Câu Hỏi Nhanh:
+                  🔍 Lối Tắt Tìm Việc Theo Chuyên Ngành &amp; Kinh Nghiệm:
                 </span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "Tôi nên nhấn mạnh kinh nghiệm nào cho JD này?",
-                    "Dự đoán 5 câu hỏi phỏng vấn kỹ thuật cho vị trí này",
-                    "Viết giúp tôi đoạn tóm tắt mở đầu CV (Summary) ấn tượng",
-                  ].map((chip, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setChatInput(chip)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors text-left"
-                    >
-                      💡 {chip}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSendMessage(`Tìm việc ${candidateDomain} phù hợp với ${profile.metadata.total_experience_years || 2} năm kinh nghiệm của tôi`)
+                    }
+                    className="px-2.5 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-xs border border-emerald-500/40 transition-all font-medium flex items-center gap-1.5"
+                  >
+                    <span>🎯 Tìm việc {candidateDomain.toUpperCase()} ({profile.metadata.total_experience_years || 2} năm KN)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendMessage("Tìm việc Backend tại Hà Nội và TP.HCM")}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors"
+                  >
+                    🏢 Việc Backend
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendMessage("Tìm việc Frontend 2-4 năm kinh nghiệm")}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors"
+                  >
+                    💻 Việc Frontend
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendMessage("Tìm việc Fullstack Remote toàn cầu")}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors"
+                  >
+                    🌍 Việc Fullstack Remote
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendMessage("Tìm việc DevOps & Cloud Infrastructure")}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors"
+                  >
+                    ☁️ Việc DevOps
+                  </button>
                 </div>
               </div>
             )}
 
+            <div ref={chatMessagesEndRef} />
           </div>
 
           {/* Chat Input Bar */}
@@ -464,20 +650,22 @@ export default function WorkspacePage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setChatInput("");
+                handleSendMessage();
               }}
               className="flex gap-2"
             >
               <input
                 type="text"
-                placeholder="Hỏi AI về cách tối ưu CV, so khớp JD, hoặc viết lại đạn STAR..."
+                placeholder="Nhập câu hỏi hoặc 'Tìm việc backend 3 năm kinh nghiệm', 'Tìm việc fullstack remote'..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 bg-[#181b25] border border-[#1E293B] rounded-xl px-4 py-2.5 text-xs text-[#f8fafc] placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                disabled={isChatLoading}
+                className="flex-1 bg-[#181b25] border border-[#1E293B] rounded-xl px-4 py-2.5 text-xs text-[#f8fafc] placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors disabled:opacity-50"
               />
               <button
                 type="submit"
-                className="bg-[#10b981] hover:bg-[#4edea3] text-[#090D16] px-4 py-2.5 rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+                disabled={isChatLoading || !chatInput.trim()}
+                className="bg-[#10b981] hover:bg-[#4edea3] disabled:opacity-50 text-[#090D16] px-4 py-2.5 rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
               >
                 <span>Gửi</span>
               </button>
@@ -498,6 +686,16 @@ export default function WorkspacePage() {
         </aside>
 
       </div>
+
+      {/* ────────────────────────────────────────────────────────────
+          JOB DETAIL MODAL (XEM THÔNG TIN BÊN TRONG CÔNG VIỆC)
+      ──────────────────────────────────────────────────────────── */}
+      <JobDetailModal
+        job={selectedJobForDetail}
+        isOpen={isJobDetailModalOpen}
+        onClose={() => setIsJobDetailModalOpen(false)}
+        onApplyJdToWorkspace={handleApplyJdFromJob}
+      />
 
       {/* ────────────────────────────────────────────────────────────
           UPLOAD CV MODAL

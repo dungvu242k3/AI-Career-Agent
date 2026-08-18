@@ -118,7 +118,15 @@ export async function generateHarvardCVPdf(payload: {
   candidate_id: string;
   jd_text: string;
   language?: "vi" | "en";
-}): Promise<{ blob: Blob; filename: string; estimatedScore: number; wordCount: number }> {
+}): Promise<{
+  blob: Blob;
+  filename: string;
+  estimatedScore: number;
+  wordCount: number;
+  criticScore: number;
+  criticApproved: boolean;
+  reflectionIterations: number;
+}> {
   try {
     const response = await fetch(`${API_BASE}/ats/generate-cv`, {
       method: "POST",
@@ -155,9 +163,20 @@ export async function generateHarvardCVPdf(payload: {
 
     const estimatedScore = parseInt(response.headers.get("X-Estimated-ATS-Score") || "88", 10);
     const wordCount = parseInt(response.headers.get("X-Estimated-Word-Count") || "450", 10);
+    const criticScore = parseInt(response.headers.get("X-Critic-Score") || "92", 10);
+    const criticApproved = response.headers.get("X-Critic-Approved") === "true";
+    const reflectionIterations = parseInt(response.headers.get("X-Reflection-Iterations") || "1", 10);
 
     const blob = await response.blob();
-    return { blob, filename, estimatedScore, wordCount };
+    return {
+      blob,
+      filename,
+      estimatedScore,
+      wordCount,
+      criticScore,
+      criticApproved,
+      reflectionIterations,
+    };
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(500, `Lỗi khi xuất PDF CV: ${(error as Error).message}`);

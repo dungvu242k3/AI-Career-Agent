@@ -18,6 +18,7 @@ interface JDInputProps {
   onAnalysisSuccess: (report: JDMatchReport, rawJdText?: string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  initialJdText?: string;
 }
 
 export const JDInput: React.FC<JDInputProps> = ({
@@ -25,13 +26,21 @@ export const JDInput: React.FC<JDInputProps> = ({
   onAnalysisSuccess,
   isLoading,
   setIsLoading,
+  initialJdText = "",
 }) => {
   const [activeTab, setActiveTab] = useState<"text" | "file">("text");
-  const [jdText, setJdText] = useState("");
+  const [jdText, setJdText] = useState(initialJdText);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (initialJdText) {
+      setJdText(initialJdText);
+      setActiveTab("text");
+    }
+  }, [initialJdText]);
 
   const handleFileChange = (file: File | null) => {
     if (!file) return;

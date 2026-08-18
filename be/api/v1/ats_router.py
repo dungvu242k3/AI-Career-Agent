@@ -51,6 +51,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+from ai.analysis.reflective_synthesizer import ReflectiveHarvardSynthesizer
+
 @lru_cache(maxsize=1)
 def get_cached_jd_parser() -> JDParser:
     return get_default_jd_parser()
@@ -67,8 +69,8 @@ def get_cached_star_rewriter() -> STARRewriter:
 
 
 @lru_cache(maxsize=1)
-def get_cached_harvard_synthesizer() -> HarvardCVSynthesizer:
-    return HarvardCVSynthesizer()
+def get_cached_harvard_synthesizer() -> ReflectiveHarvardSynthesizer:
+    return ReflectiveHarvardSynthesizer()
 
 
 
@@ -295,10 +297,10 @@ async def generate_harvard_cv(
             detail="Lỗi khi đánh giá mức độ tương thích ATS. Vui lòng thử lại sau.",
         )
 
-    # 4. Synthesize Harvard CV
+    # 4. Synthesize Harvard CV with Critic-Actor Self-Reflection Loop
     target_lang = payload.language
     try:
-        cv_data = await synthesizer.synthesize(
+        cv_data, reflection_result = await synthesizer.synthesize(
             profile=profile,
             jd=jd_profile,
             report=match_report,
@@ -334,6 +336,9 @@ async def generate_harvard_cv(
             "Content-Disposition": f'attachment; filename="{filename}"',
             "X-Estimated-ATS-Score": str(cv_data.ats_score_estimate),
             "X-Estimated-Word-Count": str(cv_data.estimated_word_count),
+            "X-Critic-Score": str(reflection_result.final_critic_score),
+            "X-Critic-Approved": str(reflection_result.is_converged).lower(),
+            "X-Reflection-Iterations": str(reflection_result.iterations_count),
         },
     )
 

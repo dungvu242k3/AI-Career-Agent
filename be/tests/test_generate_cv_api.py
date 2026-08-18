@@ -60,11 +60,14 @@ class MockATSMatcher(ATSMatcher):
         )
 
 
-class MockHarvardSynthesizer(HarvardCVSynthesizer):
+from ai.models.critic import ReflectiveSynthesisResult, CriticEvaluationReport
+
+
+class MockHarvardSynthesizer:
     async def synthesize(
         self, profile: CandidateProfile, jd: JDProfile, report: JDMatchReport, target_language: str = "vi"
-    ) -> HarvardCVData:
-        return HarvardCVData(
+    ) -> tuple[HarvardCVData, ReflectiveSynthesisResult]:
+        cv = HarvardCVData(
             target_language=target_language,
             target_role=jd.job_title,
             company_name=jd.company_name,
@@ -110,6 +113,23 @@ class MockHarvardSynthesizer(HarvardCVSynthesizer):
             ats_score_estimate=92,
             estimated_word_count=380,
         )
+        reflection = ReflectiveSynthesisResult(
+            is_converged=True,
+            iterations_count=1,
+            final_critic_score=92,
+            critic_report=CriticEvaluationReport(
+                total_score=92,
+                is_approved=True,
+                dimension_scores={
+                    "quantifiable_metrics": 25,
+                    "anti_hallucination": 25,
+                    "ats_alignment": 22,
+                    "action_verbs_brevity": 20,
+                },
+            ),
+            reflection_history=[],
+        )
+        return cv, reflection
 
 
 @pytest.fixture(autouse=True)

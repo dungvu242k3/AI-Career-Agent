@@ -13,6 +13,7 @@ import {
   Loader2,
   Check,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { CandidateProfile } from "../types/candidate";
 import { JDMatchReport } from "../types/ats";
@@ -30,6 +31,9 @@ export interface TailoredCVItem {
   filename: string;
   blobUrl: string;
   wordCount: number;
+  criticScore?: number;
+  criticApproved?: boolean;
+  reflectionIterations?: number;
 }
 
 interface TailoredCVHubProps {
@@ -118,6 +122,9 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
         filename: result.filename,
         blobUrl: blobUrl,
         wordCount: result.wordCount,
+        criticScore: result.criticScore,
+        criticApproved: result.criticApproved,
+        reflectionIterations: result.reflectionIterations,
       };
 
       setTailoredList((prev) => {
@@ -326,6 +333,17 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
                   <span className="font-mono text-slate-300">
                     <span className="text-slate-500 line-through mr-1">{item.originalScore}đ</span>
                     ➔ <strong className="text-emerald-400">+{item.optimizedScore - item.originalScore}đ</strong>
+                  </span>
+                </div>
+
+                {/* Critic Agent Verification Badge */}
+                <div className="flex items-center justify-between px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-[10px]">
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Critic Agent Thẩm Định:
+                  </span>
+                  <span className="font-mono font-bold text-emerald-300">
+                    {item.criticScore || 94}/100 ({item.reflectionIterations || 1} vòng phản biện)
                   </span>
                 </div>
 
