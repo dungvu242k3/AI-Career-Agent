@@ -14,6 +14,10 @@ httpx==0.28.*
 fpdf2>=2.8.0
 python-dotenv==1.1.*
 uuid6>=2024.7.1
+langfuse>=2.54.0
+redis>=5.2.0
+celery>=5.4.0
+qdrant-client>=1.12.0
 
 # Dev / Testing
 pytest==8.4.*

@@ -51,13 +51,24 @@ MODEL_PRICING = {
 
 
 class LLMOpsTracer:
-    """Enterprise In-Memory & OpenTelemetry-Ready LLMOps Tracer."""
+    """Enterprise In-Memory & OpenTelemetry-Ready (Langfuse) LLMOps Tracer."""
 
     def __init__(self, default_budget_usd: float = 0.50):
         self.default_budget_usd = default_budget_usd
         self._spans: list[LLMSpan] = []
         self._session_costs: dict[str, float] = {}
         self._session_tokens: dict[str, int] = {}
+        
+        # Initialize Langfuse if credentials exist
+        try:
+            import os
+            from langfuse import Langfuse
+            if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
+                self.langfuse = Langfuse()
+            else:
+                self.langfuse = None
+        except ImportError:
+            self.langfuse = None
 
     def calculate_cost(self, model: str, prompt_tokens: int, completion_tokens: int) -> float:
         """Compute exact USD cost based on token counts and model pricing."""
@@ -75,8 +86,9 @@ class LLMOpsTracer:
         completion_tokens: int,
         duration_ms: float,
         status: str = "SUCCESS",
+        metadata: dict[str, Any] | None = None
     ) -> LLMSpan:
-        """Record an execution span and update session budget meters."""
+        """Record an execution span, update session budget meters, and push to Langfuse."""
         cost = self.calculate_cost(model_name, prompt_tokens, completion_tokens)
         total_tokens = prompt_tokens + completion_tokens
 
@@ -95,6 +107,32 @@ class LLMOpsTracer:
         self._spans.append(span)
         self._session_costs[session_id] = self._session_costs.get(session_id, 0.0) + cost
         self._session_tokens[session_id] = self._session_tokens.get(session_id, 0) + total_tokens
+
+        # Push to Langfuse if enabled
+        if self.langfuse:
+            try:
+                trace = self.langfuse.trace(
+                    name=f"Session_{session_id}",
+                    session_id=session_id,
+                    metadata={"total_cost_usd": self._session_costs[session_id]}
+                )
+                trace.generation(
+                    name=component_name,
+                    model=model_name,
+                    start_time=time.time() - (duration_ms / 1000.0),
+                    end_time=time.time(),
+                    usage={
+                        "input": prompt_tokens,
+                        "output": completion_tokens,
+                        "total": total_tokens
+                    },
+                    level="ERROR" if status != "SUCCESS" else "DEFAULT",
+                    metadata=metadata or {}
+                )
+            except Exception as e:
+                # Do not block execution on observability failure
+                import logging
+                logging.getLogger(__name__).warning("Failed to push span to Langfuse: %s", e)
 
         return span
 
