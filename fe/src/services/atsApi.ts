@@ -112,12 +112,13 @@ export async function getAtsHistory(candidateId: string): Promise<ATSHistoryItem
 }
 
 /**
- * Generate 1-Page Tailored Harvard CV in PDF format.
+ * Generate 1-Page Tailored Harvard / Modern Tech / Executive CV in PDF format.
  */
 export async function generateHarvardCVPdf(payload: {
   candidate_id: string;
   jd_text: string;
   language?: "vi" | "en";
+  template?: "harvard" | "modern_tech" | "executive";
 }): Promise<{
   blob: Blob;
   filename: string;
@@ -126,6 +127,7 @@ export async function generateHarvardCVPdf(payload: {
   criticScore: number;
   criticApproved: boolean;
   reflectionIterations: number;
+  template: string;
 }> {
   try {
     const response = await fetch(`${API_BASE}/ats/generate-cv`, {
@@ -137,12 +139,13 @@ export async function generateHarvardCVPdf(payload: {
         candidate_id: payload.candidate_id,
         jd_text: payload.jd_text,
         language: payload.language || "vi",
+        template: payload.template || "harvard",
         format: "pdf",
       }),
     });
 
     if (!response.ok) {
-      let errorMessage = "Không thể tạo CV tối ưu chuẩn Harvard.";
+      let errorMessage = "Không thể tạo CV tối ưu chuẩn ATS.";
       try {
         const errorJson = await response.json();
         errorMessage = errorJson.detail || errorMessage;
@@ -153,7 +156,7 @@ export async function generateHarvardCVPdf(payload: {
     }
 
     const disposition = response.headers.get("Content-Disposition");
-    let filename = `Harvard_CV_${payload.language || "vi"}.pdf`;
+    let filename = `Tailored_CV_${payload.language || "vi"}.pdf`;
     if (disposition && disposition.includes("filename=")) {
       const match = disposition.match(/filename="?([^"]+)"?/);
       if (match && match[1]) {
@@ -166,6 +169,7 @@ export async function generateHarvardCVPdf(payload: {
     const criticScore = parseInt(response.headers.get("X-Critic-Score") || "92", 10);
     const criticApproved = response.headers.get("X-Critic-Approved") === "true";
     const reflectionIterations = parseInt(response.headers.get("X-Reflection-Iterations") || "1", 10);
+    const templateUsed = response.headers.get("X-CV-Template") || payload.template || "harvard";
 
     const blob = await response.blob();
     return {
@@ -176,6 +180,7 @@ export async function generateHarvardCVPdf(payload: {
       criticScore,
       criticApproved,
       reflectionIterations,
+      template: templateUsed,
     };
   } catch (error) {
     if (error instanceof ApiError) throw error;

@@ -66,3 +66,19 @@ async def test_get_job_details_endpoint():
         # Not found case
         not_found = await client.get("/api/v1/jobs/non-existent-id")
         assert not_found.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_chat_stream_endpoint():
+    """Test POST /api/v1/chat/stream returns valid Server-Sent Events stream."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/chat/stream",
+            json={"message": "Tìm việc làm fullstack developer"},
+        )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+        text = response.text
+        assert "data: " in text
+        assert "[DONE]" in text
+

@@ -108,6 +108,7 @@ export default function JobCardItem({
           href={job.job_url}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`Mở bài đăng tuyển dụng ${job.title}`}
           className="text-[11px] text-sky-400 hover:text-sky-300 underline flex items-center gap-1"
           onClick={(e) => e.stopPropagation()}
         >
@@ -119,6 +120,7 @@ export default function JobCardItem({
           <button
             type="button"
             onClick={() => onViewDetails(job)}
+            aria-label={`Xem chi tiết tin tuyển dụng ${job.title}`}
             className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors border border-slate-700 flex items-center gap-1"
           >
             <span>👁️ Xem chi tiết</span>
@@ -127,6 +129,7 @@ export default function JobCardItem({
           <button
             type="button"
             onClick={() => onApplyJd(job)}
+            aria-label={`Nạp JD ${job.title} để so khớp ATS`}
             className="px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
           >
             <span>🎯 Nạp JD</span>

@@ -3,7 +3,7 @@
 import json
 import logging
 from typing import Literal
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from ai.analysis.interview_arena import InterviewArenaEngine
@@ -11,28 +11,58 @@ from ai.guardrails.prompt_shield import PromptShieldEngine
 from ai.models.candidate import CandidateProfile
 from ai.models.interview import CandidateAssessmentReport, InterviewSession
 from be.db.database import get_candidate
+from be.core.rate_limiter import interview_rate_limiter
+from be.core.redis_client import get_redis_client
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/interview", tags=["Mock Interview Arena"])
 
-# In-memory session store with bounded capacity (max 500 active sessions)
+# In-memory session store with bounded capacity (fallback if Redis is unavailable)
 MAX_CONCURRENT_SESSIONS = 500
 ACTIVE_SESSIONS: dict[str, InterviewSession] = {}
 arena_engine = InterviewArenaEngine()
 prompt_shield = PromptShieldEngine()
 
 
-def _store_session(session: InterviewSession) -> None:
-    """Store session in memory, evicting oldest entry if exceeding capacity."""
+async def _store_session(session: InterviewSession) -> None:
+    """Store session in Redis (preferred) or in memory (fallback)."""
+    try:
+        redis_client = await get_redis_client()
+        if redis_client:
+            await redis_client.setex(
+                f"interview_session:{session.session_id}",
+                3600,  # 1 hour TTL
+                session.model_dump_json()
+            )
+            return
+    except Exception as e:
+        logger.warning("Failed to store session in Redis, using fallback: %s", e)
+
     if len(ACTIVE_SESSIONS) >= MAX_CONCURRENT_SESSIONS:
         oldest_key = next(iter(ACTIVE_SESSIONS))
         ACTIVE_SESSIONS.pop(oldest_key, None)
     ACTIVE_SESSIONS[session.session_id] = session
 
 
+async def _get_session(session_id: str) -> InterviewSession | None:
+    """Get session from Redis or in memory."""
+    try:
+        redis_client = await get_redis_client()
+        if redis_client:
+            data = await redis_client.get(f"interview_session:{session_id}")
+            if data:
+                return InterviewSession.model_validate_json(data)
+    except Exception as e:
+        logger.warning("Failed to get session from Redis, using fallback: %s", e)
+        
+    return ACTIVE_SESSIONS.get(session_id)
+
+
 class StartInterviewRequest(BaseModel):
     candidate_id: str = Field(description="Candidate profile ID")
     target_role: str = Field(default="Software Engineer", description="Target job title")
+    domain: str = Field(default="backend", description="Domain for routing")
+    tier: Literal["free", "pro"] = Field(default="free", description="User subscription tier")
     jd_text: str | None = Field(default=None, description="Optional JD text for targeted questions")
 
 
@@ -48,7 +78,10 @@ class SubmitAnswerRequest(BaseModel):
     status_code=status.HTTP_200_OK,
     summary="Initialize a multi-agent mock interview session",
 )
-async def start_interview_session(payload: StartInterviewRequest) -> InterviewSession:
+async def start_interview_session(
+    payload: StartInterviewRequest,
+    _ = Depends(interview_rate_limiter)
+) -> InterviewSession:
     """Initialize interview arena with Tech Lead Alex and HR Sarah questions."""
     cand_data = await get_candidate(payload.candidate_id)
     if not cand_data or "profile_json" not in cand_data:
@@ -72,12 +105,14 @@ async def start_interview_session(payload: StartInterviewRequest) -> InterviewSe
         shield_jd = prompt_shield.scan_and_sanitize(payload.jd_text)
         clean_jd = shield_jd.sanitized_text
 
-    session = arena_engine.start_session(
+    session = await arena_engine.start_session(
         candidate_profile=cand_p,
         target_role=payload.target_role,
+        domain=payload.domain,
         jd_text=clean_jd,
+        tier=payload.tier,
     )
-    _store_session(session)
+    await _store_session(session)
     return session
 
 
@@ -87,9 +122,12 @@ async def start_interview_session(payload: StartInterviewRequest) -> InterviewSe
     status_code=status.HTTP_200_OK,
     summary="Submit response to current question and receive Silent Judge score",
 )
-async def submit_turn_answer(payload: SubmitAnswerRequest) -> InterviewSession:
+async def submit_turn_answer(
+    payload: SubmitAnswerRequest,
+    _ = Depends(interview_rate_limiter)
+) -> InterviewSession:
     """Process candidate answer, evaluate via Silent Judge, and advance turn."""
-    session = ACTIVE_SESSIONS.get(payload.session_id)
+    session = await _get_session(payload.session_id)
     if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -115,7 +153,7 @@ async def submit_turn_answer(payload: SubmitAnswerRequest) -> InterviewSession:
     target_turn.candidate_answer = shield_res.sanitized_text
 
     # Evaluate turn via Silent Judge
-    evaluation = arena_engine.evaluate_turn_answer(target_turn, shield_res.sanitized_text)
+    evaluation = await arena_engine.evaluate_turn_answer(session, target_turn, shield_res.sanitized_text)
     target_turn.evaluation = evaluation
 
     # Advance current turn index
@@ -124,7 +162,7 @@ async def submit_turn_answer(payload: SubmitAnswerRequest) -> InterviewSession:
         session.is_completed = True
         session.final_report = arena_engine.generate_final_assessment(session)
 
-    _store_session(session)
+    await _store_session(session)
     return session
 
 
@@ -135,7 +173,7 @@ async def submit_turn_answer(payload: SubmitAnswerRequest) -> InterviewSession:
     summary="Retrieve session state",
 )
 async def get_interview_session(session_id: str) -> InterviewSession:
-    session = ACTIVE_SESSIONS.get(session_id)
+    session = await _get_session(session_id)
     if not session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -14,6 +14,8 @@ import { getActiveCandidateLocally } from "../services/cvApi";
 export default function InterviewPage() {
   const [candidateId, setCandidateId] = useState<string>("");
   const [targetRole, setTargetRole] = useState<string>("Senior Backend Engineer");
+  const [domain, setDomain] = useState<string>("backend");
+  const [tier, setTier] = useState<"free" | "pro">("free");
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [currentTurnIdx, setCurrentTurnIdx] = useState<number>(0);
   const [answerText, setAnswerText] = useState<string>("");
@@ -21,6 +23,9 @@ export default function InterviewPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showIdealAnswer, setShowIdealAnswer] = useState<boolean>(false);
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
+
+  // Auto-scroll ref
+  const answerInputRef = React.useRef<HTMLTextAreaElement>(null);
 
   // Initialize candidate ID from storage
   useEffect(() => {
@@ -61,7 +66,7 @@ export default function InterviewPage() {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const newSession = await startInterviewSession(candidateId, targetRole);
+      const newSession = await startInterviewSession(candidateId, targetRole, domain, tier);
       setSession(newSession);
       setCurrentTurnIdx(0);
       setAnswerText("");
@@ -100,6 +105,11 @@ export default function InterviewPage() {
       setCurrentTurnIdx((prev) => prev + 1);
       setAnswerText("");
       setShowIdealAnswer(false);
+      // Auto-focus and scroll to text area on new turn
+      setTimeout(() => {
+        answerInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        answerInputRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -108,8 +118,8 @@ export default function InterviewPage() {
 
   return (
     <div className="min-h-screen bg-[#090D16] text-[#dfe2ef] antialiased selection:bg-[#10b981] selection:text-[#090D16] font-['Inter',sans-serif]">
-      {/* HEADER BAR */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-[#090D16]/90 backdrop-blur-md border-b border-[#1E293B]">
+      {/* NAVBAR */}
+      <nav role="banner" className="fixed top-0 left-0 right-0 z-40 bg-[#090D16]/90 backdrop-blur-md border-b border-[#1E293B]">
         <div className="max-w-[1300px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -123,7 +133,7 @@ export default function InterviewPage() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               <h1 className="text-sm font-bold text-white font-['Plus_Jakarta_Sans',sans-serif]">
-                Adversarial Multi-Agent Mock Interview Arena
+                CareerPilot AI Mock Interview Arena
               </h1>
             </div>
           </div>
@@ -137,7 +147,7 @@ export default function InterviewPage() {
             </div>
           )}
         </div>
-      </header>
+      </nav>
 
       {/* MAIN CONTAINER */}
       <main className="pt-24 pb-16 max-w-[1200px] mx-auto px-6 md:px-12">
@@ -231,13 +241,33 @@ export default function InterviewPage() {
                   <h4 className="text-sm font-bold text-white">Vị trí mục tiêu cho buổi phỏng vấn:</h4>
                   <p className="text-xs text-slate-400 mt-0.5">AI sẽ tự động đọc hồ sơ CV của bạn để may đo câu hỏi phản biện.</p>
                 </div>
-                <input
-                  type="text"
-                  value={targetRole}
-                  onChange={(e) => setTargetRole(e.target.value)}
-                  className="bg-[#090D16] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 w-full sm:w-72"
-                  placeholder="VD: Senior Backend Engineer"
-                />
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <select
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    className="bg-[#090D16] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 w-full sm:w-32"
+                  >
+                    <option value="backend">Backend</option>
+                    <option value="frontend">Frontend</option>
+                    <option value="mobile">Mobile</option>
+                    <option value="data">Data Engineer</option>
+                  </select>
+                  <select
+                    value={tier}
+                    onChange={(e) => setTier(e.target.value as "free" | "pro")}
+                    className="bg-[#090D16] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 w-full sm:w-32"
+                  >
+                    <option value="free">Gói Dùng Thử</option>
+                    <option value="pro">Gói Chuyên Gia</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                    className="bg-[#090D16] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 w-full sm:w-64"
+                    placeholder="VD: Senior Backend Engineer"
+                  />
+                </div>
               </div>
 
               <button
@@ -317,6 +347,11 @@ export default function InterviewPage() {
                   <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono uppercase">
                     {currentTurn.question.category.replace("_", " ")}
                   </span>
+                  {currentTurn.follow_up_of && (
+                    <span className="text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded font-mono font-bold flex items-center gap-1 animate-pulse">
+                      <span>⚡</span> Adversarial Follow-up
+                    </span>
+                  )}
                 </div>
                 <span className="text-[11px] text-slate-400 font-mono">
                   Độ khó: <span className="text-amber-400 uppercase font-bold">{currentTurn.question.difficulty}</span>
@@ -348,6 +383,7 @@ export default function InterviewPage() {
                 </div>
 
                 <textarea
+                  ref={answerInputRef}
                   rows={6}
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
@@ -577,6 +613,22 @@ export default function InterviewPage() {
                 ))}
               </div>
             </div>
+
+            {/* Freemium Upgrade Gate */}
+            {session.tier === "free" && (
+              <div className="bg-rose-950/30 border border-rose-500/40 p-6 rounded-2xl text-center space-y-3 mt-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-3xl rounded-full"></div>
+                <h3 className="text-sm font-bold text-rose-400 uppercase tracking-widest font-mono">
+                  Đã Đạt Giới Hạn Phiên Dùng Thử
+                </h3>
+                <p className="text-slate-300 text-sm max-w-2xl mx-auto">
+                  Bạn vừa hoàn thành 5 câu hỏi của phiên bản Free. Nâng cấp lên <strong className="text-white">Gói Pro</strong> để xem toàn bộ Feedback, Lời giải chuẩn Harvard, và trải nghiệm không giới hạn vòng System Design.
+                </p>
+                <button className="bg-rose-500 hover:bg-rose-400 text-white font-bold px-8 py-3 rounded-xl text-sm transition-all shadow-lg shadow-rose-500/20 mt-2">
+                  🚀 Nâng Cấp Pro Ngay - Chỉ Từ $9.99
+                </button>
+              </div>
+            )}
 
             {/* Replay Actions */}
             <div className="flex justify-center gap-4 pt-4">

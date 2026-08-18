@@ -24,7 +24,7 @@ import { TailoredCVHub } from "../components/TailoredCVHub";
 import JobCardItem from "../components/JobCardItem";
 import JobDetailModal from "../components/JobDetailModal";
 import { JobItem, ChatMessage } from "../types/job";
-import { sendChatMessage } from "../services/chatApi";
+import { streamChatMessage } from "../services/chatApi";
 import {
   CandidateProfile,
   UploadResponse,
@@ -125,23 +125,68 @@ export default function WorkspacePage() {
     setChatInput("");
     setIsChatLoading(true);
 
+    const aiMessageId = `ai-${Date.now()}`;
+    let streamedReply = "";
+    let detectedIntent: string | undefined = undefined;
+    let foundJobs: JobItem[] | undefined = undefined;
+
     try {
-      const response = await sendChatMessage({
-        message: query,
-        candidateId: candidateId || undefined,
-        domainOverride: candidateDomain,
-      });
+      await streamChatMessage(
+        {
+          message: query,
+          candidateId: candidateId || undefined,
+          domainOverride: candidateDomain,
+        },
+        {
+          onToken: (token) => {
+            streamedReply += token;
+            setMessages((prev) => {
+              const existingIdx = prev.findIndex((m) => m.id === aiMessageId);
+              const updatedMsg: ChatMessage = {
+                id: aiMessageId,
+                sender: "ai",
+                text: streamedReply,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                intent: detectedIntent,
+                jobs: foundJobs,
+              };
 
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        sender: "ai",
-        text: response.reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        intent: response.detected_intent,
-        jobs: response.jobs_found,
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
+              if (existingIdx !== -1) {
+                const next = [...prev];
+                next[existingIdx] = updatedMsg;
+                return next;
+              } else {
+                return [...prev, updatedMsg];
+              }
+            });
+          },
+          onIntent: (intent) => {
+            detectedIntent = intent;
+          },
+          onJobs: (jobs) => {
+            foundJobs = jobs;
+            setMessages((prev) => {
+              const existingIdx = prev.findIndex((m) => m.id === aiMessageId);
+              if (existingIdx !== -1) {
+                const next = [...prev];
+                next[existingIdx] = {
+                  ...next[existingIdx],
+                  jobs: jobs,
+                  intent: "job_search",
+                };
+                return next;
+              }
+              return prev;
+            });
+          },
+          onDone: () => {
+            setIsChatLoading(false);
+          },
+          onError: () => {
+            setIsChatLoading(false);
+          },
+        }
+      );
     } catch (err: any) {
       const errorMsg: ChatMessage = {
         id: `ai-err-${Date.now()}`,

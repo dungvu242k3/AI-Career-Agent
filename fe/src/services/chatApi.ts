@@ -54,6 +54,94 @@ export async function sendChatMessage(params: {
   }
 }
 
+export async function streamChatMessage(
+  params: {
+    message: string;
+    candidateId?: string;
+    domainOverride?: string;
+    location?: string;
+  },
+  callbacks: {
+    onToken: (token: string) => void;
+    onIntent?: (intent: string) => void;
+    onJobs?: (jobs: JobItem[]) => void;
+    onDone?: () => void;
+    onError?: (error: Error) => void;
+  }
+): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE}/chat/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: params.message,
+        candidate_id: params.candidateId || null,
+        domain_override: params.domainOverride || null,
+        location: params.location || null,
+      }),
+    });
+
+    if (!response.ok) {
+      let errDetail = "Không thể gửi tin nhắn đến Trợ lý AI.";
+      try {
+        const errJson = await response.json();
+        if (errJson.detail) errDetail = errJson.detail;
+      } catch {
+        // fallback
+      }
+      throw new ApiError(response.status, errDetail);
+    }
+
+    if (!response.body) {
+      throw new Error("ReadableStream not supported in response.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+        const dataStr = trimmed.replace("data: ", "").trim();
+
+        if (dataStr === "[DONE]") {
+          callbacks.onDone?.();
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(dataStr);
+          if (parsed.type === "token" && parsed.content) {
+            callbacks.onToken(parsed.content);
+          } else if (parsed.type === "intent" && parsed.intent) {
+            callbacks.onIntent?.(parsed.intent);
+          } else if (parsed.type === "jobs" && Array.isArray(parsed.jobs)) {
+            callbacks.onJobs?.(parsed.jobs);
+          }
+        } catch {
+          // ignore chunk parse errors
+        }
+      }
+    }
+
+    callbacks.onDone?.();
+  } catch (error) {
+    callbacks.onError?.(error as Error);
+    throw error;
+  }
+}
+
 /**
  * Retrieve jobs directly by domain and experience level.
  */

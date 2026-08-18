@@ -313,3 +313,42 @@ async def test_rate_limiter_spoofed_header_blocked():
         await limiter(UntrustedClientRequest("3.3.3.3"))
     assert exc_info.value.status_code == 429
 
+
+@pytest.mark.asyncio
+async def test_generate_cv_multi_templates(client, sample_candidate_id):
+    """Test generating CV with modern_tech and executive templates."""
+    cid = sample_candidate_id
+    
+    # 1. Modern Tech
+    res_tech = client.post(
+        "/api/v1/ats/generate-cv",
+        json={
+            "candidate_id": cid,
+            "jd_text": "Tuyển dụng Senior Fullstack Engineer làm việc với React, Node.js và Kubernetes...",
+            "language": "vi",
+            "template": "modern_tech",
+            "format": "pdf",
+        },
+    )
+    assert res_tech.status_code == 200
+    assert res_tech.headers["content-type"] == "application/pdf"
+    assert res_tech.headers["X-CV-Template"] == "modern_tech"
+    assert "ModernTech_CV_" in res_tech.headers["Content-Disposition"]
+
+    # 2. Executive Clean
+    res_exec = client.post(
+        "/api/v1/ats/generate-cv",
+        json={
+            "candidate_id": cid,
+            "jd_text": "Tuyển dụng Engineering Lead / Manager quản lý đội ngũ 15+ kỹ sư công nghệ...",
+            "language": "en",
+            "template": "executive",
+            "format": "pdf",
+        },
+    )
+    assert res_exec.status_code == 200
+    assert res_exec.headers["content-type"] == "application/pdf"
+    assert res_exec.headers["X-CV-Template"] == "executive"
+    assert "Executive_CV_" in res_exec.headers["Content-Disposition"]
+
+

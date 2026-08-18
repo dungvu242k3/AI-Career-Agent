@@ -31,6 +31,10 @@ export interface InterviewTurn {
   question: QuestionItem;
   candidate_answer?: string | null;
   evaluation?: TurnEvaluation | null;
+  generated_by?: "template" | "llm" | "hybrid";
+  follow_up_of?: number | null;
+  bonus_points?: number;
+  is_llm_evaluated?: boolean;
 }
 
 export interface CandidateAssessmentReport {
@@ -55,6 +59,10 @@ export interface InterviewSession {
   candidate_id: string;
   candidate_name: string;
   target_role: string;
+  domain?: string;
+  tier?: "free" | "pro";
+  max_turns?: number;
+  is_quota_reached?: boolean;
   turns: InterviewTurn[];
   current_turn_index: number;
   is_completed: boolean;

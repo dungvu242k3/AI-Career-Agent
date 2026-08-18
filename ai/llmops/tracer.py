@@ -9,6 +9,7 @@ Provides real-time tracking of:
 
 import time
 import uuid
+from collections import deque
 from typing import Any
 from pydantic import BaseModel, Field
 
@@ -55,7 +56,8 @@ class LLMOpsTracer:
 
     def __init__(self, default_budget_usd: float = 0.50):
         self.default_budget_usd = default_budget_usd
-        self._spans: list[LLMSpan] = []
+        # Use bounded deque to prevent unbounded memory growth on long-running servers.
+        self._spans: deque[LLMSpan] = deque(maxlen=10_000)
         self._session_costs: dict[str, float] = {}
         self._session_tokens: dict[str, int] = {}
         

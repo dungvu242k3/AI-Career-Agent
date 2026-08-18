@@ -101,3 +101,30 @@ def test_render_minimal_cv():
     pdf_bytes = HarvardPDFRenderer.render(minimal_cv)
     assert isinstance(pdf_bytes, bytes)
     assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_render_modern_tech_cv(sample_harvard_cv_data):
+    from be.core.cv_renderer import ModernTechPDFRenderer, get_cv_renderer
+    renderer = get_cv_renderer("modern_tech")
+    assert renderer is ModernTechPDFRenderer
+    pdf_bytes = renderer.render(sample_harvard_cv_data)
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
+
+
+def test_render_executive_cv(sample_harvard_cv_data):
+    from be.core.cv_renderer import ExecutiveCleanPDFRenderer, get_cv_renderer
+    renderer = get_cv_renderer("executive")
+    assert renderer is ExecutiveCleanPDFRenderer
+    pdf_bytes = renderer.render(sample_harvard_cv_data)
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
+
+
+def test_get_cv_renderer_fallback():
+    from be.core.cv_renderer import HarvardPDFRenderer, get_cv_renderer
+    renderer = get_cv_renderer("non_existent_template")
+    assert renderer is HarvardPDFRenderer
+

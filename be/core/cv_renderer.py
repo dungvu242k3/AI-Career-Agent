@@ -264,3 +264,428 @@ class HarvardPDFRenderer:
         buffer = io.BytesIO()
         pdf.output(buffer)
         return buffer.getvalue()
+
+
+# ─────────────────────────────────────────────────────────────
+# 2. MODERN TECH TEMPLATE (Sans-Serif with Emerald Accent)
+# ─────────────────────────────────────────────────────────────
+
+SANS_FONT_CANDIDATES = [
+    ("C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/ariali.ttf"),
+    ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf", "C:/Windows/Fonts/segoeuii.ttf"),
+    (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+    ),
+    (
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
+    ),
+]
+
+
+class ModernTechPDF(FPDF):
+    """Custom FPDF class for Modern Tech resume template."""
+
+    def __init__(self):
+        super().__init__(orientation="P", unit="mm", format="A4")
+        self.set_margins(left=12, top=11, right=12)
+        self.set_auto_page_break(auto=False)
+        self.font_family_name = "Helvetica"
+        self._init_fonts()
+
+    def _init_fonts(self):
+        registered = False
+        for reg, bold, italic in SANS_FONT_CANDIDATES:
+            if os.path.exists(reg) and os.path.exists(bold):
+                try:
+                    self.add_font("ModernSans", "", reg)
+                    self.add_font("ModernSans", "B", bold)
+                    self.add_font("ModernSans", "I", italic if os.path.exists(italic) else reg)
+                    self.font_family_name = "ModernSans"
+                    registered = True
+                    break
+                except Exception as e:
+                    logger.debug("Failed to register modern sans font %s: %s", reg, e)
+        if not registered:
+            self.font_family_name = "Helvetica"
+
+
+class ModernTechPDFRenderer:
+    """Renders Modern Tech Single-Page CV with Emerald Accents and Clean Sans-Serif Typography."""
+
+    @staticmethod
+    def render(cv: HarvardCVData) -> bytes:
+        pdf = ModernTechPDF()
+        pdf.add_page()
+        font = pdf.font_family_name
+        is_vi = cv.target_language == "vi"
+
+        page_width = 210
+        margin_left = 12
+        margin_right = 12
+        content_width = page_width - margin_left - margin_right
+
+        # ── 1. HEADER (Tech Header with Emerald Accent) ──
+        pdf.set_font(font, "B", 14)
+        pdf.set_text_color(15, 23, 42)  # Dark slate
+        pdf.cell(content_width, 6, cv.contact.full_name, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # Target Role / Subtitle in Emerald
+        if cv.target_role:
+            pdf.set_font(font, "B", 9.5)
+            pdf.set_text_color(16, 185, 129)  # Emerald 500
+            pdf.cell(content_width, 4.5, cv.target_role.upper(), align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # Contact Info Line
+        contact_parts = []
+        if cv.contact.phone:
+            contact_parts.append(cv.contact.phone)
+        if cv.contact.email:
+            contact_parts.append(cv.contact.email)
+        if cv.contact.location:
+            contact_parts.append(cv.contact.location)
+        if cv.contact.linkedin_url:
+            contact_parts.append(cv.contact.linkedin_url.replace("https://", "").replace("www.", ""))
+        if cv.contact.github_url:
+            contact_parts.append(cv.contact.github_url.replace("https://", "").replace("www.", ""))
+
+        pdf.set_font(font, "", 8)
+        pdf.set_text_color(100, 116, 139)  # Slate 500
+        contact_line = "  •  ".join(contact_parts)
+        pdf.cell(content_width, 4.5, contact_line, align="L", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1.5)
+
+        # Helper for modern section header
+        def render_section_header(title: str):
+            pdf.ln(2.2)
+            pdf.set_font(font, "B", 9.5)
+            pdf.set_text_color(15, 118, 110)  # Dark Teal / Emerald
+            pdf.cell(content_width, 4.5, title.upper(), align="L", new_x="LMARGIN", new_y="NEXT")
+            # Sleek 2-color underline
+            y = pdf.get_y()
+            pdf.set_draw_color(16, 185, 129)  # Emerald accent
+            pdf.set_line_width(0.6)
+            pdf.line(margin_left, y, margin_left + 35, y)
+            pdf.set_draw_color(226, 232, 240)  # Subtle light grey
+            pdf.set_line_width(0.2)
+            pdf.line(margin_left + 35, y, page_width - margin_right, y)
+            pdf.ln(2.0)
+            pdf.set_text_color(15, 23, 42)  # Reset to dark slate
+
+        # ── 2. SUMMARY ──
+        if cv.summary:
+            render_section_header("Tóm tắt chuyên môn" if is_vi else "Professional Summary")
+            pdf.set_font(font, "", 8.5)
+            pdf.set_text_color(30, 41, 59)
+            pdf.multi_cell(content_width, 3.8, cv.summary, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 3. TECHNICAL SKILLS (Placed near top for Tech CV) ──
+        if cv.skills_categories:
+            render_section_header("Kỹ năng công nghệ cốt lõi" if is_vi else "Core Technical Skills")
+            for cat in cv.skills_categories:
+                pdf.set_font(font, "B", 8.5)
+                pdf.set_text_color(15, 23, 42)
+                cat_label = f"{cat.category_name}: "
+                label_w = pdf.get_string_width(cat_label) + 1.5
+                pdf.cell(label_w, 3.8, cat_label, align="L")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                skills_str = ", ".join(cat.skills)
+                pdf.multi_cell(content_width - label_w, 3.8, skills_str, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 4. WORK EXPERIENCE ──
+        if cv.experience:
+            render_section_header("Kinh nghiệm làm việc" if is_vi else "Professional Experience")
+            for exp in cv.experience:
+                pdf.ln(1.0)
+                pdf.set_font(font, "B", 9)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(content_width * 0.65, 4, exp.company, align="L")
+                pdf.set_font(font, "", 8)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.35, 4, exp.location or "", align="R", new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "I", 8.5)
+                pdf.set_text_color(15, 118, 110)
+                pdf.cell(content_width * 0.65, 3.8, exp.role, align="L")
+                pdf.set_font(font, "", 8)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.35, 3.8, exp.date_range, align="R", new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(30, 41, 59)
+                for bullet in exp.bullets:
+                    pdf.set_x(margin_left)
+                    pdf.cell(4, 3.6, "•", align="R")
+                    pdf.set_x(margin_left + 4.5)
+                    pdf.multi_cell(content_width - 4.5, 3.6, bullet, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 5. PROJECTS ──
+        if cv.projects:
+            render_section_header("Dự án tiêu biểu" if is_vi else "Featured Projects")
+            for proj in cv.projects:
+                pdf.ln(0.8)
+                pdf.set_font(font, "B", 8.8)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(content_width * 0.65, 3.8, proj.name, align="L")
+                pdf.set_font(font, "", 8)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.35, 3.8, proj.date_range or "", align="R", new_x="LMARGIN", new_y="NEXT")
+
+                if proj.role_or_tech:
+                    pdf.set_font(font, "I", 8)
+                    pdf.set_text_color(15, 118, 110)
+                    pdf.cell(content_width, 3.5, proj.role_or_tech, new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(30, 41, 59)
+                for bullet in proj.bullets:
+                    pdf.set_x(margin_left)
+                    pdf.cell(4, 3.6, "•", align="R")
+                    pdf.set_x(margin_left + 4.5)
+                    pdf.multi_cell(content_width - 4.5, 3.6, bullet, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 6. EDUCATION ──
+        if cv.education:
+            render_section_header("Học vấn & Bằng cấp" if is_vi else "Education")
+            for edu in cv.education:
+                pdf.ln(0.8)
+                pdf.set_font(font, "B", 8.8)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(content_width * 0.65, 3.8, edu.institution, align="L")
+                pdf.set_font(font, "", 8)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.35, 3.8, edu.graduation_year, align="R", new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                degree_line = edu.degree_major
+                if edu.gpa_honors:
+                    degree_line += f"  |  {edu.gpa_honors}"
+                pdf.cell(content_width, 3.6, degree_line, new_x="LMARGIN", new_y="NEXT")
+
+        # ── 7. CERTIFICATIONS & LANGUAGES ──
+        has_certs = bool(cv.certifications_and_languages.certifications)
+        has_langs = bool(cv.certifications_and_languages.languages)
+        if has_certs or has_langs:
+            render_section_header("Chứng chỉ & Ngoại ngữ" if is_vi else "Certifications & Languages")
+            if has_certs:
+                pdf.set_font(font, "B", 8.5)
+                pdf.set_text_color(15, 23, 42)
+                label = "Chứng chỉ: " if is_vi else "Certifications: "
+                label_w = pdf.get_string_width(label) + 1.5
+                pdf.cell(label_w, 3.8, label, align="L")
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                pdf.multi_cell(content_width - label_w, 3.8, ", ".join(cv.certifications_and_languages.certifications), align="L", new_x="LMARGIN", new_y="NEXT")
+
+            if has_langs:
+                pdf.set_font(font, "B", 8.5)
+                pdf.set_text_color(15, 23, 42)
+                label = "Ngoại ngữ: " if is_vi else "Languages: "
+                label_w = pdf.get_string_width(label) + 1.5
+                pdf.cell(label_w, 3.8, label, align="L")
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                pdf.multi_cell(content_width - label_w, 3.8, ", ".join(cv.certifications_and_languages.languages), align="L", new_x="LMARGIN", new_y="NEXT")
+
+        buffer = io.BytesIO()
+        pdf.output(buffer)
+        return buffer.getvalue()
+
+
+# ─────────────────────────────────────────────────────────────
+# 3. EXECUTIVE CLEAN TEMPLATE (Senior / Leadership Layout)
+# ─────────────────────────────────────────────────────────────
+
+class ExecutiveCleanPDFRenderer:
+    """Renders Executive Clean Single-Page CV focused on Leadership, Impact and Metrics."""
+
+    @staticmethod
+    def render(cv: HarvardCVData) -> bytes:
+        pdf = HarvardPDF()
+        pdf.add_page()
+        font = pdf.font_family_name
+        is_vi = cv.target_language == "vi"
+
+        page_width = 210
+        margin_left = 13
+        margin_right = 13
+        content_width = page_width - margin_left - margin_right
+
+        # ── 1. EXECUTIVE HEADER ──
+        pdf.set_font(font, "B", 15)
+        pdf.set_text_color(15, 23, 42)
+        pdf.cell(content_width, 6.5, cv.contact.full_name.upper(), align="C", new_x="LMARGIN", new_y="NEXT")
+
+        if cv.target_role:
+            pdf.set_font(font, "", 9)
+            pdf.set_text_color(71, 85, 105)
+            pdf.cell(content_width, 4.5, f"EXECUTIVE PROFILE  |  {cv.target_role.upper()}", align="C", new_x="LMARGIN", new_y="NEXT")
+
+        contact_parts = []
+        if cv.contact.phone:
+            contact_parts.append(cv.contact.phone)
+        if cv.contact.email:
+            contact_parts.append(cv.contact.email)
+        if cv.contact.location:
+            contact_parts.append(cv.contact.location)
+        if cv.contact.linkedin_url:
+            contact_parts.append(cv.contact.linkedin_url.replace("https://", "").replace("www.", ""))
+
+        pdf.set_font(font, "", 8.2)
+        pdf.set_text_color(100, 116, 139)
+        pdf.cell(content_width, 4, "  •  ".join(contact_parts), align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1.5)
+
+        def render_section_header(title: str):
+            pdf.ln(2.2)
+            pdf.set_font(font, "B", 9.5)
+            pdf.set_text_color(15, 23, 42)
+            pdf.cell(content_width, 4.5, title.upper(), align="L", new_x="LMARGIN", new_y="NEXT")
+            y = pdf.get_y()
+            pdf.set_draw_color(30, 41, 59)
+            pdf.set_line_width(0.5)
+            pdf.line(margin_left, y, page_width - margin_right, y)
+            pdf.ln(1.8)
+
+        # ── 2. EXECUTIVE SUMMARY ──
+        if cv.summary:
+            render_section_header("Tóm tắt năng lực lãnh đạo" if is_vi else "Executive Summary")
+            pdf.set_font(font, "", 8.5)
+            pdf.set_text_color(30, 41, 59)
+            pdf.multi_cell(content_width, 3.8, cv.summary, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 3. WORK EXPERIENCE ──
+        if cv.experience:
+            render_section_header("Kinh nghiệm quản lý & chuyên môn" if is_vi else "Leadership & Work Experience")
+            for exp in cv.experience:
+                pdf.ln(1.0)
+                pdf.set_font(font, "B", 9)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(content_width * 0.7, 4, exp.company, align="L")
+                pdf.set_font(font, "", 8.2)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.3, 4, exp.location or "", align="R", new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "I", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                pdf.cell(content_width * 0.7, 3.8, exp.role, align="L")
+                pdf.set_font(font, "", 8.2)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.3, 3.8, exp.date_range, align="R", new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(30, 41, 59)
+                for bullet in exp.bullets:
+                    pdf.set_x(margin_left)
+                    pdf.cell(4, 3.6, "•", align="R")
+                    pdf.set_x(margin_left + 4.5)
+                    pdf.multi_cell(content_width - 4.5, 3.6, bullet, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 4. PROJECTS ──
+        if cv.projects:
+            render_section_header("Dự án & Sáng kiến chiến lược" if is_vi else "Key Projects & Initiatives")
+            for proj in cv.projects:
+                pdf.ln(0.8)
+                pdf.set_font(font, "B", 8.8)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(content_width * 0.7, 3.8, proj.name, align="L")
+                pdf.set_font(font, "", 8.2)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.3, 3.8, proj.date_range or "", align="R", new_x="LMARGIN", new_y="NEXT")
+
+                if proj.role_or_tech:
+                    pdf.set_font(font, "I", 8)
+                    pdf.set_text_color(71, 85, 105)
+                    pdf.cell(content_width, 3.5, proj.role_or_tech, new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(30, 41, 59)
+                for bullet in proj.bullets:
+                    pdf.set_x(margin_left)
+                    pdf.cell(4, 3.6, "•", align="R")
+                    pdf.set_x(margin_left + 4.5)
+                    pdf.multi_cell(content_width - 4.5, 3.6, bullet, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 5. CORE COMPETENCIES (Skills) ──
+        if cv.skills_categories:
+            render_section_header("Năng lực cốt lõi & Kỹ năng" if is_vi else "Core Competencies & Skills")
+            for cat in cv.skills_categories:
+                pdf.set_font(font, "B", 8.5)
+                pdf.set_text_color(15, 23, 42)
+                cat_label = f"{cat.category_name}: "
+                label_w = pdf.get_string_width(cat_label) + 1.5
+                pdf.cell(label_w, 3.8, cat_label, align="L")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                skills_str = ", ".join(cat.skills)
+                pdf.multi_cell(content_width - label_w, 3.8, skills_str, align="L", new_x="LMARGIN", new_y="NEXT")
+
+        # ── 6. EDUCATION ──
+        if cv.education:
+            render_section_header("Học vấn & Đào tạo" if is_vi else "Education & Credentials")
+            for edu in cv.education:
+                pdf.ln(0.8)
+                pdf.set_font(font, "B", 8.8)
+                pdf.set_text_color(15, 23, 42)
+                pdf.cell(content_width * 0.7, 3.8, edu.institution, align="L")
+                pdf.set_font(font, "", 8.2)
+                pdf.set_text_color(100, 116, 139)
+                pdf.cell(content_width * 0.3, 3.8, edu.graduation_year, align="R", new_x="LMARGIN", new_y="NEXT")
+
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                degree_line = edu.degree_major
+                if edu.gpa_honors:
+                    degree_line += f"  |  {edu.gpa_honors}"
+                pdf.cell(content_width, 3.6, degree_line, new_x="LMARGIN", new_y="NEXT")
+
+        # ── 7. CERTIFICATIONS & LANGUAGES ──
+        has_certs = bool(cv.certifications_and_languages.certifications)
+        has_langs = bool(cv.certifications_and_languages.languages)
+        if has_certs or has_langs:
+            render_section_header("Chứng chỉ & Ngôn ngữ" if is_vi else "Certifications & Languages")
+            if has_certs:
+                pdf.set_font(font, "B", 8.5)
+                pdf.set_text_color(15, 23, 42)
+                label = "Chứng chỉ: " if is_vi else "Certifications: "
+                label_w = pdf.get_string_width(label) + 1.5
+                pdf.cell(label_w, 3.8, label, align="L")
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                pdf.multi_cell(content_width - label_w, 3.8, ", ".join(cv.certifications_and_languages.certifications), align="L", new_x="LMARGIN", new_y="NEXT")
+
+            if has_langs:
+                pdf.set_font(font, "B", 8.5)
+                pdf.set_text_color(15, 23, 42)
+                label = "Ngôn ngữ: " if is_vi else "Languages: "
+                label_w = pdf.get_string_width(label) + 1.5
+                pdf.cell(label_w, 3.8, label, align="L")
+                pdf.set_font(font, "", 8.5)
+                pdf.set_text_color(51, 65, 85)
+                pdf.multi_cell(content_width - label_w, 3.8, ", ".join(cv.certifications_and_languages.languages), align="L", new_x="LMARGIN", new_y="NEXT")
+
+        buffer = io.BytesIO()
+        pdf.output(buffer)
+        return buffer.getvalue()
+
+
+# ─────────────────────────────────────────────────────────────
+# 4. FACTORY DISPATCHER
+# ─────────────────────────────────────────────────────────────
+
+def get_cv_renderer(template_name: str = "harvard"):
+    """Factory function returning the corresponding PDF renderer class."""
+    renderers = {
+        "harvard": HarvardPDFRenderer,
+        "modern_tech": ModernTechPDFRenderer,
+        "executive": ExecutiveCleanPDFRenderer,
+    }
+    return renderers.get(template_name, HarvardPDFRenderer)
+

@@ -13,6 +13,7 @@ from ai.extractors.openai_extractor import OpenAICVExtractor
 from ai.extractors.cv_extractor import GeminiCVExtractor
 from ai.models.candidate import CandidateProfile
 from ai.config import get_ai_config
+from ai.llmops.cache import SemanticCache
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,8 @@ class CVIngestionPipeline:
         self.enable_fallback = (
             enable_fallback if enable_fallback is not None else self.config.enable_fallback
         )
+        # Reuse a single SemanticCache instance across all requests (connection pool friendly)
+        self._cache = SemanticCache()
 
     def _resolve_parser(self, content_bytes: bytes, filename: str) -> BaseDocumentParser:
         """Resolve appropriate document parser based on custom override, file extension, or magic bytes."""
@@ -72,10 +75,8 @@ class CVIngestionPipeline:
         parser = self._resolve_parser(content_bytes, filename)
         raw_text = parser.extract_text_from_bytes(content_bytes, filename=filename)
 
-        # Step 1.5: Check Semantic Cache
-        from ai.llmops.cache import SemanticCache
-        cache = SemanticCache()
-        cached_data = cache.get_cached_response(raw_text, "cv_extraction")
+        # Step 1.5: Check Semantic Cache (reuses single instance, avoids connection-per-request)
+        cached_data = self._cache.get_cached_response(raw_text, "cv_extraction")
         if cached_data:
             logger.info("Retrieved CV profile from Semantic Cache.")
             return raw_text, CandidateProfile.model_validate(cached_data)
@@ -83,7 +84,7 @@ class CVIngestionPipeline:
         # Step 2: Extract structured profile via Primary Provider (e.g. OpenAI)
         try:
             profile = await self.primary_extractor.extract_profile(raw_text)
-            cache.set_cached_response(raw_text, "cv_extraction", profile.model_dump())
+            self._cache.set_cached_response(raw_text, "cv_extraction", profile.model_dump())
             return raw_text, profile
         except Exception as primary_err:
             if not self.enable_fallback:
@@ -102,7 +103,7 @@ class CVIngestionPipeline:
                     "Auto-fallback to %s succeeded.",
                     self.fallback_extractor.__class__.__name__,
                 )
-                cache.set_cached_response(raw_text, "cv_extraction", profile.model_dump())
+                self._cache.set_cached_response(raw_text, "cv_extraction", profile.model_dump())
                 return raw_text, profile
             except Exception as fallback_err:
                 logger.error("Both primary and fallback extractors failed. Fallback error: %s", fallback_err)

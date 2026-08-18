@@ -94,16 +94,58 @@ class SlidingWindowRateLimiter:
         client_ip = self._get_client_ip(request)
 
         self._cleanup_stale_entries(current_time)
-
-        # Filter timestamps within current sliding window
         cutoff = current_time - self.window_seconds
+
+        # 1. Try Redis for distributed Rate Limiting
+        try:
+            from be.core.redis_client import get_redis_client
+            redis_client = await get_redis_client()
+            if redis_client:
+                key = f"rate_limit:{request.url.path}:{client_ip}"
+                async with redis_client.pipeline(transaction=True) as pipe:
+                    pipe.zremrangebyscore(key, 0, cutoff)
+                    pipe.zadd(key, {str(current_time): current_time})
+                    pipe.zcard(key)
+                    pipe.expire(key, self.window_seconds)
+                    results = await pipe.execute()
+                
+                request_count = results[2]
+                
+                if request_count > self.max_requests:
+                    oldest_res = await redis_client.zrange(key, 0, 0, withscores=True)
+                    if oldest_res:
+                        oldest_ts = oldest_res[0][1]
+                        retry_after = int(self.window_seconds - (current_time - oldest_ts)) + 1
+                    else:
+                        retry_after = self.window_seconds
+                        
+                    logger.warning(
+                        "Rate limit exceeded (Redis) for IP: %s on %s (Count: %d/%d)",
+                        client_ip,
+                        request.url.path,
+                        request_count,
+                        self.max_requests,
+                    )
+                    detail = self.custom_detail or f"Bạn đã gửi quá nhiều yêu cầu ({request_count}/{self.max_requests} lần). Vui lòng thử lại sau {retry_after} giây."
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail=detail,
+                        headers={"Retry-After": str(retry_after)},
+                    )
+                return
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning("Redis rate limiting failed: %s. Falling back to in-memory.", e)
+
+        # 2. Fallback to in-memory Rate Limiting
         timestamps = [t for t in self._history[client_ip] if t > cutoff]
         self._history[client_ip] = timestamps
 
         if len(timestamps) >= self.max_requests:
             retry_after = int(self.window_seconds - (current_time - timestamps[0])) + 1
             logger.warning(
-                "Rate limit exceeded for IP: %s on %s (Count: %d/%d)",
+                "Rate limit exceeded (Memory) for IP: %s on %s (Count: %d/%d)",
                 client_ip,
                 request.url.path,
                 len(timestamps),
@@ -135,4 +177,9 @@ cv_generation_rate_limiter = SlidingWindowRateLimiter(
     window_seconds=86400,
     custom_detail="Bạn đã đạt giới hạn 5 lần tạo CV tối ưu miễn phí trong ngày. Vui lòng quay lại vào ngày mai!",
 )
+# 20 Chat requests per minute
+chat_rate_limiter = SlidingWindowRateLimiter(max_requests=20, window_seconds=60)
+# 5 Mock Interview starts per minute
+interview_rate_limiter = SlidingWindowRateLimiter(max_requests=5, window_seconds=60)
+
 

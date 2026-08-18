@@ -1,6 +1,6 @@
 """Canonical Pydantic models for Adversarial Multi-Agent Mock Interview Arena."""
 
-from typing import Literal
+from typing import Literal, Any
 from pydantic import BaseModel, Field
 
 
@@ -20,11 +20,13 @@ class QuestionItem(BaseModel):
     interviewer: InterviewerPersona
     question_text: str = Field(description="Verbatim question asked")
     context_hint: str = Field(default="", description="Hint on what the interviewer is probing for")
-    category: Literal["system_design", "deep_technical", "behavioral_star", "culture_fit", "stress_handling"] = Field(
+    category: Literal["system_design", "deep_technical", "behavioral_star", "culture_fit", "stress_handling", "system_design_scratch"] = Field(
         default="deep_technical",
         description="Question category",
     )
     difficulty: Literal["easy", "medium", "hard"] = Field(default="medium")
+    generated_by: Literal["template", "ai"] = Field(default="template", description="How this question was generated")
+    follow_up_of: str | None = Field(default=None, description="ID of original question if this is a follow-up")
 
 
 class TurnEvaluation(BaseModel):
@@ -39,6 +41,10 @@ class TurnEvaluation(BaseModel):
     key_strengths: list[str] = Field(default_factory=list, description="Points candidate handled well")
     improvement_areas: list[str] = Field(default_factory=list, description="Points that could be sharper")
     ideal_star_answer: str = Field(description="Exemplary Harvard-style STAR benchmark answer for this question")
+    has_quantified_result: bool = Field(default=False, description="Did the answer contain metrics?")
+    bonus_points: int = Field(default=0, description="Bonus points for metrics or excellent insights")
+    weak_axis: str | None = Field(default=None, description="The weakest scoring axis (triggers follow-up)")
+    is_llm_evaluated: bool = Field(default=True, description="True if scored by LLM, False if fallback keyword scored")
 
 
 class InterviewTurn(BaseModel):
@@ -76,6 +82,12 @@ class InterviewSession(BaseModel):
     candidate_id: str
     candidate_name: str
     target_role: str
+    domain: str = Field(default="backend", description="Specialty domain for routing questions")
+    jd_profile: Any | None = Field(default=None, description="JD context for generation")
+    ruleset_version: str = Field(default="v1", description="Rules engine version")
+    tier: Literal["free", "pro"] = Field(default="free", description="Freemium tier")
+    max_turns: int = Field(default=5, description="Maximum turns allowed based on tier")
+    is_quota_reached: bool = Field(default=False, description="True if hit freemium wall")
     turns: list[InterviewTurn] = Field(default_factory=list)
     current_turn_index: int = Field(default=0)
     is_completed: bool = Field(default=False)

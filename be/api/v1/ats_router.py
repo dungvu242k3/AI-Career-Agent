@@ -33,7 +33,7 @@ from be.api.v1.schemas import (
     STARRewriteRequest,
     GenerateCVRequest,
 )
-from be.core.cv_renderer import HarvardPDFRenderer
+from be.core.cv_renderer import HarvardPDFRenderer, get_cv_renderer
 from be.core.rate_limiter import (
     ats_rate_limiter,
     read_rate_limiter,
@@ -313,11 +313,12 @@ async def generate_harvard_cv(
             detail="Lỗi khi AI tổng hợp dữ liệu CV chuẩn Harvard. Vui lòng thử lại sau.",
         )
 
-    # 5. Render PDF
+    # 5. Render PDF with Selected Template
     try:
-        pdf_bytes = HarvardPDFRenderer.render(cv_data)
+        renderer_cls = get_cv_renderer(payload.template)
+        pdf_bytes = renderer_cls.render(cv_data)
     except Exception as e:
-        logger.error("Error rendering Harvard PDF: %s", e, exc_info=True)
+        logger.error("Error rendering CV (%s): %s", payload.template, e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Lỗi khi xuất tệp PDF CV. Vui lòng thử lại sau.",
@@ -327,7 +328,14 @@ async def generate_harvard_cv(
     raw_name = profile.personal_info.full_name or "Candidate"
     ascii_name = unicodedata.normalize("NFKD", raw_name).encode("ascii", "ignore").decode("ascii")
     safe_name = re.sub(r"[^\w\-_]", "_", ascii_name).strip("_") or "Candidate"
-    filename = f"Harvard_CV_{safe_name}_{target_lang}.pdf"
+    
+    prefix_map = {
+        "harvard": "Harvard_CV",
+        "modern_tech": "ModernTech_CV",
+        "executive": "Executive_CV",
+    }
+    prefix = prefix_map.get(payload.template, "Harvard_CV")
+    filename = f"{prefix}_{safe_name}_{target_lang}.pdf"
 
     return Response(
         content=pdf_bytes,
@@ -339,6 +347,7 @@ async def generate_harvard_cv(
             "X-Critic-Score": str(reflection_result.final_critic_score),
             "X-Critic-Approved": str(reflection_result.is_converged).lower(),
             "X-Reflection-Iterations": str(reflection_result.iterations_count),
+            "X-CV-Template": payload.template,
         },
     )
 

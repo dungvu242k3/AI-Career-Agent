@@ -57,11 +57,12 @@ class ATSHistoryItem(BaseModel):
 
 
 class GenerateCVRequest(BaseModel):
-    """Payload for generating tailored Harvard 1-Page CV."""
+    """Payload for generating tailored Harvard / Modern Tech / Executive 1-Page CV."""
 
     candidate_id: str = Field(description="Candidate profile UUIDv7 ID")
     jd_text: str = Field(description="Raw Job Description text", min_length=15, max_length=10000)
     language: Literal["vi", "en"] = Field(default="vi", description="Target CV language: 'vi' or 'en'")
+    template: Literal["harvard", "modern_tech", "executive"] = Field(default="harvard", description="Template style: 'harvard', 'modern_tech', 'executive'")
     format: Literal["pdf"] = Field(default="pdf", description="Export format: 'pdf'")
 
 

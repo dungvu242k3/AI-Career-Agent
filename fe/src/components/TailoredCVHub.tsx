@@ -14,16 +14,23 @@ import {
   Check,
   Zap,
   ShieldCheck,
+  Palette,
+  Layers,
+  Code2,
+  Crown,
 } from "lucide-react";
 import { CandidateProfile } from "../types/candidate";
 import { JDMatchReport } from "../types/ats";
 import { generateHarvardCVPdf } from "../services/atsApi";
+
+export type CVTemplateType = "harvard" | "modern_tech" | "executive";
 
 export interface TailoredCVItem {
   id: string;
   companyName: string;
   targetRole: string;
   language: "vi" | "en";
+  template: CVTemplateType;
   originalScore: number;
   optimizedScore: number;
   grade: string;
@@ -50,6 +57,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
   currentJdText,
 }) => {
   const [selectedLang, setSelectedLang] = useState<"vi" | "en">("vi");
+  const [selectedTemplate, setSelectedTemplate] = useState<CVTemplateType>("harvard");
   const [isGenerating, setIsGenerating] = useState(false);
   const [genStep, setGenStep] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -104,6 +112,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
         candidate_id: candidateId,
         jd_text: jdToUse,
         language: selectedLang,
+        template: selectedTemplate,
       });
 
       const blobUrl = URL.createObjectURL(result.blob);
@@ -115,6 +124,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
         companyName: currentAtsReport?.jd_title?.split("-")[0]?.trim() || "Target Company",
         targetRole: currentAtsReport?.jd_title || candidateProfile.summary.detected_title || "Software Engineer",
         language: selectedLang,
+        template: selectedTemplate,
         originalScore: original,
         optimizedScore: Math.min(100, optimized),
         grade: optimized >= 90 ? "A+" : "A",
@@ -138,7 +148,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
       });
       setPreviewItem(newItem);
     } catch (err: any) {
-      setErrorMessage(err.message || "Lỗi khi tạo CV Harvard tối ưu.");
+      setErrorMessage(err.message || "Lỗi khi tạo CV tối ưu.");
     } finally {
       setIsGenerating(false);
       setGenStep("");
@@ -156,6 +166,12 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
     document.body.removeChild(a);
   };
 
+  const templateDisplayMap: Record<CVTemplateType, { name: string; tag: string }> = {
+    harvard: { name: "Harvard Classic", tag: "🎓 Harvard" },
+    modern_tech: { name: "Modern Tech", tag: "💻 Modern Tech" },
+    executive: { name: "Executive Clean", tag: "👔 Executive" },
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0c101b] border-l border-[#1E293B] overflow-hidden">
       {/* ── HEADER ── */}
@@ -166,9 +182,9 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
           </div>
           <div>
             <h3 className="text-xs font-bold text-white uppercase tracking-wider font-['Plus_Jakarta_Sans',sans-serif]">
-              Kho CV Harvard Tối Ưu
+              Kho CV May Đo ATS
             </h3>
-            <p className="text-[11px] text-slate-400">Xuất PDF chuẩn 1 trang & ATS</p>
+            <p className="text-[11px] text-slate-400">Xuất PDF chuẩn 1 trang & Multi-Template</p>
           </div>
         </div>
 
@@ -180,7 +196,60 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
       </div>
 
       {/* ── ACTION BANNER (GENERATE SECTION) ── */}
-      <div className="p-4 border-b border-[#1E293B] bg-[#111827]/60 space-y-3 shrink-0">
+      <div className="p-4 border-b border-[#1E293B] bg-[#111827]/60 space-y-3.5 shrink-0">
+        {/* Template Selector */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold">
+            <Palette className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Mẫu thiết kế CV:</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSelectedTemplate("harvard")}
+              className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all text-center ${
+                selectedTemplate === "harvard"
+                  ? "bg-emerald-500/10 border-emerald-500 text-white shadow-sm ring-1 ring-emerald-500/50"
+                  : "bg-[#090D16] border-[#1E293B] text-slate-400 hover:text-slate-200 hover:border-slate-700"
+              }`}
+            >
+              <FileText className={`w-3.5 h-3.5 ${selectedTemplate === "harvard" ? "text-emerald-400" : "text-slate-500"}`} />
+              <span className="text-[11px] font-bold">Harvard</span>
+              <span className="text-[9px] text-slate-400">Ivy Classic</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedTemplate("modern_tech")}
+              className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all text-center ${
+                selectedTemplate === "modern_tech"
+                  ? "bg-emerald-500/10 border-emerald-500 text-white shadow-sm ring-1 ring-emerald-500/50"
+                  : "bg-[#090D16] border-[#1E293B] text-slate-400 hover:text-slate-200 hover:border-slate-700"
+              }`}
+            >
+              <Code2 className={`w-3.5 h-3.5 ${selectedTemplate === "modern_tech" ? "text-emerald-400" : "text-slate-500"}`} />
+              <span className="text-[11px] font-bold">Modern Tech</span>
+              <span className="text-[9px] text-slate-400">Dev & Cloud</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedTemplate("executive")}
+              className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all text-center ${
+                selectedTemplate === "executive"
+                  ? "bg-emerald-500/10 border-emerald-500 text-white shadow-sm ring-1 ring-emerald-500/50"
+                  : "bg-[#090D16] border-[#1E293B] text-slate-400 hover:text-slate-200 hover:border-slate-700"
+              }`}
+            >
+              <Crown className={`w-3.5 h-3.5 ${selectedTemplate === "executive" ? "text-emerald-400" : "text-slate-500"}`} />
+              <span className="text-[11px] font-bold">Executive</span>
+              <span className="text-[9px] text-slate-400">Lead / Senior</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Language Selection */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold">
             <Globe2 className="w-3.5 h-3.5 text-cyan-400" />
@@ -235,7 +304,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
           ) : (
             <>
               <Sparkles className="w-4 h-4 text-[#090D16]" />
-              <span>Tạo CV Harvard 1 Trang ({selectedLang === "vi" ? "VI" : "EN"})</span>
+              <span>Tạo CV {templateDisplayMap[selectedTemplate].name} ({selectedLang === "vi" ? "VI" : "EN"})</span>
             </>
           )}
         </button>
@@ -253,7 +322,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
             <Zap className="w-3 h-3 text-amber-400" />
             Giới hạn: 5 lượt tạo/ngày
           </span>
-          <span className="text-slate-500">Font Times • 100% Text ATS</span>
+          <span className="text-slate-500">1 Trang Chuẩn ATS • 100% Vector</span>
         </div>
 
         {/* Error message if any */}
@@ -275,10 +344,10 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
 
             <div className="space-y-1.5 max-w-xs">
               <h4 className="text-sm font-bold text-white font-['Plus_Jakarta_Sans',sans-serif]">
-                Chưa Có Bản CV Harvard Nào
+                Chưa Có Bản CV May Đo Nào
               </h4>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Nạp JD tại <strong>Cột 1</strong> và bấm nút <strong>"Tạo CV Harvard 1 Trang"</strong> ở trên để AI tự động sắp xếp lại kinh nghiệm, viết chuẩn STAR và xuất bản PDF.
+                Nạp JD tại <strong>Cột 1</strong>, chọn mẫu thiết kế và bấm nút <strong>"Tạo CV"</strong> ở trên để AI tự động sắp xếp lại kinh nghiệm, viết chuẩn STAR và xuất bản PDF 1 trang.
               </p>
             </div>
 
@@ -303,9 +372,12 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
                         {item.language === "vi" ? "🇻🇳 Tiếng Việt" : "🇬🇧 English"}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-semibold">
+                        {templateDisplayMap[item.template || "harvard"]?.tag || "🎓 Harvard"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
                         {item.createdAt}
@@ -385,7 +457,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">
-                    Xem Trước PDF CV Harvard ({previewItem.language.toUpperCase()})
+                    Xem Trước PDF CV ({templateDisplayMap[previewItem.template || "harvard"]?.name || "Harvard"} • {previewItem.language.toUpperCase()})
                   </h3>
                   <p className="text-xs text-slate-400">
                     {previewItem.targetRole} • {previewItem.optimizedScore}/100 ATS Score
@@ -416,7 +488,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
             <div className="flex-1 bg-slate-950 rounded-xl overflow-hidden border border-[#1E293B]">
               <iframe
                 src={previewItem.blobUrl}
-                title="Harvard CV Preview"
+                title="CV Preview"
                 className="w-full h-full border-0"
               />
             </div>

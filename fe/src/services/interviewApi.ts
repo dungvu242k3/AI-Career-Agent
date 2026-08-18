@@ -5,6 +5,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 export async function startInterviewSession(
   candidateId: string,
   targetRole: string = "Software Engineer",
+  domain: string = "backend",
+  tier: "free" | "pro" = "free",
   jdText?: string
 ): Promise<InterviewSession> {
   const response = await fetch(`${API_BASE_URL}/interview/start`, {
@@ -15,6 +17,8 @@ export async function startInterviewSession(
     body: JSON.stringify({
       candidate_id: candidateId,
       target_role: targetRole,
+      domain: domain,
+      tier: tier,
       jd_text: jdText,
     }),
   });

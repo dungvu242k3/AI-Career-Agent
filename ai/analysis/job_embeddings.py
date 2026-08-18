@@ -8,6 +8,7 @@ Supports:
 
 import math
 import re
+import zlib
 from typing import Sequence
 from ai.models.candidate import CandidateProfile
 from ai.models.jd import JDProfile
@@ -59,14 +60,16 @@ class JobEmbeddingEngine:
 
         vec = [0.0] * self.vector_dim
         for token in tokens:
-            # Deterministic bucket hashing
-            token_hash = hash(token) % self.vector_dim
+            # Deterministic bucket hashing using zlib.adler32 (stable across Python restarts,
+            # unlike built-in hash() which is randomized by PYTHONHASHSEED).
+            token_checksum = zlib.adler32(token.encode())
+            token_hash = token_checksum % self.vector_dim
             weight = self.vocab_weights.get(token, 1.0)
             vec[token_hash] += weight
 
             # Bigram hashing for compound tech (e.g., 'react native', 'ci cd')
             if len(token) > 3:
-                secondary_hash = (hash(token) >> 4) % self.vector_dim
+                secondary_hash = (token_checksum >> 4) % self.vector_dim
                 vec[secondary_hash] += weight * 0.5
 
         # Normalize vector to unit length
