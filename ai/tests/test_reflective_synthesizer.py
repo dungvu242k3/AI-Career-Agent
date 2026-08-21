@@ -1,73 +1,48 @@
-"""Tests for Reflective Harvard Synthesizer Actor-Critic loop."""
+"""Tests for grounded actor/critic CV synthesis."""
+
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from unittest.mock import AsyncMock, patch
+
 from ai.analysis.reflective_synthesizer import ReflectiveHarvardSynthesizer
-from ai.models.candidate import CandidateProfile, PersonalInfo, SummarySection, SkillsTaxonomy
+from ai.models.candidate import CandidateProfile, PersonalInfo, SkillsTaxonomy, SummarySection
 from ai.models.harvard_cv import HarvardCVData, HarvardContactInfo, HarvardExperienceItem, HarvardSkillsCategory
-from ai.models.jd import JDProfile, JDMatchReport
+from ai.models.jd import JDMatchReport, JDProfile
 
 
-@pytest.fixture
-def mock_candidate_and_jd():
-    cand = CandidateProfile(
-        personal_info=PersonalInfo(full_name="Lê Minh B"),
+@pytest.mark.asyncio
+async def test_reflection_drops_experience_without_source_evidence():
+    profile = CandidateProfile(
+        personal_info=PersonalInfo(full_name="Candidate"),
         summary=SummarySection(detected_title="Frontend Engineer"),
-        skills_taxonomy=SkillsTaxonomy(languages_and_frameworks=["React", "TypeScript", "Next.js"]),
+        skills_taxonomy=SkillsTaxonomy(frameworks=["React"]),
     )
-    jd = JDProfile(
-        job_title="Senior Frontend Developer",
-        must_have_skills=["React", "TypeScript", "Next.js"],
-        raw_text="Tuyển Senior Frontend React",
-    )
+    jd = JDProfile(job_title="Senior Frontend Developer", raw_text="React role")
     report = JDMatchReport(
         overall_score=85,
         skill_match_score=90,
         experience_fit_score=80,
         format_quality_score=85,
-        matched_skills=[],
-        missing_skills=[],
-        excess_skills=[],
     )
-    return cand, jd, report
-
-
-@pytest.mark.asyncio
-async def test_reflective_synthesizer_converges(mock_candidate_and_jd):
-    """Test that the Reflective Synthesizer executes Actor -> Critic and converges."""
-    cand, jd, report = mock_candidate_and_jd
-
-    mock_initial_cv = HarvardCVData(
+    ungrounded = HarvardCVData(
         target_language="vi",
         target_role="Senior Frontend Developer",
-        contact=HarvardContactInfo(full_name="Lê Minh B"),
+        contact=HarvardContactInfo(full_name="Candidate"),
         experience=[
             HarvardExperienceItem(
-                company="Shopee",
+                company="Unknown",
                 role="Frontend Developer",
                 date_range="2022 - Present",
-                bullets=[
-                    "Tham gia vào phát triển giao diện web với React và TypeScript.",
-                ],
+                bullets=["Improved latency by 30%"],
             )
         ],
-        skills_categories=[
-            HarvardSkillsCategory(category_name="Frontend", skills=["React", "TypeScript", "Next.js"])
-        ],
+        skills_categories=[HarvardSkillsCategory(category_name="Frontend", skills=["React", "UnknownSkill"])],
     )
+    synthesizer = ReflectiveHarvardSynthesizer(max_iterations=2, approval_threshold=80)
+    with patch.object(synthesizer.actor_synthesizer, "synthesize", new=AsyncMock(return_value=ungrounded)):
+        final_cv, result = await synthesizer.synthesize(profile, jd, report)
 
-    synthesizer = ReflectiveHarvardSynthesizer(max_iterations=3, approval_threshold=80)
-
-    with patch.object(synthesizer.actor_synthesizer, "synthesize", new=AsyncMock(return_value=mock_initial_cv)):
-        final_cv, reflection_result = await synthesizer.synthesize(
-            profile=cand,
-            jd=jd,
-            report=report,
-        )
-
-        assert reflection_result.iterations_count >= 1
-        assert reflection_result.final_critic_score >= 80
-        assert len(reflection_result.reflection_history) >= 1
-        # Check that passive starter was rewritten with an Action Verb
-        first_bullet = final_cv.experience[0].bullets[0]
-        assert not first_bullet.startswith("Tham gia vào")
+    assert not final_cv.experience
+    assert final_cv.ats_score_estimate == 85
+    assert "experience:Unknown/Frontend Developer" in result.grounding_report["dropped_claims"]
+    assert "skill:UnknownSkill" in result.grounding_report["dropped_claims"]

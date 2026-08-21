@@ -1,7 +1,7 @@
-"""Semantic Vector Embedding & Cosine Similarity Engine for Job & Profile Matching.
+"""Deterministic hashed lexical vectors for non-critical job discovery.
 
 Supports:
-- Dense vector representation of Candidate Profiles and Job Descriptions
+- Token-hash vector representation of Candidate Profiles and Job Descriptions
 - Fast vector cosine similarity calculations (< 1ms per 1000 items)
 - In-memory LRU caching of pre-computed embeddings
 """
@@ -36,8 +36,12 @@ def compute_cosine_similarity(vec_a: Sequence[float], vec_b: Sequence[float]) ->
     return max(0.0, min(1.0, sim))
 
 
-class JobEmbeddingEngine:
-    """High-speed Semantic Vector Embedding & Projection Engine for Jobs & Candidates."""
+class HashedLexicalVectorEngine:
+    """Hashed lexical projection, not a semantic embedding model.
+
+    This is appropriate for discovery/ranking hints only. It must not drive
+    ATS scoring, hiring decisions, eligibility, or other consequential output.
+    """
 
     def __init__(self, vector_dim: int = 128):
         self.vector_dim = vector_dim
@@ -79,7 +83,7 @@ class JobEmbeddingEngine:
         return vec
 
     def embed_candidate(self, profile: CandidateProfile) -> list[float]:
-        """Generate dense semantic vector from candidate profile."""
+        """Generate a deterministic lexical vector from a candidate profile."""
         skills = []
         for group in profile.skills_taxonomy.model_dump().values():
             if isinstance(group, list):
@@ -112,7 +116,7 @@ class JobEmbeddingEngine:
         tech_stack: list[str] | str | None = None,
         description: str = "",
     ) -> list[float]:
-        """Generate dense semantic vector from a job description."""
+        """Generate a deterministic lexical vector from a job description."""
         req_str = requirements if isinstance(requirements, str) else " ".join([r for r in (requirements or []) if isinstance(r, str)])
         stack_str = tech_stack if isinstance(tech_stack, str) else " ".join([t for t in (tech_stack or []) if isinstance(t, str)])
 
@@ -123,3 +127,8 @@ class JobEmbeddingEngine:
             f"{description}"
         )
         return self.generate_text_vector(job_context)
+
+
+# Kept as a compatibility alias for integrations. New code should use the
+# accurately named ``HashedLexicalVectorEngine``.
+JobEmbeddingEngine = HashedLexicalVectorEngine

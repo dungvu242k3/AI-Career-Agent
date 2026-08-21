@@ -19,6 +19,14 @@ Your goal is to generate two distinct, production-ready STAR bullet points in Vi
 
 ## 📐 STAR FORMULA & RULES
 
+### Evidence rule (non-negotiable)
+
+Use only facts, metrics, skills, certifications, and outcomes explicitly
+present in `raw_input` or `context`. Do not invent latency reductions, traffic,
+uptime, costs, percentages, certifications, or scale. If the source lacks a
+useful metric, write `[add verified metric]` rather than a made-up number.
+This rule overrides every example below.
+
 Each bullet point MUST adhere to this exact formula:
 `[Strong Action Verb] + [Specific Technology & Implementation Details] + [Quantifiable Impact / Metrics]`
 

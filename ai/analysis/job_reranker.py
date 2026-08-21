@@ -1,7 +1,7 @@
-"""Cross-Encoder Semantic Re-Ranker for Precision Job-Candidate Alignment.
+"""Deterministic lexical job-fit reranker for non-critical discovery.
 
 Performs deep contextual pairwise scoring between CandidateProfile and JobItems to compute:
-- semantic_fit_score: 0 - 100%
+- heuristic_fit_score: 0 - 100% (a discovery hint, not an eligibility score)
 - fit_highlights: Key matching strengths (e.g., tech stack synergy, experience alignment)
 - potential_gap: Any noticeable gap between candidate background and job requirements
 """
@@ -11,7 +11,7 @@ from ai.models.candidate import CandidateProfile
 
 
 class JobCrossEncoderReranker:
-    """Pairwise Cross-Encoder semantic evaluator for deep job compatibility."""
+    """Rule-based lexical evaluator; it is not a cross-encoder or AI decision maker."""
 
     def rerank_top_k(
         self,
@@ -19,7 +19,7 @@ class JobCrossEncoderReranker:
         ranked_jobs: list[tuple[dict[str, Any], float]],
         top_k: int = 8,
     ) -> list[dict[str, Any]]:
-        """Rerank top candidate jobs with detailed semantic highlights and percentage score."""
+        """Rerank discovery results with explainable lexical evidence."""
         results: list[dict[str, Any]] = []
 
         # Extract candidate skill set
@@ -51,7 +51,7 @@ class JobCrossEncoderReranker:
             elif cand_exp_years >= min_exp:
                 exp_fit = min(1.0, 0.9 + (cand_exp_years - min_exp) * 0.05)
 
-            # 3. Pairwise Cross-Encoder Score (Scale 0-100)
+            # 3. Explainable heuristic score (scale 0-100)
             cross_score = int(
                 (base_score * 40.0) + (tech_fit_ratio * 40.0) + (exp_fit * 20.0)
             )
@@ -72,6 +72,9 @@ class JobCrossEncoderReranker:
             if not highlights:
                 highlights.append("Phù hợp tổng quan với định hướng phát triển kỹ thuật")
 
+            # New clients consume this explicit heuristic label. The legacy
+            # key remains during the API migration and carries the same value.
+            job_dict["heuristic_fit_score"] = cross_score
             job_dict["semantic_fit_score"] = cross_score
             job_dict["fit_highlights"] = highlights
             results.append(job_dict)

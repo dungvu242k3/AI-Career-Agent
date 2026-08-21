@@ -1,12 +1,14 @@
-"""LLM Client Factory & Multi-provider Registry (OpenAI & Google GenAI)."""
+"""Shared LLM clients with connection pooling and canonical configuration."""
 
+from functools import lru_cache
 from openai import AsyncOpenAI
 from google import genai
 from ai.config import get_ai_config
 
 
+@lru_cache(maxsize=1)
 def get_openai_client() -> AsyncOpenAI:
-    """Instantiate and return configured AsyncOpenAI client."""
+    """Return the process-wide async OpenAI client."""
     config = get_ai_config()
     key = config.get_openai_key()
     if not key or not key.strip():
@@ -14,8 +16,9 @@ def get_openai_client() -> AsyncOpenAI:
     return AsyncOpenAI(api_key=key.strip())
 
 
+@lru_cache(maxsize=1)
 def get_gemini_client() -> genai.Client:
-    """Instantiate and return configured Google GenAI client."""
+    """Return the process-wide Gemini client."""
     config = get_ai_config()
     key = config.get_gemini_key()
     if not key or not key.strip():

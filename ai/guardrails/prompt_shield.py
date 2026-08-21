@@ -38,6 +38,10 @@ class PromptShieldEngine:
 
     # PII Regex Patterns
     PII_PATTERNS = [
+        # Contact data is not needed by a third-party model to reason about a CV.
+        (re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE), "[REDACTED_EMAIL]"),
+        (re.compile(r"(?<!\d)(?:\+?84|0)(?:[\s.-]?\d){8,10}(?!\d)"), "[REDACTED_PHONE]"),
+        (re.compile(r"((?:date\s*of\s*birth|dob|ngày\s*sinh)\s*[:\-]?\s*)[^\n,;]+", re.IGNORECASE), r"\1[REDACTED_DOB]"),
         # Vietnamese CCCD / ID Card: 12 continuous or formatted digits
         (re.compile(r"\b0\d{11}\b"), "[REDACTED_CCCD]"),
         # Standard Credit / Debit Cards (16 digits with optional spaces or dashes)

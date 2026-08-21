@@ -47,3 +47,7 @@ class ReflectiveSynthesisResult(BaseModel):
         default_factory=list,
         description="Step-by-step history of score improvements across iterations",
     )
+    grounding_report: dict[str, object] = Field(
+        default_factory=dict,
+        description="Internal grounding diagnostics; never rendered into the CV PDF.",
+    )

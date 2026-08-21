@@ -14,6 +14,9 @@ import asyncio
 from typing import Any, Literal
 
 from ai.client import get_openai_client
+from ai.config import get_ai_config
+from ai.execution import AIStage, get_ai_executor
+from ai.privacy import sanitize_llm_input
 from ai.models.candidate import CandidateProfile
 from ai.models.interview import (
     CandidateAssessmentReport,
@@ -60,8 +63,13 @@ SYSTEM_DESIGN_BANK = {
 class InterviewArenaEngine:
     """Multi-Agent Interview Coordinator and Evaluator."""
 
+    def __init__(self):
+        self._executor = get_ai_executor()
+        self._config = get_ai_config()
+
     async def _enrich_question_with_llm(self, question: QuestionItem, domain: str, skills: str, jd: str) -> QuestionItem:
         client = get_openai_client()
+        jd = sanitize_llm_input(jd) if jd else ""
         prompt = f"""
 Bạn là {question.interviewer.name}, {question.interviewer.role}. Phong cách: {question.interviewer.style}.
 Domain: {domain} | Kỹ năng ứng viên: {skills} | Yêu cầu JD: {jd}
@@ -70,13 +78,16 @@ Viết lại câu hỏi trên sao cho tự nhiên, mang văn phong giao tiếp, 
 Chỉ trả về nội dung câu hỏi, không giải thích.
 """
         try:
-            response = await client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=150,
-                timeout=5.0
-            )
+            response = (await self._executor.run(
+                stage=AIStage.INTERVIEW,
+                primary_provider="openai",
+                primary=lambda: client.chat.completions.create(
+                    model=self._config.model_for("interview", "openai"), messages=[{"role": "user", "content": prompt}],
+                    temperature=0.7, max_tokens=150,
+                ),
+                input_chars=len(prompt),
+                primary_model=self._config.model_for("interview", "openai"),
+            )).value
             enriched_text = response.choices[0].message.content.strip()
             if enriched_text:
                 question.question_text = enriched_text
@@ -154,6 +165,7 @@ Chỉ trả về nội dung câu hỏi, không giải thích.
 
     async def _evaluate_with_llm(self, turn: InterviewTurn, answer_text: str, pre_screen_bonus: int, is_sys_design: bool) -> TurnEvaluation:
         client = get_openai_client()
+        answer_text = sanitize_llm_input(answer_text)
         prompt = f"""
 Bạn là AI Judge. Chấm điểm câu trả lời của ứng viên.
 Câu hỏi: {turn.question.question_text}
@@ -161,7 +173,16 @@ Câu trả lời: {answer_text}
 TRẢ VỀ JSON: {{"technical_depth_score":25, "star_structure_score":20, "confidence_score":20, "adaptability_score":15, "feedback":"...", "key_strengths":[".."], "improvement_areas":[".."], "ideal_star_answer":".."}}
 """
         try:
-            response = await client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.2, response_format={"type": "json_object"})
+            response = (await self._executor.run(
+                stage=AIStage.INTERVIEW,
+                primary_provider="openai",
+                primary=lambda: client.chat.completions.create(
+                    model=self._config.model_for("interview", "openai"), messages=[{"role": "user", "content": prompt}],
+                    temperature=0.2, response_format={"type": "json_object"},
+                ),
+                input_chars=len(prompt),
+                primary_model=self._config.model_for("interview", "openai"),
+            )).value
             data = json.loads(response.choices[0].message.content.strip())
             tech = min(30, data.get("technical_depth_score", 15) + pre_screen_bonus)
             star = min(25, data.get("star_structure_score", 15))
@@ -194,9 +215,19 @@ TRẢ VỀ JSON: {{"technical_depth_score":25, "star_structure_score":20, "confi
         try:
             client = get_openai_client()
             prompt = f"Phản biện lại câu trả lời này cực kỳ ngắn gọn (Alex): {turn.candidate_answer}"
-            response = await client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], temperature=0.8, max_tokens=100)
+            safe_prompt = sanitize_llm_input(prompt)
+            response = (await self._executor.run(
+                stage=AIStage.INTERVIEW,
+                primary_provider="openai",
+                primary=lambda: client.chat.completions.create(
+                    model=self._config.model_for("interview", "openai"),
+                    messages=[{"role": "user", "content": safe_prompt}], temperature=0.8, max_tokens=100,
+                ),
+                input_chars=len(safe_prompt),
+                primary_model=self._config.model_for("interview", "openai"),
+            )).value
             q_text = response.choices[0].message.content.strip()
-        except:
+        except Exception:
             q_text = "Senior của bạn không đồng ý với giải pháp này. Bạn phản bác ra sao?"
         return QuestionItem(id=f"q-{uuid.uuid4().hex[:6]}", interviewer=TECH_LEAD_ALEX, category="deep_technical", difficulty="hard", question_text=q_text, generated_by="ai", follow_up_of=turn.question.id)
 

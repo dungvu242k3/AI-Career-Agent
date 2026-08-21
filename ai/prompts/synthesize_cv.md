@@ -18,6 +18,11 @@ Your goal is to synthesize a tailored, highly competitive 1-page Harvard CV repr
 
 ## 🛑 NON-NEGOTIABLE ANTI-FABRICATION CONSTRAINTS (P0)
 
+0. **SOURCE GROUNDING:** Every output claim must be directly supported by
+   `<candidate_profile>`. Do not add a metric, outcome, skill, certificate, or
+   ATS score from the JD or your own assumptions. When a useful metric is
+   absent, omit it or use `[add verified metric]`; never create one.
+
 1. **NO FAKE FACTS OR SKILLS:**
    - NEVER invent new companies, degrees, dates, credentials, or technologies the candidate has never worked with.
    - NEVER claim false metrics or certifications.

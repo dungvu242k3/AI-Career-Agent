@@ -1,15 +1,15 @@
-"""Hybrid Dense-Sparse Search Engine combining BM25 keyword matching with Dense Vector Cosine Similarity."""
+"""Hybrid lexical job discovery: term overlap plus deterministic token hashes."""
 
 from typing import Any
-from ai.analysis.job_embeddings import JobEmbeddingEngine, compute_cosine_similarity, _tokenize
+from ai.analysis.job_embeddings import HashedLexicalVectorEngine, compute_cosine_similarity, _tokenize
 from ai.models.candidate import CandidateProfile
 
 
 class HybridJobSearchEngine:
-    """Combines BM25-style term frequency matching with dense semantic embeddings."""
+    """Combines term overlap with a non-semantic hashed lexical projection."""
 
-    def __init__(self, embedding_engine: JobEmbeddingEngine | None = None):
-        self.embedding_engine = embedding_engine or JobEmbeddingEngine()
+    def __init__(self, embedding_engine: HashedLexicalVectorEngine | None = None):
+        self.embedding_engine = embedding_engine or HashedLexicalVectorEngine()
 
     def _compute_sparse_score(self, query_tokens: list[str], job_tokens: list[str]) -> float:
         """Compute term overlap score between query and job document."""
@@ -35,11 +35,11 @@ class HybridJobSearchEngine:
         domain_filter: str | None = None,
         experience_filter: float | None = None,
     ) -> list[tuple[dict[str, Any], float]]:
-        """Run hybrid search over job dataset, ranking results by combined dense-sparse score."""
+        """Rank discovery results with lexical heuristics only."""
         if not jobs:
             return []
 
-        # 1. Prepare candidate embedding if profile provided
+        # 1. Prepare candidate lexical vector if profile provided
         cand_vector = None
         cand_tokens = []
         if candidate_profile:
@@ -87,7 +87,7 @@ class HybridJobSearchEngine:
             # A. Sparse Keyword Score
             sparse_score = self._compute_sparse_score(combined_tokens, job_tokens)
 
-            # B. Dense Vector Score
+            # B. Hashed lexical-vector score (not semantic similarity)
             job_vector = self.embedding_engine.embed_job(
                 title=job.get("title", ""),
                 domain=job.get("domain", ""),
