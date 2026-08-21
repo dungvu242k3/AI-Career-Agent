@@ -7,15 +7,15 @@ services:
     container_name: careerpilot-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: careerpilot
+      POSTGRES_USER: ${POSTGRES_USER:-careerpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your deployment secret store}
+      POSTGRES_DB: ${POSTGRES_DB:-careerpilot}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,16 +24,16 @@ services:
   # MinIO S3-Compatible Object Storage for CVs & Assets
   # -------------------------------------------------------------
   minio:
-    image: minio/minio:latest
+    image: ${MINIO_IMAGE:?Set MINIO_IMAGE to an approved, pinned MinIO release or digest}
     container_name: careerpilot-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadminpassword
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in your deployment secret store}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in your deployment secret store}
     ports:
-      - "9000:9000"  # S3 API endpoint
-      - "9001:9001"  # Web Console UI
+      - "127.0.0.1:9000:9000"  # S3 API endpoint; put TLS/reverse proxy in front for production
+      - "127.0.0.1:9001:9001"  # Console; do not publish publicly
     volumes:
       - minio_data:/data
     healthcheck:

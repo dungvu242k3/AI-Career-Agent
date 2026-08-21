@@ -1,0 +1,122 @@
+name: careerpilot-production
+
+# This file assumes PostgreSQL, Redis, and S3/MinIO are managed services or
+# private services reachable from this host. It intentionally does not publish
+# any data service port. Put TLS/WAF/reverse proxy in front of frontend:80.
+
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-careerpilot/backend:release}
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      CAREERPILOT_DEBUG: "false"
+      DATABASE_URL: ${BACKEND_DATABASE_URL:?Set BACKEND_DATABASE_URL}
+      DATABASE_AUTO_MIGRATE: "false"
+      REDIS_URL: ${BACKEND_REDIS_URL:?Set BACKEND_REDIS_URL}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:?Set TRUSTED_PROXIES to the private reverse-proxy addresses}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS as a JSON array}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-careerpilot-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-careerpilot-api}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:?Set MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-careerpilot-cvs}
+      MINIO_SECURE: "true"
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      ENABLE_FALLBACK: ${ENABLE_FALLBACK:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LOG_FORMAT: json
+      OTEL_SERVICE_NAME: careerpilot-backend
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+    expose:
+      - "8000"
+    networks:
+      - private
+
+  worker:
+    image: ${BACKEND_IMAGE:-careerpilot/backend:release}
+    restart: unless-stopped
+    command: ["celery", "-A", "be.workers.celery_app:celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    environment:
+      APP_ENV: production
+      CAREERPILOT_DEBUG: "false"
+      DATABASE_URL: ${BACKEND_DATABASE_URL:?Set BACKEND_DATABASE_URL}
+      DATABASE_AUTO_MIGRATE: "false"
+      REDIS_URL: ${BACKEND_REDIS_URL:?Set BACKEND_REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-careerpilot-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-careerpilot-api}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:?Set MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-careerpilot-cvs}
+      MINIO_SECURE: "true"
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      ENABLE_FALLBACK: ${ENABLE_FALLBACK:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LOG_FORMAT: json
+      OTEL_SERVICE_NAME: careerpilot-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+    networks:
+      - private
+
+  beat:
+    image: ${BACKEND_IMAGE:-careerpilot/backend:release}
+    restart: unless-stopped
+    command: ["celery", "-A", "be.workers.celery_app:celery_app", "beat", "--loglevel=INFO"]
+    environment:
+      APP_ENV: production
+      CAREERPILOT_DEBUG: "false"
+      DATABASE_URL: ${BACKEND_DATABASE_URL:?Set BACKEND_DATABASE_URL}
+      DATABASE_AUTO_MIGRATE: "false"
+      REDIS_URL: ${BACKEND_REDIS_URL:?Set BACKEND_REDIS_URL}
+      LOG_FORMAT: json
+      OTEL_SERVICE_NAME: careerpilot-beat
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+    networks:
+      - private
+
+  auth:
+    image: ${AUTH_IMAGE:-careerpilot/auth:release}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${AUTH_DATABASE_URL:?Set AUTH_DATABASE_URL}
+      DATABASE_AUTO_MIGRATE: "false"
+      REDIS_URL: ${AUTH_REDIS_URL:?Set AUTH_REDIS_URL}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET:?Set REFRESH_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-careerpilot-auth}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-careerpilot-api}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+    expose:
+      - "4000"
+    networks:
+      - private
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-careerpilot/frontend:release}
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    networks:
+      - private
+
+networks:
+  private:
+    driver: bridge

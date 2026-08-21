@@ -1,0 +1,113 @@
+name: Staging verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Approved non-production environment to verify
+        type: choice
+        required: true
+        default: staging
+        options:
+          - staging
+          - preproduction
+      frontend_url:
+        description: Public frontend base URL
+        type: string
+        required: true
+      backend_url:
+        description: Backend base URL reachable from this runner
+        type: string
+        required: true
+      auth_url:
+        description: Auth-service base URL reachable from this runner
+        type: string
+        required: true
+      run_write_e2e:
+        description: Create disposable auth users and run token-contract checks
+        type: boolean
+        required: true
+        default: false
+      run_async_job:
+        description: Also enqueue an AI job and verify idempotency/owner isolation
+        type: boolean
+        required: true
+        default: false
+      run_load:
+        description: Run bounded k6 liveness load profile
+        type: boolean
+        required: true
+        default: true
+      k6_vus:
+        description: Concurrent virtual users for the bounded load profile
+        type: string
+        required: true
+        default: '5'
+      k6_duration:
+        description: k6 duration, for example 30s or 2m
+        type: string
+        required: true
+        default: 30s
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-verification-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Smoke checks
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run health and observability smoke checks
+        env:
+          FRONTEND_URL: ${{ inputs.frontend_url }}
+          BACKEND_URL: ${{ inputs.backend_url }}
+          AUTH_URL: ${{ inputs.auth_url }}
+        run: python scripts/smoke_test.py
+
+  write-e2e:
+    name: Auth and ownership E2E
+    needs: smoke
+    if: ${{ inputs.run_write_e2e }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run opt-in staging E2E checks
+        env:
+          E2E_ALLOW_WRITE: 'true'
+          E2E_AUTH_API_URL: ${{ inputs.auth_url }}/api/v1/auth
+          E2E_BACKEND_API_URL: ${{ inputs.backend_url }}/api/v1
+          E2E_RUN_ASYNC_JOB: ${{ inputs.run_async_job }}
+        run: python scripts/staging_e2e.py
+
+  load:
+    name: Bounded staging load profile
+    needs: smoke
+    if: ${{ inputs.run_load }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1
+        with:
+          k6-version: '2.2.0'
+
+      - name: Run liveness load profile
+        env:
+          BACKEND_URL: ${{ inputs.backend_url }}
+          K6_VUS: ${{ inputs.k6_vus }}
+          K6_DURATION: ${{ inputs.k6_duration }}
+        run: k6 run tests/load/staging_health.js
