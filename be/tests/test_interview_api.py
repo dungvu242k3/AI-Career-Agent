@@ -36,6 +36,7 @@ async def test_interview_session_lifecycle(client):
         full_name=cand_profile.personal_info.full_name,
         email="test@example.com",
         title="Senior Backend Engineer",
+        owner_user_id=1,
         candidate_id=cand_id,
     )
 
@@ -87,6 +88,7 @@ async def test_interview_blocks_prompt_injection(client):
         full_name=cand_profile.personal_info.full_name,
         email="test2@example.com",
         title="Software Engineer",
+        owner_user_id=1,
         candidate_id=cand_id,
     )
 

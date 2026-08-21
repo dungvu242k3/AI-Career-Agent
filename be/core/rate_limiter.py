@@ -11,6 +11,8 @@ from fastapi import HTTPException, Request, status
 
 import os
 
+from be.config import get_settings
+
 logger = logging.getLogger(__name__)
 
 # Trusted proxy IP list (can be configured via env var for deployment behind Nginx / Cloudflare)
@@ -145,6 +147,12 @@ class SlidingWindowRateLimiter:
         except HTTPException:
             raise
         except Exception as e:
+            if get_settings().is_production:
+                logger.error("Redis rate limiting failed in production: %s", e)
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Rate limiting service is temporarily unavailable.",
+                )
             logger.warning("Redis rate limiting failed: %s. Falling back to in-memory.", e)
 
         # 2. Fallback to in-memory Rate Limiting

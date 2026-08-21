@@ -179,6 +179,7 @@ async def sample_candidate_id():
         full_name="Nguyễn Văn C",
         email="c.nguyen@example.com",
         title="Senior Python Engineer",
+        owner_user_id=1,
     )
     return cid
 
@@ -350,5 +351,4 @@ async def test_generate_cv_multi_templates(client, sample_candidate_id):
     assert res_exec.headers["content-type"] == "application/pdf"
     assert res_exec.headers["X-CV-Template"] == "executive"
     assert "Executive_CV_" in res_exec.headers["Content-Disposition"]
-
 

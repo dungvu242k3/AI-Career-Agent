@@ -115,6 +115,7 @@ async def sample_candidate_id():
         full_name="Trần Thị B",
         email="b.tran@example.com",
         title="Senior Developer",
+        owner_user_id=1,
     )
 
 

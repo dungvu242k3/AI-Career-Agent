@@ -19,12 +19,16 @@ from be.core.job_search import (
 )
 from be.db.database import get_candidate
 from ai.guardrails.prompt_shield import PromptShieldEngine
+from ai.client import get_openai_client
+from ai.execution import AIStage, get_ai_executor
 from be.config import get_settings
 from be.core.rate_limiter import chat_rate_limiter
+from be.core.security import CurrentUser, require_current_user
+from be.api.v1.ai_context import ai_request_context
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="", tags=["Chat & Job Search"])
+router = APIRouter(prefix="", tags=["Chat & Job Search"], dependencies=[Depends(ai_request_context)])
 _prompt_shield = PromptShieldEngine()
 
 
@@ -34,7 +38,8 @@ _prompt_shield = PromptShieldEngine()
 )
 async def handle_chat_stream(
     request: ChatMessageRequest,
-    _ = Depends(chat_rate_limiter)
+    _ = Depends(chat_rate_limiter),
+    current_user: CurrentUser = Depends(require_current_user),
 ):
     """Stream AI chat response chunk-by-chunk using Server-Sent Events (SSE)."""
     # 0. Safety Guardrails & Anti-Jailbreak Protection
@@ -46,6 +51,7 @@ async def handle_chat_stream(
                 f"({', '.join(shield_result.detected_threats)}). Vui lòng đặt câu hỏi phù hợp nhé!"
             )
             yield f"data: {json.dumps({'type': 'token', 'content': msg}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'code': 'AI_INPUT_REJECTED'})}\n\n"
             yield f"data: {json.dumps({'type': 'intent', 'intent': 'security_blocked'})}\n\n"
             yield "data: [DONE]\n\n"
 
@@ -61,7 +67,7 @@ async def handle_chat_stream(
 
     if request.candidate_id:
         try:
-            cand_data = await get_candidate(request.candidate_id)
+            cand_data = await get_candidate(request.candidate_id, current_user.id)
             if cand_data and "profile_json" in cand_data:
                 profile_obj = cand_data["profile_json"]
                 if isinstance(profile_obj, str):
@@ -181,23 +187,31 @@ async def handle_chat_stream(
 
         if settings.openai_api_key and settings.openai_api_key.get_secret_value():
             try:
-                from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value())
+                client = get_openai_client()
                 prompt_context = (
                     f"Bạn là Chuyên gia Cố vấn Hướng nghiệp AI (CareerPilot Copilot). "
                     f"Đang tư vấn cho ứng viên tên '{candidate_name}' (Chuyên ngành: {domain}, Kinh nghiệm: {exp_years or 'Chưa rõ'} năm). "
                     f"Trả lời người dùng ngắn gọn, súc tích, thực tế, định dạng markdown đẹp."
                 )
-                stream = await client.chat.completions.create(
-                    model=settings.openai_extraction_model,
-                    messages=[
-                        {"role": "system", "content": prompt_context},
-                        {"role": "user", "content": request.message},
-                    ],
-                    max_tokens=600,
-                    temperature=0.7,
-                    stream=True,
-                )
+                # Names/contact details are not needed for career advice and
+                # must not be sent to the provider.
+                prompt_context = prompt_context.replace(candidate_name, "Candidate")
+                stream = (await get_ai_executor().run(
+                    stage=AIStage.ANALYSIS,
+                    primary_provider="openai",
+                    primary=lambda: client.chat.completions.create(
+                        model=settings.openai_reasoning_model,
+                        messages=[
+                            {"role": "system", "content": prompt_context},
+                            {"role": "user", "content": shield_result.sanitized_text},
+                        ],
+                        max_tokens=600,
+                        temperature=0.7,
+                        stream=True,
+                    ),
+                    input_chars=len(prompt_context) + len(shield_result.sanitized_text),
+                    primary_model=settings.openai_reasoning_model,
+                )).value
                 yield f"data: {json.dumps({'type': 'intent', 'intent': 'cv_advice'})}\n\n"
                 async for chunk in stream:
                     delta = chunk.choices[0].delta
@@ -235,7 +249,8 @@ async def handle_chat_stream(
 )
 async def handle_chat_message(
     request: ChatMessageRequest,
-    _ = Depends(chat_rate_limiter)
+    _ = Depends(chat_rate_limiter),
+    current_user: CurrentUser = Depends(require_current_user),
 ) -> ChatMessageResponse:
     """Process user message in Workspace Copilot, auto-detecting job search intent and domain."""
     # 0. Safety Guardrails & Anti-Jailbreak Protection
@@ -248,6 +263,7 @@ async def handle_chat_message(
             ),
             detected_intent="security_blocked",
             jobs_found=[],
+            error_code="AI_INPUT_REJECTED",
         )
 
     user_msg = shield_result.sanitized_text.strip().lower()
@@ -260,7 +276,7 @@ async def handle_chat_message(
 
     if request.candidate_id:
         try:
-            cand_data = await get_candidate(request.candidate_id)
+            cand_data = await get_candidate(request.candidate_id, current_user.id)
             if cand_data and "profile_json" in cand_data:
                 profile_obj = cand_data["profile_json"]
                 if isinstance(profile_obj, str):
@@ -370,24 +386,30 @@ async def handle_chat_message(
     # 3. Regular Career / CV Advice Logic
     # LLM-based or smart response
     settings = get_settings()
-    if settings.openai_api_key:
+    if settings.openai_api_key.get_secret_value():
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value())
+            client = get_openai_client()
             prompt_context = (
                 f"Bạn là Chuyên gia Cố vấn Hướng nghiệp AI (CareerPilot Copilot). "
                 f"Đang tư vấn cho ứng viên tên '{candidate_name}' (Chuyên ngành: {domain}, Kinh nghiệm: {exp_years or 'Chưa rõ'} năm). "
                 f"Trả lời người dùng ngắn gọn, súc tích, thực tế, định dạng markdown đẹp."
             )
-            completion = await client.chat.completions.create(
-                model=settings.openai_model,
-                messages=[
-                    {"role": "system", "content": prompt_context},
-                    {"role": "user", "content": request.message},
-                ],
-                max_tokens=500,
-                temperature=0.7,
-            )
+            prompt_context = prompt_context.replace(candidate_name, "Candidate")
+            completion = (await get_ai_executor().run(
+                stage=AIStage.ANALYSIS,
+                primary_provider="openai",
+                primary=lambda: client.chat.completions.create(
+                    model=settings.openai_reasoning_model,
+                    messages=[
+                        {"role": "system", "content": prompt_context},
+                        {"role": "user", "content": shield_result.sanitized_text},
+                    ],
+                    max_tokens=500,
+                    temperature=0.7,
+                ),
+                input_chars=len(prompt_context) + len(shield_result.sanitized_text),
+                primary_model=settings.openai_reasoning_model,
+            )).value
             ai_reply = completion.choices[0].message.content or "Tôi đã nhận câu hỏi của bạn."
             return ChatMessageResponse(
                 reply=ai_reply,
@@ -425,12 +447,13 @@ async def get_jobs_by_domain_endpoint(
     location: str | None = Query(default=None, description="Location: Hà Nội, TP.HCM, Remote, etc."),
     platform: str | None = Query(default=None, description="Platform: ITviec, TopCV, VietnamWorks, LinkedIn"),
     keyword: str | None = Query(default=None, description="Keyword search in title or skills"),
+    current_user: CurrentUser = Depends(require_current_user),
 ) -> JobSearchResponse:
     """Retrieve filtered job postings matching candidate criteria with optional semantic re-ranking."""
     cand_p = None
     if candidate_id:
         try:
-            cand_data = await get_candidate(candidate_id)
+            cand_data = await get_candidate(candidate_id, current_user.id)
             if cand_data and "profile_json" in cand_data:
                 profile_raw = cand_data["profile_json"]
                 cand_p = CandidateProfile.model_validate_json(profile_raw) if isinstance(profile_raw, str) else CandidateProfile.model_validate(profile_raw)
@@ -459,7 +482,10 @@ async def get_jobs_by_domain_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get full job details by ID",
 )
-async def get_job_details_endpoint(job_id: str) -> JobItemSchema:
+async def get_job_details_endpoint(
+    job_id: str,
+    _current_user: CurrentUser = Depends(require_current_user),
+) -> JobItemSchema:
     """Get single job details including description, requirements and benefits."""
     job = get_job_by_id(job_id)
     if not job:

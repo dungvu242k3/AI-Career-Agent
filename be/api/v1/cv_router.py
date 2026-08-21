@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFil
 from fastapi.responses import StreamingResponse
 
 from ai.models.candidate import CandidateProfile
+from ai.execution import AIExecutionError
 from ai.parsers import (
     PDFInvalidFormatError,
     PDFParsingError,
@@ -21,19 +22,21 @@ from ai.parsers import (
 )
 from ai.pipeline import CVIngestionPipeline, get_default_ingestion_pipeline
 from be.api.v1.schemas import MessageResponse, UpdateProfileRequest, UploadResponse
+from be.api.v1.ai_errors import ai_http_error
+from be.api.v1.ai_context import ai_request_context
 from be.config import Settings, get_settings
 from be.core.rate_limiter import upload_rate_limiter, read_rate_limiter
 from be.core.storage import BaseStorageService, get_storage_service
+from be.core.security import CurrentUser, require_current_user
 from be.db.database import (
     get_candidate,
     get_upload_by_checksum,
-    save_candidate,
-    save_upload,
+    save_candidate_and_upload_idempotently,
     update_candidate,
 )
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(ai_request_context)])
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 
@@ -73,6 +76,7 @@ async def upload_cv(
     settings: Settings = Depends(get_settings),
     pipeline: CVIngestionPipeline = Depends(get_cached_ingestion_pipeline),
     storage: BaseStorageService = Depends(get_storage_service),
+    current_user: CurrentUser = Depends(require_current_user),
 ):
     """Upload a CV file (PDF/DOCX), store in MinIO/S3, deconstruct layout, extract structured profile via AI pipeline."""
     if not file.filename:
@@ -109,9 +113,9 @@ async def upload_cv(
 
     # Compute SHA256 checksum for deduplication & instant cache retrieval
     checksum = hashlib.sha256(content).hexdigest()
-    cached_upload = await get_upload_by_checksum(checksum)
+    cached_upload = await get_upload_by_checksum(checksum, current_user.id)
     if cached_upload and cached_upload["candidate_id"]:
-        candidate = await get_candidate(cached_upload["candidate_id"])
+        candidate = await get_candidate(cached_upload["candidate_id"], current_user.id)
         if candidate:
             profile = CandidateProfile.model_validate_json(candidate["profile_json"])
             presigned_url = await storage.get_presigned_url(cached_upload["file_path"])
@@ -135,11 +139,15 @@ async def upload_cv(
         content=content,
         filename=safe_filename,
         content_type=content_type,
+        user_id=str(current_user.id),
     )
 
     # Execute AI Ingestion Pipeline (PDF / DOCX -> AI Extractor -> CandidateProfile v3)
     try:
         raw_text, profile = await pipeline.process_bytes(content, filename=safe_filename)
+    except AIExecutionError as e:
+        await storage.delete_file(storage_key)
+        raise ai_http_error(e)
     except PDFScanDetectedError as e:
         await storage.delete_file(storage_key)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
@@ -155,19 +163,37 @@ async def upload_cv(
         )
 
     # Persist in Database
-    candidate_id = await save_candidate(
-        profile_json=profile.model_dump_json(),
-        full_name=profile.full_name,
-        email=profile.email,
-        title=profile.title,
-    )
-    await save_upload(
-        filename=safe_filename,
-        file_path=storage_key,
-        checksum=checksum,
-        raw_text=raw_text,
-        candidate_id=candidate_id,
-    )
+    try:
+        candidate_id, duplicate_created_concurrently = await save_candidate_and_upload_idempotently(
+            profile_json=profile.model_dump_json(),
+            full_name=profile.full_name,
+            email=profile.email,
+            title=profile.title,
+            owner_user_id=current_user.id,
+            filename=safe_filename,
+            file_path=storage_key,
+            checksum=checksum,
+            raw_text=raw_text,
+        )
+    except Exception as exc:
+        await storage.delete_file(storage_key)
+        logger.error("Failed to persist CV upload: %s", exc, exc_info=True)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="KhÃ´ng thá»ƒ lÆ°u há»“ sÆ¡. Vui lÃ²ng thá»­ láº¡i.")
+
+    if duplicate_created_concurrently:
+        await storage.delete_file(storage_key)
+        existing = await get_candidate(candidate_id, current_user.id)
+        existing_upload = await get_upload_by_checksum(checksum, current_user.id)
+        if existing:
+            return UploadResponse(
+                candidate_id=candidate_id,
+                filename=existing_upload["filename"] if existing_upload else safe_filename,
+                text_length=len(raw_text),
+                profile=CandidateProfile.model_validate_json(existing["profile_json"]),
+                storage_key=existing_upload["file_path"] if existing_upload else None,
+                presigned_url=(await storage.get_presigned_url(existing_upload["file_path"])) if existing_upload else None,
+                is_cached=True,
+            )
 
     return UploadResponse(
         candidate_id=candidate_id,
@@ -186,9 +212,9 @@ async def upload_cv(
     summary="Get Candidate Profile for Preview",
     dependencies=[Depends(read_rate_limiter)],
 )
-async def get_candidate_preview(candidate_id: str):
+async def get_candidate_preview(candidate_id: str, current_user: CurrentUser = Depends(require_current_user)):
     """Retrieve CandidateProfile for preview and editing."""
-    candidate = await get_candidate(candidate_id)
+    candidate = await get_candidate(candidate_id, current_user.id)
     if not candidate:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -204,9 +230,9 @@ async def get_candidate_preview(candidate_id: str):
     summary="Update Candidate Profile after User Edits",
     dependencies=[Depends(read_rate_limiter)],
 )
-async def update_candidate_preview(candidate_id: str, payload: UpdateProfileRequest):
+async def update_candidate_preview(candidate_id: str, payload: UpdateProfileRequest, current_user: CurrentUser = Depends(require_current_user)):
     """Update CandidateProfile after user edits information on Preview Card."""
-    candidate = await get_candidate(candidate_id)
+    candidate = await get_candidate(candidate_id, current_user.id)
     if not candidate:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -220,6 +246,7 @@ async def update_candidate_preview(candidate_id: str, payload: UpdateProfileRequ
         full_name=profile.full_name,
         email=profile.email,
         title=profile.title,
+        owner_user_id=current_user.id,
     )
     if not success:
         raise HTTPException(
@@ -241,9 +268,12 @@ async def update_candidate_preview(candidate_id: str, payload: UpdateProfileRequ
 async def get_stored_file(
     storage_key: str,
     storage: BaseStorageService = Depends(get_storage_service),
+    current_user: CurrentUser = Depends(require_current_user),
 ):
     """Stream stored file bytes securely (for local storage or proxy mode)."""
     try:
+        if not storage_key.startswith(f"users/{current_user.id}/"):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="KhÃ´ng tÃ¬m tháº¥y tá»‡p.")
         content = await storage.get_file_bytes(storage_key)
         ext = Path(storage_key).suffix.lower()
         media_type = "application/pdf" if ext == ".pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -254,6 +284,8 @@ async def get_stored_file(
         )
     except FileNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy tệp.")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error retrieving file %s: %s", storage_key, e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Lỗi khi tải tệp.")

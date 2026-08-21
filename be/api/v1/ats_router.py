@@ -33,6 +33,7 @@ from be.api.v1.schemas import (
     STARRewriteRequest,
     GenerateCVRequest,
 )
+from be.api.v1.ai_context import ai_request_context
 from be.core.cv_renderer import HarvardPDFRenderer, get_cv_renderer
 from be.core.rate_limiter import (
     ats_rate_limiter,
@@ -40,6 +41,7 @@ from be.core.rate_limiter import (
     star_rate_limiter,
     cv_generation_rate_limiter,
 )
+from be.core.security import CurrentUser, require_current_user
 from be.db.database import (
     get_candidate,
     get_candidate_analyses,
@@ -48,10 +50,12 @@ from be.db.database import (
 from fastapi.responses import Response
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(ai_request_context)])
 
 
 from ai.analysis.reflective_synthesizer import ReflectiveHarvardSynthesizer
+from ai.execution import AIExecutionError
+from be.api.v1.ai_errors import ai_http_error
 
 @lru_cache(maxsize=1)
 def get_cached_jd_parser() -> JDParser:
@@ -88,10 +92,11 @@ async def match_jd(
     jd_file: UploadFile | None = File(None, description="Optional JD file (PDF or DOCX, max 2MB)"),
     jd_parser: JDParser = Depends(get_cached_jd_parser),
     ats_matcher: ATSMatcher = Depends(get_cached_ats_matcher),
+    current_user: CurrentUser = Depends(require_current_user),
 ):
     """Conduct 3-pillar ATS compatibility evaluation between CandidateProfile and target JD."""
     # 1. Verify candidate exists
-    candidate = await get_candidate(candidate_id)
+    candidate = await get_candidate(candidate_id, current_user.id)
     if not candidate:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -126,6 +131,8 @@ async def match_jd(
 
         try:
             jd_profile = await jd_parser.parse_jd_file(content, filename=jd_file.filename)
+        except AIExecutionError as error:
+            raise ai_http_error(error)
         except ValueError as ve:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
         except Exception as e:
@@ -143,6 +150,8 @@ async def match_jd(
             )
         try:
             jd_profile = await jd_parser.parse_jd_text(cleaned_text)
+        except AIExecutionError as error:
+            raise ai_http_error(error)
         except ValueError as ve:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
         except Exception as e:
@@ -160,6 +169,8 @@ async def match_jd(
     # 3. Match Profile against JD
     try:
         report = await ats_matcher.match(profile, jd_profile)
+    except AIExecutionError as error:
+        raise ai_http_error(error)
     except Exception as e:
         logger.error("Error during ATS matching: %s", e, exc_info=True)
         raise HTTPException(
@@ -174,6 +185,7 @@ async def match_jd(
             ats_score=report.overall_score,
             ats_grade=report.overall_grade,
             report_json=report.model_dump_json(),
+            owner_user_id=current_user.id,
         )
     except Exception as db_err:
         logger.warning("Could not persist ATS analysis to database: %s", db_err)
@@ -192,6 +204,7 @@ async def match_jd(
 async def rewrite_bullet_to_star(
     payload: STARRewriteRequest,
     star_rewriter: STARRewriter = Depends(get_cached_star_rewriter),
+    _current_user: CurrentUser = Depends(require_current_user),
 ):
     """Transform weak CV bullet points or missing skills into STAR format with power verbs and metrics."""
     try:
@@ -200,6 +213,8 @@ async def rewrite_bullet_to_star(
             target_role=payload.target_role,
             context=payload.context,
         )
+    except AIExecutionError as error:
+        raise ai_http_error(error)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
@@ -216,16 +231,16 @@ async def rewrite_bullet_to_star(
     summary="Get ATS Analysis History for Candidate",
     dependencies=[Depends(read_rate_limiter)],
 )
-async def get_ats_history(candidate_id: str):
+async def get_ats_history(candidate_id: str, current_user: CurrentUser = Depends(require_current_user)):
     """Retrieve historical ATS reports for a given candidate profile."""
-    candidate = await get_candidate(candidate_id)
+    candidate = await get_candidate(candidate_id, current_user.id)
     if not candidate:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Không tìm thấy hồ sơ ứng viên #{candidate_id}",
         )
 
-    records = await get_candidate_analyses(candidate_id)
+    records = await get_candidate_analyses(candidate_id, current_user.id)
     return [
         ATSHistoryItem(
             id=r["id"],
@@ -251,10 +266,11 @@ async def generate_harvard_cv(
     jd_parser: JDParser = Depends(get_cached_jd_parser),
     ats_matcher: ATSMatcher = Depends(get_cached_ats_matcher),
     synthesizer: HarvardCVSynthesizer = Depends(get_cached_harvard_synthesizer),
+    current_user: CurrentUser = Depends(require_current_user),
 ):
     """Generate a single-page Harvard CV tailored to a Job Description in PDF binary format."""
     # 1. Verify candidate exists
-    candidate = await get_candidate(payload.candidate_id)
+    candidate = await get_candidate(payload.candidate_id, current_user.id)
     if not candidate:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -280,6 +296,8 @@ async def generate_harvard_cv(
 
     try:
         jd_profile = await jd_parser.parse_jd_text(cleaned_text)
+    except AIExecutionError as error:
+        raise ai_http_error(error)
     except Exception as e:
         logger.error("Error parsing JD text: %s", e, exc_info=True)
         raise HTTPException(
@@ -290,6 +308,8 @@ async def generate_harvard_cv(
     # 3. Match profile against JD for scoring and keyword targeting
     try:
         match_report = await ats_matcher.match(profile, jd_profile)
+    except AIExecutionError as error:
+        raise ai_http_error(error)
     except Exception as e:
         logger.error("Error during ATS matching: %s", e, exc_info=True)
         raise HTTPException(
@@ -306,6 +326,8 @@ async def generate_harvard_cv(
             report=match_report,
             target_language=target_lang,
         )
+    except AIExecutionError as error:
+        raise ai_http_error(error)
     except Exception as e:
         logger.error("Error during Harvard CV synthesis: %s", e, exc_info=True)
         raise HTTPException(
@@ -350,5 +372,3 @@ async def generate_harvard_cv(
             "X-CV-Template": payload.template,
         },
     )
-
-

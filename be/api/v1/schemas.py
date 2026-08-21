@@ -1,6 +1,6 @@
 """API Request and Response DTO Schemas for CV Endpoints."""
 
-from typing import Literal
+from typing import Any, Literal
 from pydantic import BaseModel, Field
 from ai.models.candidate import CandidateProfile
 
@@ -28,6 +28,27 @@ class MessageResponse(BaseModel):
 
     message: str
     candidate_id: str | None = None
+
+
+class AIJobAccepted(BaseModel):
+    """Asynchronous AI work accepted for processing."""
+
+    job_id: str
+    status: Literal["queued", "running", "succeeded", "failed"]
+    poll_url: str
+
+
+class AIJobStatus(BaseModel):
+    """Owner-scoped job state; result has no raw prompt or provider exception."""
+
+    job_id: str
+    operation: Literal["cv-ingestion", "cv-generation"]
+    status: Literal["queued", "running", "succeeded", "failed"]
+    progress: int = Field(ge=0, le=100)
+    result: dict[str, Any] | None = None
+    error_code: str | None = None
+    trace_id: str | None = None
+    attempts: int = Field(ge=0)
 
 
 class STARRewriteRequest(BaseModel):
@@ -86,7 +107,8 @@ class JobItemSchema(BaseModel):
     requirements: str = Field(default="", description="Detailed job requirements")
     benefits: str = Field(default="", description="Company benefits and perks")
     posted_date: str = Field(default="Vừa đăng", description="Posting timestamp or date")
-    semantic_fit_score: int | None = Field(default=None, description="Semantic match score percentage (0-100%) from Cross-Encoder")
+    semantic_fit_score: int | None = Field(default=None, description="Deprecated compatibility alias for heuristic_fit_score")
+    heuristic_fit_score: int | None = Field(default=None, description="Lexical fit heuristic (0-100); discovery hint only, not a hiring decision")
     fit_highlights: list[str] = Field(default_factory=list, description="Key matching strengths identified by AI")
 
 
@@ -113,5 +135,4 @@ class ChatMessageResponse(BaseModel):
     reply: str = Field(description="AI response text in markdown")
     detected_intent: str = Field(default="general_chat", description="Intent: 'job_search', 'cv_advice', 'general_chat'")
     jobs_found: list[JobItemSchema] = Field(default_factory=list, description="List of matched jobs if job search was requested")
-
-
+    error_code: str | None = Field(default=None, description="Stable AI safety/provider error code when no AI answer is produced")

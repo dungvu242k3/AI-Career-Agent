@@ -1,6 +1,8 @@
 import os
 from celery import Celery
 
+from be.telemetry import configure_worker_telemetry
+
 # Default to local redis if not specified in environment
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
@@ -19,4 +21,12 @@ celery_app.conf.update(
     enable_utc=True,
     task_track_started=True,
     task_time_limit=300, # 5 minutes max per task
+    beat_schedule={
+        "reconcile-queued-ai-jobs": {
+            "task": "be.workers.reconcile_queued_ai_jobs",
+            "schedule": 60.0,
+        },
+    },
 )
+
+configure_worker_telemetry()

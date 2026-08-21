@@ -82,7 +82,7 @@ class LocalStorageService(BaseStorageService):
         resolved_path = (self.base_dir / safe_key).resolve()
         resolved_base = self.base_dir.resolve()
 
-        if not str(resolved_path).startswith(str(resolved_base)):
+        if not resolved_path.is_relative_to(resolved_base):
             logger.warning("Path traversal attempt blocked: %s", storage_key)
             raise PermissionError("Truy cập tệp ngoài thư mục cho phép bị từ chối.")
 
@@ -96,7 +96,7 @@ class LocalStorageService(BaseStorageService):
         resolved_path = (self.base_dir / safe_key).resolve()
         resolved_base = self.base_dir.resolve()
 
-        if not str(resolved_path).startswith(str(resolved_base)):
+        if not resolved_path.is_relative_to(resolved_base):
             logger.warning("Path traversal delete attempt blocked: %s", storage_key)
             return False
 
@@ -147,6 +147,8 @@ class MinIOStorageService(BaseStorageService):
                 self.settings.minio_endpoint,
                 e,
             )
+            if self.settings.is_production:
+                raise RuntimeError("Object storage is unavailable; refusing local fallback in production") from e
             self._client = None
 
     async def upload_file(
@@ -177,6 +179,8 @@ class MinIOStorageService(BaseStorageService):
             return storage_key, presigned_url
         except Exception as e:
             logger.warning("MinIO upload failed (%s). Falling back to local storage.", e)
+            if self.settings.is_production:
+                raise RuntimeError("Object storage upload failed") from e
             return await self._local_fallback.upload_file(content, filename, content_type, user_id)
 
     async def get_file_bytes(self, storage_key: str) -> bytes:
@@ -192,6 +196,8 @@ class MinIOStorageService(BaseStorageService):
                 response.release_conn()
         except Exception as e:
             logger.warning("MinIO download failed (%s). Checking local storage.", e)
+            if self.settings.is_production:
+                raise RuntimeError("Object storage download failed") from e
             return await self._local_fallback.get_file_bytes(storage_key)
 
     async def delete_file(self, storage_key: str) -> bool:
@@ -202,6 +208,8 @@ class MinIOStorageService(BaseStorageService):
             self._client.remove_object(self.bucket_name, storage_key)
             return True
         except Exception:
+            if self.settings.is_production:
+                raise
             return await self._local_fallback.delete_file(storage_key)
 
     async def get_presigned_url(self, storage_key: str, expiry_seconds: int = 900) -> str:
@@ -218,6 +226,8 @@ class MinIOStorageService(BaseStorageService):
             return url
         except Exception as e:
             logger.warning("MinIO presigned URL generation failed: %s", e)
+            if self.settings.is_production:
+                raise RuntimeError("Object storage signing failed") from e
             return await self._local_fallback.get_presigned_url(storage_key, expiry_seconds)
 
 
