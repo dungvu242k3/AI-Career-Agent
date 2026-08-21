@@ -17,6 +17,7 @@ export const loginRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts from this IP, please try again after 15 minutes' },
+  passOnStoreError: false,
   store: new RedisStore({
     sendCommand: redisSendCommand,
   }),
@@ -28,6 +29,7 @@ export const registerRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many registration attempts from this IP, please try again after 1 hour' },
+  passOnStoreError: false,
   store: new RedisStore({
     sendCommand: redisSendCommand,
   }),
@@ -39,8 +41,8 @@ export const refreshRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many token refresh requests from this IP, please try again later' },
+  passOnStoreError: false,
   store: new RedisStore({
     sendCommand: redisSendCommand,
   }),
 });
-

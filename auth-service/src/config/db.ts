@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { AUTH_SCHEMA_VERSION, getAuthSchemaVersion, migrateAuthDatabase } from './migrations.js';
 
 dotenv.config();
 
@@ -8,21 +9,18 @@ export const pool = new Pool({
 });
 
 export const initDb = async () => {
-  const client = await pool.connect();
-  try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        tier VARCHAR(50) DEFAULT 'free',
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  if (process.env.NODE_ENV === 'production') {
+    const version = await getAuthSchemaVersion(pool);
+    if (version !== AUTH_SCHEMA_VERSION) {
+      throw new Error(
+        `Auth database schema version ${version} is behind required version ${AUTH_SCHEMA_VERSION}; ` +
+        'run npm run migrate before startup',
       );
-    `);
-    console.log('Database initialized: users table ready.');
-  } catch (error) {
-    console.error('Error initializing database:', error);
-  } finally {
-    client.release();
+    }
+    console.log(`Auth database schema verified: schema_version=${version}.`);
+    return;
   }
+
+  const version = await migrateAuthDatabase(pool);
+  console.log(`Database initialized: auth schema_version=${version}.`);
 };

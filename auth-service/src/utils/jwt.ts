@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -19,19 +20,38 @@ const getRefreshSecret = (): string => {
   return secret;
 };
 
+const issuer = process.env.JWT_ISSUER || 'careerpilot-auth';
+const audience = process.env.JWT_AUDIENCE || 'careerpilot-api';
+
 export const generateAccessToken = (userId: number, email: string, tier: string): string => {
-  return jwt.sign({ sub: userId, email, tier }, getJwtSecret(), { expiresIn: '15m' });
+  return jwt.sign({ sub: String(userId), email, tier }, getJwtSecret(), {
+    algorithm: 'HS256',
+    expiresIn: '15m',
+    issuer,
+    audience,
+  });
 };
 
-export const generateRefreshToken = (userId: number): string => {
-  return jwt.sign({ sub: userId }, getRefreshSecret(), { expiresIn: '7d' });
+export const generateRefreshToken = (userId: number, sessionId = randomUUID()): { token: string; sessionId: string } => {
+  const token = jwt.sign({ sub: String(userId), jti: sessionId }, getRefreshSecret(), {
+    algorithm: 'HS256',
+    expiresIn: '7d',
+    issuer,
+    audience,
+  });
+  return { token, sessionId };
 };
 
-export const verifyRefreshToken = (token: string): any => {
+export interface RefreshTokenClaims {
+  sub: string;
+  jti: string;
+  exp: number;
+}
+
+export const verifyRefreshToken = (token: string): RefreshTokenClaims | null => {
   try {
-    return jwt.verify(token, getRefreshSecret(), { algorithms: ['HS256'] });
+    return jwt.verify(token, getRefreshSecret(), { algorithms: ['HS256'], issuer, audience }) as RefreshTokenClaims;
   } catch (error) {
     return null;
   }
 };
-
