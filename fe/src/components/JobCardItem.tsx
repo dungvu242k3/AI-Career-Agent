@@ -12,6 +12,8 @@ export default function JobCardItem({
   onViewDetails,
   onApplyJd,
 }: JobCardItemProps) {
+  const fitScore = job.heuristic_fit_score ?? job.semantic_fit_score;
+
   return (
     <div className="bg-[#111827] border border-[#1e293b] hover:border-emerald-500/50 rounded-xl p-3.5 transition-all shadow-md space-y-3 group text-[#f8fafc]">
       {/* Header Info */}
@@ -61,16 +63,16 @@ export default function JobCardItem({
         </div>
       </div>
 
-      {/* Semantic Match Score & AI Fit Highlights (Cross-Encoder) */}
-      {job.semantic_fit_score !== undefined && job.semantic_fit_score !== null && (
+      {/* Explainable lexical discovery hint; never an ATS or hiring decision. */}
+      {fitScore !== undefined && fitScore !== null && (
         <div className="p-2 bg-emerald-950/30 border border-emerald-500/30 rounded-lg space-y-1">
           <div className="flex items-center justify-between text-[11px]">
             <span className="flex items-center gap-1 font-bold text-emerald-400">
               <span>🎯</span>
-              <span>Độ khớp ngữ nghĩa:</span>
+              <span>Độ khớp theo từ khóa:</span>
             </span>
             <span className="font-mono font-black text-emerald-300">
-              {job.semantic_fit_score}% Fit
+              {fitScore}% Fit
             </span>
           </div>
           {job.fit_highlights && job.fit_highlights.length > 0 && (

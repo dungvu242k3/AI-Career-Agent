@@ -1,4 +1,5 @@
 import { InterviewSession } from "../types/interview";
+import { apiFetch } from "./apiClient";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -9,7 +10,7 @@ export async function startInterviewSession(
   tier: "free" | "pro" = "free",
   jdText?: string
 ): Promise<InterviewSession> {
-  const response = await fetch(`${API_BASE_URL}/interview/start`, {
+  const response = await apiFetch(`${API_BASE_URL}/interview/start`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -36,7 +37,7 @@ export async function submitInterviewAnswer(
   turnIndex: number,
   answerText: string
 ): Promise<InterviewSession> {
-  const response = await fetch(`${API_BASE_URL}/interview/submit-answer`, {
+  const response = await apiFetch(`${API_BASE_URL}/interview/submit-answer`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -57,7 +58,7 @@ export async function submitInterviewAnswer(
 }
 
 export async function getInterviewSession(sessionId: string): Promise<InterviewSession> {
-  const response = await fetch(`${API_BASE_URL}/interview/session/${sessionId}`);
+  const response = await apiFetch(`${API_BASE_URL}/interview/session/${sessionId}`);
   if (!response.ok) {
     throw new Error("Không tìm thấy thông tin phiên phỏng vấn.");
   }

@@ -4,25 +4,17 @@
  */
 
 import { CandidateProfile, MessageResponse, UploadResponse } from "../types/candidate";
+import { apiFetch } from "./apiClient";
+import { enqueueAIJob, waitForAIJob } from "./aiJobsApi";
+import { ApiError } from "./apiError";
+export { ApiError } from "./apiError";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
-
-export class ApiError extends Error {
-  statusCode: number;
-  detail: string;
-
-  constructor(statusCode: number, detail: string) {
-    super(detail);
-    this.name = "ApiError";
-    this.statusCode = statusCode;
-    this.detail = detail;
-  }
-}
 
 /**
  * Upload a PDF CV file to backend for AI structured parsing.
  */
-export async function uploadCv(file: File): Promise<UploadResponse> {
+export async function uploadCvSync(file: File): Promise<UploadResponse> {
   // Client-side validations
   const lowerName = file.name.toLowerCase();
   if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
@@ -41,7 +33,7 @@ export async function uploadCv(file: File): Promise<UploadResponse> {
   formData.append("file", file);
 
   try {
-    const response = await fetch(`${API_BASE}/cv/upload`, {
+    const response = await apiFetch(`${API_BASE}/cv/upload`, {
       method: "POST",
       body: formData,
     });
@@ -69,12 +61,53 @@ export async function uploadCv(file: File): Promise<UploadResponse> {
   }
 }
 
+interface CVIngestionJobResult {
+  candidate_id: string;
+  filename: string;
+  text_length: number;
+  storage_key: string;
+  is_cached: boolean;
+  profile: CandidateProfile;
+}
+
+/**
+ * Hybrid-async CV ingestion. The document is stored once, then the browser
+ * polls an owner-scoped durable job rather than holding a request open.
+ */
+export async function uploadCv(file: File): Promise<UploadResponse> {
+  const lowerName = file.name.toLowerCase();
+  if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
+    throw new ApiError(400, "Only PDF and DOCX CV files are supported.");
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    throw new ApiError(400, "CV file exceeds the 2MB limit.");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  const accepted = await enqueueAIJob("cv-ingestion", formData);
+  const completed = await waitForAIJob<CVIngestionJobResult>(accepted.job_id);
+  if (!completed.result) throw new ApiError(502, "CV ingestion completed without a result");
+
+  const result: UploadResponse = {
+    candidate_id: completed.result.candidate_id,
+    filename: completed.result.filename,
+    text_length: completed.result.text_length,
+    profile: completed.result.profile,
+    storage_key: completed.result.storage_key,
+    presigned_url: null,
+    is_cached: completed.result.is_cached,
+  };
+  saveActiveCandidateLocally(result.candidate_id, result.filename, result.profile);
+  return result;
+}
+
 /**
  * Fetch candidate profile for preview by ID.
  */
 export async function getCandidatePreview(candidateId: string): Promise<CandidateProfile> {
   try {
-    const response = await fetch(`${API_BASE}/cv/preview/${candidateId}`);
+    const response = await apiFetch(`${API_BASE}/cv/preview/${candidateId}`);
     if (!response.ok) {
       let errorMessage = "Không tìm thấy hồ sơ ứng viên.";
       try {
@@ -100,7 +133,7 @@ export async function updateCandidatePreview(
   profile: CandidateProfile
 ): Promise<MessageResponse> {
   try {
-    const response = await fetch(`${API_BASE}/cv/preview/${candidateId}`, {
+    const response = await apiFetch(`${API_BASE}/cv/preview/${candidateId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

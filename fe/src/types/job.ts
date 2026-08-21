@@ -17,6 +17,8 @@ export interface JobItem {
   benefits: string;
   posted_date: string;
   semantic_fit_score?: number;
+  /** Explainable lexical discovery hint; not a hiring or ATS decision. */
+  heuristic_fit_score?: number;
   fit_highlights?: string[];
 }
 

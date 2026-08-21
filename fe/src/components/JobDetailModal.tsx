@@ -16,6 +16,8 @@ export default function JobDetailModal({
 }: JobDetailModalProps) {
   if (!isOpen || !job) return null;
 
+  const fitScore = job.heuristic_fit_score ?? job.semantic_fit_score;
+
   const handleApplyClick = () => {
     onApplyJdToWorkspace(job);
     onClose();
@@ -98,16 +100,16 @@ export default function JobDetailModal({
 
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 scrollbar-thin text-xs sm:text-sm text-slate-300 leading-relaxed">
-          {/* AI Semantic Fit Analysis if available */}
-          {job.semantic_fit_score !== undefined && job.semantic_fit_score !== null && (
+          {/* Explainable lexical discovery hint; not ATS or hiring decision. */}
+          {fitScore !== undefined && fitScore !== null && (
             <div className="p-3.5 bg-emerald-950/30 border border-emerald-500/30 rounded-xl space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-400 text-xs">
                   <span>🎯</span>
-                  <span>Đánh Giá Khớp Ngữ Nghĩa (Cross-Encoder AI):</span>
+                  <span>Đánh giá khớp theo từ khóa:</span>
                 </div>
                 <span className="font-mono font-black text-sm text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
-                  {job.semantic_fit_score}% Phù hợp
+                  {fitScore}% Phù hợp
                 </span>
               </div>
               {job.fit_highlights && job.fit_highlights.length > 0 && (

@@ -3,7 +3,9 @@
  */
 
 import { ATSHistoryItem, JDMatchReport, STARResult } from "../types/ats";
-import { ApiError } from "./cvApi";
+import { ApiError } from "./apiError";
+import { apiFetch } from "./apiClient";
+import { downloadOwnerFile, enqueueAIJob, waitForAIJob } from "./aiJobsApi";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -34,7 +36,7 @@ export async function matchJd(
   }
 
   try {
-    const response = await fetch(`${API_BASE}/ats/match`, {
+    const response = await apiFetch(`${API_BASE}/ats/match`, {
       method: "POST",
       body: formData,
     });
@@ -66,7 +68,7 @@ export async function rewriteBulletToStar(payload: {
   context?: string;
 }): Promise<STARResult> {
   try {
-    const response = await fetch(`${API_BASE}/ats/rewrite-star`, {
+    const response = await apiFetch(`${API_BASE}/ats/rewrite-star`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -101,7 +103,7 @@ export async function rewriteBulletToStar(payload: {
  */
 export async function getAtsHistory(candidateId: string): Promise<ATSHistoryItem[]> {
   try {
-    const response = await fetch(`${API_BASE}/ats/history/${candidateId}`);
+    const response = await apiFetch(`${API_BASE}/ats/history/${candidateId}`);
     if (!response.ok) {
       return [];
     }
@@ -114,7 +116,7 @@ export async function getAtsHistory(candidateId: string): Promise<ATSHistoryItem
 /**
  * Generate 1-Page Tailored Harvard / Modern Tech / Executive CV in PDF format.
  */
-export async function generateHarvardCVPdf(payload: {
+export async function generateHarvardCVPdfSync(payload: {
   candidate_id: string;
   jd_text: string;
   language?: "vi" | "en";
@@ -130,7 +132,7 @@ export async function generateHarvardCVPdf(payload: {
   template: string;
 }> {
   try {
-    const response = await fetch(`${API_BASE}/ats/generate-cv`, {
+    const response = await apiFetch(`${API_BASE}/ats/generate-cv`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -164,9 +166,11 @@ export async function generateHarvardCVPdf(payload: {
       }
     }
 
-    const estimatedScore = parseInt(response.headers.get("X-Estimated-ATS-Score") || "88", 10);
-    const wordCount = parseInt(response.headers.get("X-Estimated-Word-Count") || "450", 10);
-    const criticScore = parseInt(response.headers.get("X-Critic-Score") || "92", 10);
+    // These are server-computed diagnostics. Never invent a score when an
+    // intermediary strips response headers.
+    const estimatedScore = parseInt(response.headers.get("X-Estimated-ATS-Score") || "0", 10);
+    const wordCount = parseInt(response.headers.get("X-Estimated-Word-Count") || "0", 10);
+    const criticScore = parseInt(response.headers.get("X-Critic-Score") || "0", 10);
     const criticApproved = response.headers.get("X-Critic-Approved") === "true";
     const reflectionIterations = parseInt(response.headers.get("X-Reflection-Iterations") || "1", 10);
     const templateUsed = response.headers.get("X-CV-Template") || payload.template || "harvard";
@@ -188,3 +192,52 @@ export async function generateHarvardCVPdf(payload: {
   }
 }
 
+interface CVGenerationJobResult {
+  storage_key: string;
+  ats_score: number;
+  word_count: number;
+  critic_score: number;
+  critic_approved: boolean;
+  reflection_iterations: number;
+}
+
+/** Generate a CV via the durable job API; the synchronous endpoint is retained for rollback only. */
+export async function generateHarvardCVPdf(payload: {
+  candidate_id: string;
+  jd_text: string;
+  language?: "vi" | "en";
+  template?: "harvard" | "modern_tech" | "executive";
+}): Promise<{
+  blob: Blob;
+  filename: string;
+  estimatedScore: number;
+  wordCount: number;
+  criticScore: number;
+  criticApproved: boolean;
+  reflectionIterations: number;
+  template: string;
+}> {
+  const language = payload.language || "vi";
+  const template = payload.template || "harvard";
+  const accepted = await enqueueAIJob("cv-generation", {
+    candidate_id: payload.candidate_id,
+    jd_text: payload.jd_text,
+    language,
+    template,
+    format: "pdf",
+  });
+  const job = await waitForAIJob<CVGenerationJobResult>(accepted.job_id);
+  if (!job.result) throw new ApiError(502, "CV generation completed without a result");
+  const result = job.result;
+  const blob = await downloadOwnerFile(result.storage_key);
+  return {
+    blob,
+    filename: `Tailored_CV_${language}.pdf`,
+    estimatedScore: result.ats_score,
+    wordCount: result.word_count,
+    criticScore: result.critic_score,
+    criticApproved: result.critic_approved,
+    reflectionIterations: result.reflection_iterations,
+    template,
+  };
+}

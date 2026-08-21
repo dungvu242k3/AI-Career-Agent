@@ -3,7 +3,8 @@
  */
 
 import { JobItem } from "../types/job";
-import { ApiError } from "./cvApi";
+import { ApiError } from "./apiError";
+import { apiFetch } from "./apiClient";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -23,7 +24,7 @@ export async function sendChatMessage(params: {
   location?: string;
 }): Promise<ChatResponsePayload> {
   try {
-    const response = await fetch(`${API_BASE}/chat/message`, {
+    const response = await apiFetch(`${API_BASE}/chat/message`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -70,7 +71,7 @@ export async function streamChatMessage(
   }
 ): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE}/chat/stream`, {
+    const response = await apiFetch(`${API_BASE}/chat/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -160,7 +161,7 @@ export async function getJobsByDomain(params: {
     if (params.platform) searchParams.append("platform", params.platform);
     if (params.keyword) searchParams.append("keyword", params.keyword);
 
-    const response = await fetch(`${API_BASE}/jobs/by-domain?${searchParams.toString()}`);
+    const response = await apiFetch(`${API_BASE}/jobs/by-domain?${searchParams.toString()}`);
 
     if (!response.ok) {
       throw new ApiError(response.status, "Không thể tải danh sách việc làm.");
@@ -178,7 +179,7 @@ export async function getJobsByDomain(params: {
  */
 export async function getJobDetails(jobId: string): Promise<JobItem> {
   try {
-    const response = await fetch(`${API_BASE}/jobs/${jobId}`);
+    const response = await apiFetch(`${API_BASE}/jobs/${jobId}`);
     if (!response.ok) {
       throw new ApiError(response.status, `Không tìm thấy chi tiết công việc #${jobId}.`);
     }

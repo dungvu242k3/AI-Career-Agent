@@ -116,8 +116,9 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
       });
 
       const blobUrl = URL.createObjectURL(result.blob);
-      const original = currentAtsReport?.overall_score || 70;
-      const optimized = Math.max(original + 12, result.estimatedScore || 92);
+      const original = currentAtsReport?.overall_score ?? result.estimatedScore;
+      // Never raise a score client-side for presentation purposes.
+      const optimized = result.estimatedScore;
 
       const newItem: TailoredCVItem = {
         id: Date.now().toString(),
@@ -126,8 +127,8 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
         language: selectedLang,
         template: selectedTemplate,
         originalScore: original,
-        optimizedScore: Math.min(100, optimized),
-        grade: optimized >= 90 ? "A+" : "A",
+        optimizedScore: Math.min(100, Math.max(0, optimized)),
+        grade: optimized >= 90 ? "A+" : optimized >= 80 ? "A" : optimized >= 70 ? "B" : "C",
         createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         filename: result.filename,
         blobUrl: blobUrl,
@@ -415,7 +416,7 @@ export const TailoredCVHub: React.FC<TailoredCVHubProps> = ({
                     Critic Agent Thẩm Định:
                   </span>
                   <span className="font-mono font-bold text-emerald-300">
-                    {item.criticScore || 94}/100 ({item.reflectionIterations || 1} vòng phản biện)
+                    {item.criticScore ?? "N/A"}/100 ({item.reflectionIterations ?? 0} vòng phản biện)
                   </span>
                 </div>
 

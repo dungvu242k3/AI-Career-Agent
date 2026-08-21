@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaGoogle, FaGithub, FaLinkedin } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
+import { registerUser } from "../services/authApi";
 
 // Validation schema for Registration
 const registerSchema = z.object({
@@ -24,6 +25,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const {
     register,
@@ -34,10 +36,13 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: RegisterForm) => {
-    console.log("Register data:", data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    navigate("/login");
+    try {
+      setSubmitError(null);
+      await registerUser(data.email, data.password);
+      navigate("/login");
+    } catch {
+      setSubmitError("KhÃ´ng thá»ƒ táº¡o tÃ i khoáº£n. Email cÃ³ thá»ƒ Ä‘Ã£ tá»“n táº¡i.");
+    }
   };
 
   return (
@@ -122,6 +127,7 @@ export default function RegisterPage() {
                 "CREATE ACCOUNT"
               )}
             </button>
+            {submitError && <p className="text-red-500 text-sm text-center">{submitError}</p>}
             
             <div className="text-center text-sm mt-4">
               <span className="text-gray-500">Already have an account? </span>

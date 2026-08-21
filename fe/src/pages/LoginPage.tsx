@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaGoogle, FaGithub, FaLinkedin } from "react-icons/fa";
 import { Eye, EyeOff } from "lucide-react";
+import { loginUser } from "../services/authApi";
 
 // Validation schema
 const loginSchema = z.object({
@@ -17,6 +18,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const {
     register,
@@ -27,11 +29,13 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginForm) => {
-    // TODO: Connect to actual Auth Service
-    console.log("Login data:", data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    navigate("/workspace");
+    try {
+      setSubmitError(null);
+      await loginUser(data.email, data.password);
+      navigate("/workspace");
+    } catch {
+      setSubmitError("Email hoáº·c máº­t kháº©u khÃ´ng Ä‘Ãºng.");
+    }
   };
 
   return (
@@ -109,6 +113,7 @@ export default function LoginPage() {
                 "SIGN IN"
               )}
             </button>
+            {submitError && <p className="text-red-500 text-sm text-center">{submitError}</p>}
             
             <div className="flex flex-col items-center gap-3 text-sm mt-4">
               <a href="#" className="text-gray-500 hover:text-[#0A3D7C] transition-colors">Forgot password?</a>
